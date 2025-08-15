@@ -4,6 +4,7 @@ export interface User {
   id: number;
   username: string;
   email?: string;
+  isAdmin?: boolean;
   gamesPlayed: number;
   gamesWon: number;
 }

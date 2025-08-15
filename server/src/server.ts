@@ -2,8 +2,10 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import bcrypt from 'bcrypt';
 import { register, login, authenticateToken } from './auth/auth';
 import { gameManager } from './game/game-manager';
+import { createOrUpdateAdminUser } from './database/users';
 import config from './config';
 import './database/db'; // Initialize database
 
@@ -273,7 +275,25 @@ io.on('connection', (socket: any) => {
   });
 });
 
-server.listen(PORT, () => {
+// Admin initialization
+async function initializeAdmin() {
+  if (config.admin.password) {
+    try {
+      const adminUsername = 'admin';
+      const passwordHash = await bcrypt.hash(config.admin.password, 10);
+      await createOrUpdateAdminUser(adminUsername, passwordHash);
+    } catch (error) {
+      console.error('❌ Failed to initialize admin user:', error);
+    }
+  } else {
+    console.log('ℹ️  No ADMIN_PASSWORD provided, skipping admin user creation');
+  }
+}
+
+server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket server ready`);
+  
+  // Initialize admin user
+  await initializeAdmin();
 });

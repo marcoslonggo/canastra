@@ -18,6 +18,9 @@ interface Config {
     secret: string;
     expiresIn: string;
   };
+  admin: {
+    password?: string;
+  };
   logging: {
     level: string;
   };
@@ -39,6 +42,9 @@ const config: Config = {
   jwt: {
     secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
     expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+  },
+  admin: {
+    password: process.env.ADMIN_PASSWORD,
   },
   logging: {
     level: process.env.LOG_LEVEL || 'info',

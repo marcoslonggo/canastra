@@ -23,12 +23,23 @@ function initializeTables() {
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       email TEXT UNIQUE,
+      is_admin BOOLEAN DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       last_login DATETIME,
       games_played INTEGER DEFAULT 0,
       games_won INTEGER DEFAULT 0
     )
   `);
+
+  // Add is_admin column if it doesn't exist (for existing databases)
+  db.run(`
+    ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0
+  `, (err) => {
+    // Ignore error if column already exists
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding is_admin column:', err.message);
+    }
+  });
 
   // Create games table
   db.run(`
