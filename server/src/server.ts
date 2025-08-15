@@ -5,7 +5,14 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import { register, login, authenticateToken } from './auth/auth';
 import { gameManager } from './game/game-manager';
-import { createOrUpdateAdminUser } from './database/users';
+import { 
+  createOrUpdateAdminUser, 
+  getAllUsers, 
+  updateUserAdminStatus, 
+  updateUserPassword,
+  getUserById,
+  userRowToUser 
+} from './database/users';
 import config from './config';
 import './database/db'; // Initialize database
 
@@ -39,6 +46,67 @@ app.post('/auth/login', login);
 // Protected route example
 app.get('/api/profile', authenticateToken, (req: any, res) => {
   res.json({ message: 'Protected route accessed', userId: req.userId });
+});
+
+// Admin middleware
+const requireAdmin = async (req: any, res: any, next: any) => {
+  try {
+    const user = await getUserById(req.userId);
+    if (!user || !user.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Admin routes
+app.get('/api/admin/users', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    const users = await getAllUsers();
+    const safeUsers = users.map(user => userRowToUser(user));
+    res.json(safeUsers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.post('/api/admin/users/:userId/promote', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    await updateUserAdminStatus(userId, true);
+    res.json({ success: true, message: 'User promoted to admin' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to promote user' });
+  }
+});
+
+app.post('/api/admin/users/:userId/demote', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    await updateUserAdminStatus(userId, false);
+    res.json({ success: true, message: 'User demoted from admin' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to demote user' });
+  }
+});
+
+app.post('/api/admin/users/:userId/reset-password', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    const { newPassword } = req.body;
+    
+    if (!newPassword || newPassword.length < 4) {
+      return res.status(400).json({ error: 'Password must be at least 4 characters' });
+    }
+    
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await updateUserPassword(userId, passwordHash);
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
 });
 
 // Socket.IO connection handling
