@@ -28,6 +28,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     allowMultipleDiscard: false,
     allowDiscardDrawnCards: false
   });
+  const [showMortoSelection, setShowMortoSelection] = useState(false);
+  const [availableMortos, setAvailableMortos] = useState<number[]>([]);
   const [keySequence, setKeySequence] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -167,9 +169,18 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       setActionMessage(`Game ended! Team ${data.winner} wins! Scores: ${data.scores[0]} - ${data.scores[1]}`);
     };
 
-    listenersRef.current.actionError = (error: { message: string }) => {
-      setActionMessage(`Error: ${error.message}`);
-      setTimeout(() => setActionMessage(''), 3000);
+    listenersRef.current.actionError = (error: { message: string; data?: any }) => {
+      console.log('🎮 Action error received:', error);
+      
+      if (error.message === 'multiple_mortos_available' && error.data?.availableMortos) {
+        console.log('🎮 Multiple Mortos available, showing selection:', error.data.availableMortos);
+        setAvailableMortos(error.data.availableMortos);
+        setShowMortoSelection(true);
+        setActionMessage('Choose which Morto to take');
+      } else {
+        setActionMessage(`Error: ${error.message}`);
+        setTimeout(() => setActionMessage(''), 3000);
+      }
     };
 
     listenersRef.current.error = (error: any) => {
@@ -367,14 +378,27 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     setTimeout(processNextDiscard, 100);
   };
 
-  const handleBater = () => {
+  const handleBater = (mortoChoice?: number) => {
     if (!isMyTurnOrCheat()) {
       setActionMessage('Not your turn!');
       return;
     }
 
-    gameService.bater();
+    gameService.bater(mortoChoice);
     setActionMessage('Attempting to Bater...');
+  };
+
+  const handleMortoSelection = (mortoIndex: number) => {
+    console.log('🎮 Player selected Morto:', mortoIndex);
+    setShowMortoSelection(false);
+    setAvailableMortos([]);
+    handleBater(mortoIndex);
+  };
+
+  const cancelMortoSelection = () => {
+    setShowMortoSelection(false);
+    setAvailableMortos([]);
+    setActionMessage('');
   };
 
   const handleEndTurn = () => {
@@ -812,13 +836,37 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
           <div className="morto-area">
             <div className="morto-status">
-              <div className="morto-item">
-                <span>Morto 1: {gameState.mortosUsed[0] ? 'Used' : 'Available'}</span>
-                <span>({gameState.mortos[0].length} cards)</span>
+              <div className={`morto-item ${gameState.mortosUsed[0] ? 'morto-used' : 'morto-available'}`}>
+                <div className="morto-icon">
+                  <div className="morto-deck">
+                    <div className="morto-card morto-card-1"></div>
+                    <div className="morto-card morto-card-2"></div>
+                    <div className="morto-card morto-card-3"></div>
+                  </div>
+                  <div className="morto-label">
+                    <span className="morto-title">📦 Morto 1</span>
+                    <span className="morto-count">({gameState.mortos[0].length} cards)</span>
+                    <span className="morto-status-text">
+                      {gameState.mortosUsed[0] ? '✅ Used' : '🟢 Available'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="morto-item">
-                <span>Morto 2: {gameState.mortosUsed[1] ? 'Used' : 'Available'}</span>
-                <span>({gameState.mortos[1].length} cards)</span>
+              <div className={`morto-item ${gameState.mortosUsed[1] ? 'morto-used' : 'morto-available'}`}>
+                <div className="morto-icon">
+                  <div className="morto-deck">
+                    <div className="morto-card morto-card-1"></div>
+                    <div className="morto-card morto-card-2"></div>
+                    <div className="morto-card morto-card-3"></div>
+                  </div>
+                  <div className="morto-label">
+                    <span className="morto-title">📦 Morto 2</span>
+                    <span className="morto-count">({gameState.mortos[1].length} cards)</span>
+                    <span className="morto-status-text">
+                      {gameState.mortosUsed[1] ? '✅ Used' : '🟢 Available'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1150,6 +1198,49 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               Send
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Morto Selection Dialog */}
+      {showMortoSelection && (
+        <div className="morto-selection-overlay">
+          <div className="morto-selection-dialog">
+            <h2>🎯 Choose Your Morto</h2>
+            <p>Multiple Mortos are available. Choose which one to take:</p>
+            
+            <div className="morto-selection-options">
+              {availableMortos.map(mortoIndex => (
+                <button
+                  key={mortoIndex}
+                  onClick={() => handleMortoSelection(mortoIndex)}
+                  className="morto-selection-button"
+                >
+                  <div className="morto-selection-visual">
+                    <div className="morto-deck">
+                      <div className="morto-card morto-card-1"></div>
+                      <div className="morto-card morto-card-2"></div>
+                      <div className="morto-card morto-card-3"></div>
+                    </div>
+                    <div className="morto-selection-info">
+                      <span className="morto-selection-title">📦 Morto {mortoIndex + 1}</span>
+                      <span className="morto-selection-count">
+                        {gameState?.mortos[mortoIndex]?.length || 11} cards
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            
+            <div className="morto-selection-actions">
+              <button 
+                onClick={cancelMortoSelection}
+                className="action-button cancel-button"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

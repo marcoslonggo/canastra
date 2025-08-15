@@ -355,10 +355,12 @@ export class GameService {
     }
   }
 
-  public bater() {
+  public bater(mortoChoice?: number) {
     if (this.socket) {
+      const data = mortoChoice !== undefined ? { mortoChoice } : undefined;
       this.socket.emit('game-action', {
-        type: 'bater'
+        type: 'bater',
+        data
       });
     }
   }

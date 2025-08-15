@@ -314,14 +314,183 @@
 .morto-status {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .morto-item {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   font-size: 0.9rem;
   color: #e8f5e8;
+  padding: 0.75rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.morto-item.morto-available {
+  background: rgba(76, 175, 80, 0.2);
+  border: 2px solid rgba(76, 175, 80, 0.5);
+}
+
+.morto-item.morto-used {
+  background: rgba(158, 158, 158, 0.2);
+  border: 2px solid rgba(158, 158, 158, 0.5);
+  opacity: 0.7;
+}
+
+.morto-icon {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.morto-deck {
+  position: relative;
+  width: 40px;
+  height: 56px;
+}
+
+.morto-card {
+  position: absolute;
+  width: 32px;
+  height: 44px;
+  background: linear-gradient(145deg, #2c3e50, #34495e);
+  border: 2px solid #ecf0f1;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.morto-card-1 {
+  top: 0;
+  left: 0;
+  z-index: 3;
+}
+
+.morto-card-2 {
+  top: 2px;
+  left: 4px;
+  z-index: 2;
+}
+
+.morto-card-3 {
+  top: 4px;
+  left: 8px;
+  z-index: 1;
+}
+
+.morto-item.morto-used .morto-card {
+  background: linear-gradient(145deg, #555, #666);
+  border-color: #999;
+}
+
+.morto-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.morto-title {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.morto-count {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.morto-status-text {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Morto Selection Dialog */
+.morto-selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.morto-selection-dialog {
+  background: linear-gradient(145deg, #2c3e50, #34495e);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  color: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.morto-selection-dialog h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #ecf0f1;
+}
+
+.morto-selection-dialog p {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #bdc3c7;
+}
+
+.morto-selection-options {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.morto-selection-button {
+  background: rgba(52, 152, 219, 0.2);
+  border: 2px solid rgba(52, 152, 219, 0.5);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.morto-selection-button:hover {
+  background: rgba(52, 152, 219, 0.4);
+  border-color: rgba(52, 152, 219, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+}
+
+.morto-selection-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.morto-selection-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.morto-selection-title {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.morto-selection-count {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.morto-selection-actions {
+  display: flex;
+  justify-content: center;
 }
 
 .player-area {

@@ -13,6 +13,7 @@ export interface GameActionResult {
   message?: string;
   newGameState?: GameState;
   gameEnded?: boolean;
+  data?: any; // Additional data for special cases (like morto selection)
 }
 
 export class BuracoGame {
@@ -73,7 +74,7 @@ export class BuracoGame {
       case 'discard':
         return this.handleDiscard(player, action.data);
       case 'bater':
-        return this.handleBater(player);
+        return this.handleBater(player, action.data);
       case 'add-to-sequence':
         return this.handleAddToSequence(player, action.data);
       case 'end-turn':
@@ -268,7 +269,7 @@ export class BuracoGame {
     };
   }
 
-  private handleBater(player: Player): GameActionResult {
+  private handleBater(player: Player, data?: { mortoChoice?: number }): GameActionResult {
     if (!this.canPlayerBater(player)) {
       return { success: false, message: 'Cannot Bater yet' };
     }
@@ -280,22 +281,46 @@ export class BuracoGame {
       return this.finishGame(player);
     }
 
-    // Regular Bater - take Morto if available
-    const availableMorto = this.getAvailableMortoForTeam(team);
-    if (availableMorto !== null) {
-      // Give Morto to player
-      player.hand.push(...this.gameState.mortos[availableMorto]);
-      this.gameState.mortos[availableMorto] = [];
-      this.gameState.mortosUsed[availableMorto] = true;
+    // Get available Mortos
+    const availableMortos = this.getAvailableMortos();
+    
+    if (availableMortos.length === 0) {
+      return { success: false, message: 'No Morto available' };
+    }
 
+    // If no choice specified and multiple Mortos available, require choice
+    if (!data?.mortoChoice && availableMortos.length > 1) {
       return {
-        success: true,
-        message: 'Bateu! Took Morto deck. Continue playing.',
+        success: false,
+        message: 'multiple_mortos_available',
+        data: { availableMortos },
         newGameState: this.gameState
       };
-    } else {
-      return { success: false, message: 'No Morto available for your team' };
     }
+
+    // Determine which Morto to take
+    let mortoToTake: number;
+    if (data?.mortoChoice !== undefined) {
+      // Validate player's choice
+      if (!availableMortos.includes(data.mortoChoice)) {
+        return { success: false, message: 'Selected Morto is not available' };
+      }
+      mortoToTake = data.mortoChoice;
+    } else {
+      // Only one Morto available, take it
+      mortoToTake = availableMortos[0];
+    }
+
+    // Give Morto to player
+    player.hand.push(...this.gameState.mortos[mortoToTake]);
+    this.gameState.mortos[mortoToTake] = [];
+    this.gameState.mortosUsed[mortoToTake] = true;
+
+    return {
+      success: true,
+      message: `Bateu! Took Morto ${mortoToTake + 1}. Continue playing.`,
+      newGameState: this.gameState
+    };
   }
 
   private handleAddToSequence(player: Player, data: { sequenceId: string; cardIndices: number[] }): GameActionResult {
@@ -568,6 +593,17 @@ export class BuracoGame {
     if (this.gameState.mortos[0].length > 0) return 0;
     if (this.gameState.mortos[1].length > 0) return 1;
     return null;
+  }
+
+  private getAvailableMortos(): number[] {
+    const available: number[] = [];
+    if (this.gameState.mortos[0].length > 0 && !this.gameState.mortosUsed[0]) {
+      available.push(0);
+    }
+    if (this.gameState.mortos[1].length > 0 && !this.gameState.mortosUsed[1]) {
+      available.push(1);
+    }
+    return available;
   }
 
   private getAvailableMortoForTeam(team: number): number | null {
