@@ -177,6 +177,7 @@ export class GameService {
     this.socket.removeAllListeners('chat:history');
     this.socket.removeAllListeners('game-reconnected');
     this.socket.removeAllListeners('waiting-room-reconnected');
+    this.socket.removeAllListeners('session-terminated');
 
     // Game events
     this.socket.on('game-created', (data) => {
@@ -238,6 +239,35 @@ export class GameService {
     this.socket.on('waiting-room-reconnected', (data) => {
       console.log('Waiting room reconnected:', data);
       this.emit('waiting-room-reconnected', data);
+    });
+
+    // Session management events
+    this.socket.on('session-terminated', (data) => {
+      console.log('Session terminated:', data);
+      this.handleSessionTerminated(data);
+    });
+  }
+
+  // Session management
+  private handleSessionTerminated(data: any) {
+    console.log('Session terminated:', data.reason);
+    
+    // Disconnect socket
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+    
+    // Clear user state
+    this.user = null;
+    this.gameState = null;
+    this.setConnectionStatus('disconnected');
+    
+    // Emit session termination event for UI to handle
+    this.emit('session-terminated', {
+      reason: data.reason,
+      message: data.message,
+      timestamp: data.timestamp
     });
   }
 

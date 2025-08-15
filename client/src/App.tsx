@@ -32,15 +32,35 @@ function App() {
     setCurrentScreen('waiting');
   }, []);
 
+  const handleSessionTerminated = useCallback((data: { reason: string; message: string; timestamp: Date }) => {
+    console.log('Session terminated:', data.reason);
+    
+    // Clear local state
+    setUser(null);
+    setToken(null);
+    setCurrentGameId(null);
+    setGameState(null);
+    setCurrentScreen('auth');
+    
+    // Clear localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    
+    // Show user notification
+    alert(data.message || 'Your session has been terminated because you logged in from another device.');
+  }, []);
+
   const setupReconnectionListeners = useCallback(() => {
     // Remove any existing listeners to prevent duplicates
     gameService.off('game-reconnected', handleGameReconnected);
     gameService.off('waiting-room-reconnected', handleWaitingRoomReconnected);
+    gameService.off('session-terminated', handleSessionTerminated);
     
     // Add the listeners
     gameService.on('game-reconnected', handleGameReconnected);
     gameService.on('waiting-room-reconnected', handleWaitingRoomReconnected);
-  }, [handleGameReconnected, handleWaitingRoomReconnected]);
+    gameService.on('session-terminated', handleSessionTerminated);
+  }, [handleGameReconnected, handleWaitingRoomReconnected, handleSessionTerminated]);
 
   useEffect(() => {
     // Check for stored token on app load
