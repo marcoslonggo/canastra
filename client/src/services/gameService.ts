@@ -7,6 +7,10 @@ export class GameService {
   private user: User | null = null;
   private gameState: GameState | null = null;
   private listeners: Map<string, Function[]> = new Map();
+  private connectionStatus: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     this.initializeEventMap();
@@ -17,7 +21,8 @@ export class GameService {
     const events = [
       'authenticated', 'game-created', 'game-state-update', 'game-ended',
       'chat-message', 'chat-history', 'error', 'action-error', 'player-disconnected',
-      'player-left', 'game-list-updated', 'game-reconnected', 'waiting-room-reconnected'
+      'player-left', 'game-list-updated', 'game-reconnected', 'waiting-room-reconnected',
+      'connection-status-changed'
     ];
     
     events.forEach(event => {
@@ -25,14 +30,23 @@ export class GameService {
     });
   }
 
-  public connect(user: User): Promise<boolean> {
+  public connect(user: User, isReconnect: boolean = false): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // Clear any existing reconnect timeout
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
+      }
+
       // If already connected with same user, don't reconnect
       if (this.socket && this.socket.connected && this.user?.id === user.id) {
         console.log('Already connected with same user, skipping reconnection');
+        this.setConnectionStatus('connected');
         resolve(true);
         return;
       }
+
+      this.setConnectionStatus('connecting');
       
       // Disconnect existing connection if any
       if (this.socket) {
@@ -48,6 +62,7 @@ export class GameService {
 
       this.socket.on('connect', () => {
         console.log('Connected to server');
+        this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
         // Authenticate with the server
         this.socket!.emit('authenticate', {
           userId: user.id,
@@ -57,16 +72,20 @@ export class GameService {
 
       this.socket.on('authenticated', (data: { success: boolean }) => {
         if (data.success) {
+          this.setConnectionStatus('connected');
           this.setupEventListeners();
+          this.setupConnectionHandlers();
           this.emit('authenticated', data);
           resolve(true);
         } else {
+          this.setConnectionStatus('disconnected');
           reject(new Error('Authentication failed'));
         }
       });
 
       this.socket.on('connect_error', (error) => {
         console.error('Connection error:', error);
+        this.setConnectionStatus('disconnected');
         reject(error);
       });
 
@@ -76,6 +95,71 @@ export class GameService {
         this.emit('error', error);
       });
     });
+  }
+
+  private setupConnectionHandlers() {
+    if (!this.socket) return;
+
+    // Handle disconnection
+    this.socket.on('disconnect', (reason) => {
+      console.log('Disconnected from server:', reason);
+      this.setConnectionStatus('disconnected');
+      
+      // Only attempt auto-reconnect for certain disconnect reasons
+      if (reason === 'io server disconnect') {
+        // Server initiated disconnect - don't auto-reconnect
+        console.log('Server disconnected us - not auto-reconnecting');
+        return;
+      }
+      
+      // Auto-reconnect for network issues, server restarts, etc.
+      this.attemptReconnect();
+    });
+
+    // Handle reconnection success
+    this.socket.on('reconnect', () => {
+      console.log('Reconnected to server');
+      this.reconnectAttempts = 0;
+      this.setConnectionStatus('connected');
+    });
+
+    // Handle reconnection attempts
+    this.socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`Reconnection attempt ${attemptNumber}`);
+      this.reconnectAttempts = attemptNumber;
+      this.setConnectionStatus('connecting');
+    });
+
+    // Handle reconnection failure
+    this.socket.on('reconnect_failed', () => {
+      console.log('Failed to reconnect');
+      this.setConnectionStatus('disconnected');
+    });
+  }
+
+  private attemptReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.log('Max reconnection attempts reached');
+      return;
+    }
+
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // Exponential backoff, max 30s
+    this.reconnectAttempts++;
+
+    console.log(`Attempting reconnection in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    
+    this.reconnectTimeout = setTimeout(() => {
+      if (this.user) {
+        this.connect(this.user, true).catch((error) => {
+          console.error('Reconnection failed:', error);
+          this.attemptReconnect();
+        });
+      }
+    }, delay);
   }
 
   private setupEventListeners() {
@@ -179,6 +263,13 @@ export class GameService {
     const eventListeners = this.listeners.get(event);
     if (eventListeners) {
       eventListeners.forEach(callback => callback(data));
+    }
+  }
+
+  private setConnectionStatus(status: 'disconnected' | 'connecting' | 'connected') {
+    if (this.connectionStatus !== status) {
+      this.connectionStatus = status;
+      this.emit('connection-status-changed', { status, attempts: this.reconnectAttempts });
     }
   }
 
@@ -331,16 +422,51 @@ export class GameService {
     return this.socket?.connected || false;
   }
 
+  public getConnectionStatus(): 'disconnected' | 'connecting' | 'connected' {
+    return this.connectionStatus;
+  }
+
+  public getReconnectAttempts(): number {
+    return this.reconnectAttempts;
+  }
+
+  public manualReconnect(): Promise<boolean> {
+    if (!this.user) {
+      return Promise.reject(new Error('No user to reconnect with'));
+    }
+    
+    // Reset reconnect attempts for manual reconnection
+    this.reconnectAttempts = 0;
+    
+    // Clear any pending auto-reconnect
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    
+    return this.connect(this.user, true);
+  }
+
   public disconnect() {
     console.log('Disconnecting game service');
+    
+    // Clear any pending reconnect
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    
     if (this.socket) {
       // Remove all socket listeners to prevent memory leaks
       this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
     }
+    
+    this.setConnectionStatus('disconnected');
     this.gameState = null;
     this.user = null;
+    this.reconnectAttempts = 0;
   }
 }
 

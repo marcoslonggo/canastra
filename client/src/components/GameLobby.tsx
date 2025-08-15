@@ -21,8 +21,8 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [joinGameId, setJoinGameId] = useState('');
-  const [isConnecting, setIsConnecting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   // Admin state
@@ -38,6 +38,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     chatMessage?: Function;
     error?: Function;
     gameStateUpdate?: Function;
+    connectionStatusChanged?: Function;
   }>({});
 
   useEffect(() => {
@@ -56,19 +57,26 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
   }, [chatMessages]);
 
   const connectToGameService = async () => {
-    setConnectionStatus('connecting');
     try {
       // Connection is managed by App component, just ensure we're connected
       if (!gameService.isConnected()) {
         await gameService.connect(user);
       }
-      setConnectionStatus('connected');
       setupEventListeners();
       gameService.joinLobby();
       gameService.getActiveGames();
     } catch (error) {
       console.error('Failed to connect to game service:', error);
-      setConnectionStatus('disconnected');
+    }
+  };
+
+  const handleManualReconnect = async () => {
+    try {
+      await gameService.manualReconnect();
+      gameService.joinLobby();
+      gameService.getActiveGames();
+    } catch (error) {
+      console.error('Manual reconnection failed:', error);
     }
   };
 
@@ -88,6 +96,9 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     }
     if (listenersRef.current.gameStateUpdate) {
       gameService.off('game-state-update', listenersRef.current.gameStateUpdate);
+    }
+    if (listenersRef.current.connectionStatusChanged) {
+      gameService.off('connection-status-changed', listenersRef.current.connectionStatusChanged);
     }
     
     // Clear references
@@ -129,6 +140,12 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
         onGameStart(gameState.id);
       }
     };
+
+    listenersRef.current.connectionStatusChanged = (data: { status: 'disconnected' | 'connecting' | 'connected', attempts: number }) => {
+      console.log('Connection status changed:', data);
+      setConnectionStatus(data.status);
+      setReconnectAttempts(data.attempts);
+    };
     
     // Add the listeners
     gameService.on('game-created', listenersRef.current.gameCreated);
@@ -137,6 +154,11 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     gameService.on('chat-history', chatHistoryHandler);
     gameService.on('error', listenersRef.current.error);
     gameService.on('game-state-update', listenersRef.current.gameStateUpdate);
+    gameService.on('connection-status-changed', listenersRef.current.connectionStatusChanged);
+
+    // Initialize connection status from gameService
+    setConnectionStatus(gameService.getConnectionStatus());
+    setReconnectAttempts(gameService.getReconnectAttempts());
   };
 
   const handleCreateGame = async () => {
@@ -144,11 +166,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
       await connectToGameService();
     }
     
-    setIsConnecting(true);
     gameService.createGame();
-    
-    // Reset after a few seconds in case of no response
-    setTimeout(() => setIsConnecting(false), 3000);
   };
 
   const handleJoinGame = async (gameId?: string) => {
@@ -163,11 +181,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
       await connectToGameService();
     }
 
-    setIsConnecting(true);
     gameService.joinGame(targetGameId);
-    
-    // Reset after a few seconds in case of no response
-    setTimeout(() => setIsConnecting(false), 3000);
   };
 
   const handleSendChat = (e: React.FormEvent) => {
@@ -284,10 +298,10 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
             </span>
             {connectionStatus === 'disconnected' && (
               <button 
-                onClick={connectToGameService}
+                onClick={handleManualReconnect}
                 className="reconnect-button"
               >
-                Reconnect
+                Reconnect {reconnectAttempts > 0 && `(${reconnectAttempts}/5)`}
               </button>
             )}
           </div>
@@ -391,10 +405,10 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
               <p>Start a new Buraco game for your family</p>
               <button 
                 onClick={handleCreateGame}
-                disabled={isConnecting || connectionStatus !== 'connected'}
+                disabled={connectionStatus !== 'connected'}
                 className="primary-button"
               >
-                {isConnecting ? 'Creating...' : 'Create Game'}
+                {connectionStatus === 'connecting' ? 'Creating...' : 'Create Game'}
               </button>
             </div>
 
@@ -412,10 +426,15 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
                 />
                 <button 
                   onClick={() => handleJoinGame()}
-                  disabled={!joinGameId || isConnecting || connectionStatus !== 'connected'}
+                  disabled={!joinGameId || connectionStatus !== 'connected'}
                   className="secondary-button"
                 >
-                  {isConnecting ? 'Joining...' : 'Join Game'}
+                  {(() => {
+                    const gameInList = availableGames.find(g => g.id === joinGameId);
+                    const isPlayerInGame = gameInList?.players.includes(user.username);
+                    return connectionStatus === 'connecting' ? 'Joining...' : 
+                           isPlayerInGame ? 'Rejoin Game' : 'Join Game';
+                  })()}
                 </button>
               </div>
             </div>
@@ -442,10 +461,10 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
                       </div>
                       <button 
                         onClick={() => handleJoinGame(game.id)}
-                        disabled={isConnecting || game.status === 'playing' || connectionStatus !== 'connected'}
+                        disabled={connectionStatus !== 'connected'}
                         className="join-button"
                       >
-                        Join
+                        {game.players.includes(user.username) ? 'Rejoin' : 'Join'}
                       </button>
                     </div>
                   ))}
