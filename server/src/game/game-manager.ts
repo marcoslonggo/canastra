@@ -31,7 +31,7 @@ export class GameManager {
 
     const gameRoom: GameRoom = {
       id: gameId,
-      game: new BuracoGame([hostPlayer]),
+      game: new BuracoGame([hostPlayer], gameId),
       players: [hostPlayer],
       createdAt: new Date(),
       status: 'waiting'
@@ -101,7 +101,7 @@ export class GameManager {
     }
 
     // Create new game instance with all players
-    gameRoom.game = new BuracoGame(gameRoom.players);
+    gameRoom.game = new BuracoGame(gameRoom.players, gameId);
     gameRoom.status = 'playing';
 
     return { success: true };

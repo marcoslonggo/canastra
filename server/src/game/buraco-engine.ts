@@ -18,11 +18,11 @@ export interface GameActionResult {
 export class BuracoGame {
   private gameState: GameState;
 
-  constructor(players: Player[]) {
-    this.gameState = this.initializeGame(players);
+  constructor(players: Player[], gameId?: string) {
+    this.gameState = this.initializeGame(players, gameId);
   }
 
-  private initializeGame(players: Player[]): GameState {
+  private initializeGame(players: Player[], gameId?: string): GameState {
     const deck = shuffleDeck(createDeck());
     const { playerHands, remainingDeck, mortos } = dealCards(deck, players.length);
 
@@ -32,7 +32,7 @@ export class BuracoGame {
     });
 
     return {
-      id: this.generateGameId(),
+      id: gameId || this.generateGameId(),
       players,
       currentTurn: 0,
       mainDeck: remainingDeck,

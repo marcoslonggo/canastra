@@ -27,6 +27,75 @@ const io = new Server(server, {
 
 const PORT = config.server.port;
 
+// Chat history storage
+interface ChatHistoryMessage {
+  id: string;
+  username: string;
+  message: string;
+  timestamp: Date;
+  room: 'lobby' | 'game';
+  gameId?: string;
+}
+
+class ChatHistoryManager {
+  private lobbyHistory: ChatHistoryMessage[] = [];
+  private gameHistories: Map<string, ChatHistoryMessage[]> = new Map();
+  private readonly RETENTION_TIME = 20 * 60 * 1000; // 20 minutes in milliseconds
+  
+  constructor() {
+    // Clean up old messages every 5 minutes
+    setInterval(() => {
+      this.cleanupOldMessages();
+    }, 5 * 60 * 1000);
+  }
+  
+  addLobbyMessage(message: ChatHistoryMessage) {
+    this.lobbyHistory.push(message);
+    this.cleanupOldMessages();
+  }
+  
+  addGameMessage(gameId: string, message: ChatHistoryMessage) {
+    if (!this.gameHistories.has(gameId)) {
+      this.gameHistories.set(gameId, []);
+    }
+    this.gameHistories.get(gameId)!.push(message);
+    this.cleanupOldMessages();
+  }
+  
+  getLobbyHistory(): ChatHistoryMessage[] {
+    this.cleanupOldMessages();
+    return [...this.lobbyHistory];
+  }
+  
+  getGameHistory(gameId: string): ChatHistoryMessage[] {
+    this.cleanupOldMessages();
+    return [...(this.gameHistories.get(gameId) || [])];
+  }
+  
+  private cleanupOldMessages() {
+    const cutoffTime = new Date(Date.now() - this.RETENTION_TIME);
+    
+    // Clean lobby history
+    this.lobbyHistory = this.lobbyHistory.filter(msg => msg.timestamp > cutoffTime);
+    
+    // Clean game histories
+    for (const [gameId, messages] of this.gameHistories.entries()) {
+      const filteredMessages = messages.filter(msg => msg.timestamp > cutoffTime);
+      if (filteredMessages.length === 0) {
+        this.gameHistories.delete(gameId);
+      } else {
+        this.gameHistories.set(gameId, filteredMessages);
+      }
+    }
+  }
+  
+  removeGameHistory(gameId: string) {
+    this.gameHistories.delete(gameId);
+  }
+}
+
+const chatHistory = new ChatHistoryManager();
+
 // Middleware
 app.use(cors({
   origin: config.cors.allowedOrigins,
@@ -126,6 +195,14 @@ io.on('connection', (socket: any) => {
     }
   });
 
+  // Add debug event listener to catch all events
+  socket.onAny((eventName: string, ...args: any[]) => {
+    console.log('📡 Received event:', eventName, 'from user:', currentUser?.username || 'anonymous');
+    if (eventName.startsWith('chat:')) {
+      console.log('💬 Chat event details:', args);
+    }
+  });
+
   // Authentication for socket
   socket.on('authenticate', (data: { userId: number; username: string }) => {
     currentUser = {
@@ -162,6 +239,16 @@ io.on('connection', (socket: any) => {
     console.log('User joined lobby:', data);
     socket.join('lobby');
     socket.to('lobby').emit('user-joined', { socketId: socket.id, ...data });
+    
+    // Send chat history to the newly joined user
+    const lobbyHistory = chatHistory.getLobbyHistory();
+    console.log('📋 Lobby history retrieved:', lobbyHistory.length, 'messages');
+    if (lobbyHistory.length > 0) {
+      console.log('📤 Sending lobby chat history to user:', currentUser?.username);
+      socket.emit('chat:history', { room: 'lobby', messages: lobbyHistory });
+    } else {
+      console.log('📭 No lobby chat history to send');
+    }
   });
 
   socket.on('leave-lobby', () => {
@@ -171,13 +258,62 @@ io.on('connection', (socket: any) => {
 
   // Chat events
   socket.on('chat:lobby', (message: any) => {
-    io.to('lobby').emit('chat:message', {
+    const chatMessage = {
       id: Date.now().toString(),
       username: message.username,
       message: message.text,
       timestamp: new Date(),
-      room: 'lobby'
-    });
+      room: 'lobby' as const
+    };
+    
+    // Save to history
+    chatHistory.addLobbyMessage(chatMessage);
+    
+    // Broadcast to all lobby users
+    io.to('lobby').emit('chat:message', chatMessage);
+  });
+
+  console.log('🔧 Setting up chat:game event listener');
+  socket.on('chat:game', (data: { gameId: string; message: string }) => {
+    console.log('🎮 Received chat:game event:', data, 'from user:', currentUser?.username);
+    
+    if (!currentUser) {
+      console.log('❌ Not authenticated for chat:game');
+      socket.emit('error', { message: 'Not authenticated' });
+      return;
+    }
+
+    // Verify user is actually in this game
+    const gameState = gameManager.getGameStateById(data.gameId);
+    if (!gameState) {
+      console.log('❌ Game not found for chat:game:', data.gameId);
+      socket.emit('error', { message: 'Game not found' });
+      return;
+    }
+
+    const isPlayerInGame = gameState.players.some(player => player.id === currentUser.id.toString());
+    if (!isPlayerInGame) {
+      console.log('❌ Player not in game for chat:game:', currentUser.id, 'gameId:', data.gameId);
+      socket.emit('error', { message: 'You are not in this game' });
+      return;
+    }
+
+    console.log('✅ Sending game chat message to room:', `game:${data.gameId}`);
+    
+    const chatMessage = {
+      id: Date.now().toString(),
+      username: currentUser.username,
+      message: data.message,
+      timestamp: new Date(),
+      room: 'game' as const,
+      gameId: data.gameId
+    };
+    
+    // Save to history
+    chatHistory.addGameMessage(data.gameId, chatMessage);
+    
+    // Send message to game-specific room
+    io.to(`game:${data.gameId}`).emit('chat:message', chatMessage);
   });
 
   // Game events
@@ -228,6 +364,12 @@ io.on('connection', (socket: any) => {
       currentGameId = data.gameId;
       socket.join(`game:${data.gameId}`);
       
+      // Send game chat history to the reconnecting user
+      const gameHistory = chatHistory.getGameHistory(data.gameId);
+      if (gameHistory.length > 0) {
+        socket.emit('chat:history', { room: 'game', gameId: data.gameId, messages: gameHistory });
+      }
+      
       if (reconnectResult.gameState) {
         socket.emit('game-reconnected', { 
           gameId: reconnectResult.gameId,
@@ -249,6 +391,12 @@ io.on('connection', (socket: any) => {
     if (result.success) {
       currentGameId = data.gameId;
       socket.join(`game:${data.gameId}`);
+      
+      // Send game chat history to the newly joined user
+      const gameHistory = chatHistory.getGameHistory(data.gameId);
+      if (gameHistory.length > 0) {
+        socket.emit('chat:history', { room: 'game', gameId: data.gameId, messages: gameHistory });
+      }
       
       // Send updated game state to all players in the game
       const gameState = gameManager.getGameStateById(data.gameId);
