@@ -9,9 +9,89 @@ export interface SequenceValidation {
   canUseHighAce?: boolean;
 }
 
+/**
+ * Validates wildcard limits in a sequence according to Buraco rules:
+ * - Only one wildcard per sequence (hand)
+ * - Exception: If wildcard 2 is in its natural position (value 2), another wildcard can be used
+ */
+function validateWildcardLimits(cards: Card[]): SequenceValidation {
+  const wildcards = cards.filter(c => isWildCard(c));
+  
+  if (wildcards.length <= 1) {
+    // One or no wildcards is always valid
+    return { isValid: true };
+  }
+  
+  if (wildcards.length > 2) {
+    // More than 2 wildcards is never allowed
+    return { 
+      isValid: false,
+      missingCards: [],
+      canUseLowAce: false,
+      canUseHighAce: false
+    };
+  }
+  
+  // Exactly 2 wildcards - check for the special exception
+  // Exception: wildcard 2 in its natural position (between A and 3)
+  if (hasWildcard2InNaturalPosition(cards)) {
+    return { isValid: true };
+  }
+  
+  // Two wildcards without the exception
+  return { 
+    isValid: false,
+    missingCards: [],
+    canUseLowAce: false,
+    canUseHighAce: false
+  };
+}
+
+/**
+ * Checks if a wildcard 2 is in its natural position (value 2) in the sequence
+ * This allows for an additional wildcard to be used elsewhere
+ */
+function hasWildcard2InNaturalPosition(cards: Card[]): boolean {
+  // Sort cards by value for analysis
+  const naturalCards = cards.filter(c => !isWildCard(c)).sort((a, b) => a.value - b.value);
+  const wildcards = cards.filter(c => isWildCard(c));
+  
+  // Look for wildcard 2s specifically
+  const wildcard2s = wildcards.filter(c => c.rank === '2');
+  
+  if (wildcard2s.length === 0) {
+    return false; // No wildcard 2s
+  }
+  
+  // Check if any wildcard 2 could be in its natural position (value 2)
+  // This happens when we have A (value 1) and 3 (value 3) as natural cards
+  const hasAce = naturalCards.some(c => c.value === 1);
+  const hasThree = naturalCards.some(c => c.value === 3);
+  
+  // If we have both A and 3, and a wildcard 2, then the 2 could be in its natural position
+  if (hasAce && hasThree && wildcard2s.length > 0) {
+    // Check if they're all the same suit (for regular sequences)
+    const suits = naturalCards.map(c => c.suit);
+    const uniqueSuits = [...new Set(suits)];
+    
+    if (uniqueSuits.length === 1) {
+      console.log('🃏 Wildcard 2 exception: Found A-2(wild)-3 pattern, allowing additional wildcard');
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 export function validateSequence(cards: Card[]): SequenceValidation {
   if (cards.length < 3) {
     return { isValid: false };
+  }
+
+  // Validate wildcard limits first
+  const wildcardValidation = validateWildcardLimits(cards);
+  if (!wildcardValidation.isValid) {
+    return wildcardValidation;
   }
 
   // Check if it's an Ace sequence (special case)

@@ -1,5 +1,5 @@
 import { GameState, Card, Sequence, Player } from '../types';
-import { createDeck, shuffleDeck, dealCards } from './deck';
+import { createDeck, shuffleDeck, dealCards, isWildCard } from './deck';
 import { validateSequence, createSequence } from './sequences';
 
 export interface GameAction {
@@ -174,6 +174,15 @@ export class BuracoGame {
       }
     }
 
+    // Validate wildcard limits across all sequences being played
+    const wildcardValidation = this.validateCrossSequenceWildcards(data.sequences);
+    if (!wildcardValidation.isValid) {
+      return {
+        success: false,
+        message: wildcardValidation.message
+      };
+    }
+
     // Validate all sequences
     const validatedSequences: Sequence[] = [];
     for (const cardGroup of data.sequences) {
@@ -310,9 +319,18 @@ export class BuracoGame {
       cardsToAdd.push(player.hand[cardIndex]);
     }
     
+    // Check wildcard limits for the new sequence
+    const newSequenceCards = [...targetSequence.cards, ...cardsToAdd];
+    const wildcardValidation = this.validateCrossSequenceWildcards([newSequenceCards]);
+    if (!wildcardValidation.isValid) {
+      return {
+        success: false,
+        message: `Cannot add cards: ${wildcardValidation.message}`
+      };
+    }
+    
     // Try to add cards to the sequence
     try {
-      const newSequenceCards = [...targetSequence.cards, ...cardsToAdd];
       const newSequence = createSequence(newSequenceCards, targetSequence.id);
       
       // Remove cards from player's hand (in reverse order to maintain indices)
@@ -391,6 +409,87 @@ export class BuracoGame {
       message: 'Turn ended',
       newGameState: this.gameState
     };
+  }
+
+  private validateCrossSequenceWildcards(sequences: Card[][]): { isValid: boolean; message?: string } {
+    // Count total wildcards being played across all sequences
+    let totalWildcards = 0;
+    let sequencesWithWildcard2InNaturalPosition = 0;
+    
+    for (const cardGroup of sequences) {
+      const wildcards = cardGroup.filter(c => isWildCard(c));
+      totalWildcards += wildcards.length;
+      
+      // Check if this sequence has a wildcard 2 in natural position
+      if (this.hasWildcard2InNaturalPosition(cardGroup)) {
+        sequencesWithWildcard2InNaturalPosition++;
+      }
+    }
+    
+    // Rule: Each sequence can have at most 1 wildcard
+    // Exception: If wildcard 2 is in natural position, that sequence can have 2 wildcards
+    const maxAllowedWildcards = sequences.length + sequencesWithWildcard2InNaturalPosition;
+    
+    if (totalWildcards > maxAllowedWildcards) {
+      return {
+        isValid: false,
+        message: `Too many wildcards: ${totalWildcards} used, maximum ${maxAllowedWildcards} allowed (1 per sequence, +1 for wildcard 2 in natural position)`
+      };
+    }
+    
+    // Check individual sequence wildcard limits
+    for (let i = 0; i < sequences.length; i++) {
+      const cardGroup = sequences[i];
+      const wildcards = cardGroup.filter(c => isWildCard(c));
+      
+      if (wildcards.length > 2) {
+        return {
+          isValid: false,
+          message: `Sequence ${i + 1} has ${wildcards.length} wildcards, maximum 2 allowed`
+        };
+      }
+      
+      if (wildcards.length === 2 && !this.hasWildcard2InNaturalPosition(cardGroup)) {
+        return {
+          isValid: false,
+          message: `Sequence ${i + 1} has 2 wildcards but wildcard 2 is not in its natural position (between A and 3)`
+        };
+      }
+    }
+    
+    return { isValid: true };
+  }
+
+  private hasWildcard2InNaturalPosition(cards: Card[]): boolean {
+    // Sort cards by value for analysis
+    const naturalCards = cards.filter(c => !isWildCard(c)).sort((a, b) => a.value - b.value);
+    const wildcards = cards.filter(c => isWildCard(c));
+    
+    // Look for wildcard 2s specifically
+    const wildcard2s = wildcards.filter(c => c.rank === '2');
+    
+    if (wildcard2s.length === 0) {
+      return false; // No wildcard 2s
+    }
+    
+    // Check if any wildcard 2 could be in its natural position (value 2)
+    // This happens when we have A (value 1) and 3 (value 3) as natural cards
+    const hasAce = naturalCards.some(c => c.value === 1);
+    const hasThree = naturalCards.some(c => c.value === 3);
+    
+    // If we have both A and 3, and a wildcard 2, then the 2 could be in its natural position
+    if (hasAce && hasThree && wildcard2s.length > 0) {
+      // Check if they're all the same suit (for regular sequences)
+      const suits = naturalCards.map(c => c.suit);
+      const uniqueSuits = [...new Set(suits)];
+      
+      if (uniqueSuits.length === 1) {
+        console.log('🃏 Wildcard 2 exception: Found A-2(wild)-3 pattern, allowing additional wildcard');
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   private canPlayerBater(player: Player): boolean {

@@ -166,10 +166,22 @@ A web-based multiplayer Brazilian Buraco (Canastra) card game with real-time Web
 - Card dealing and deck management
 - Turn management
 - Sequence validation (same-suit sequences, 3-aces rule)
+- **Wildcard validation and limits** (Issue #16 implementation)
 - Scoring calculation
 - Canastra detection (Limpa +200, Suja +100, Ás-à-Ás +1000)
 - Bater and Morto mechanics
 - Win condition checking
+
+### sequences.ts (Sequence Validation)
+**Location**: `/server/src/game/sequences.ts`
+**Purpose**: Sequence validation logic and wildcard rule enforcement
+**Key Responsibilities**:
+- Sequence structure validation (minimum 3 cards, same suit)
+- **Wildcard limit enforcement**: Maximum 1 wildcard per sequence
+- **Special exception**: Wildcard 2 in natural position (A-2-3) allows 2 wildcards
+- Ace sequence validation (A-A-A combinations)
+- Optimal wildcard positioning for game display
+- Canastra type detection (Limpa/Suja/Ás-à-Ás)
 
 ### auth.ts (Authentication)
 **Location**: `/server/src/auth/auth.ts`
@@ -291,6 +303,29 @@ PORT=3004 npm start    # Start development server
 - Frontend: Port 3004
 - Both services must be running for full functionality
 
+## Game Rules Implementation
+
+### Wildcard Validation Rules (Issue #16)
+**Implementation**: `/server/src/game/sequences.ts` + `/server/src/game/buraco-engine.ts`
+**Rule**: Only one wildcard should be playable in an existing or new hand (sequence)
+
+**Core Rules**:
+1. **Maximum 1 wildcard per sequence** - Each sequence can contain at most one wildcard (Joker or wildcard 2)
+2. **Special Exception**: When wildcard 2 is in its natural position (value 2 between A and 3), that sequence may contain 2 wildcards total
+3. **Cross-sequence validation**: When playing multiple sequences simultaneously, wildcard limits are enforced across all sequences
+
+**Technical Implementation**:
+- `validateWildcardLimits()`: Validates individual sequence wildcard count
+- `hasWildcard2InNaturalPosition()`: Detects the A-2(wild)-3 exception pattern
+- `validateCrossSequenceWildcards()`: Enforces limits across multiple sequences in `handleBaixar()`
+- `handleAddToSequence()`: Validates wildcard limits when adding cards to existing sequences
+
+**Examples**:
+- ✅ Valid: `A♥ - 2♥(wild) - 3♥` (1 wildcard)
+- ✅ Valid: `A♥ - 2♥(wild) - 3♥ - Joker(wild) - 5♥` (2 wildcards, exception applies)
+- ❌ Invalid: `4♥ - 2♥(wild) - 6♥ - Joker(wild) - 8♥` (2 wildcards, no exception)
+- ❌ Invalid: Multiple sequences with total wildcards > sequences + exceptions
+
 ## Recent Bug Fixes
 
 ### Bug #1: Game Creation Loading Screen
@@ -300,6 +335,10 @@ PORT=3004 npm start    # Start development server
 ### Bug #2: Team Switching Not Working
 - **Fixed**: Moved WebSocket connection to App.tsx level
 - **Impact**: Persistent connections, working team selection
+
+### Feature #3: Wildcard Limit Enforcement (Issue #16)
+- **Implemented**: Wildcard validation rules according to Brazilian Buraco regulations
+- **Impact**: Prevents invalid sequences with excessive wildcards, enforces game authenticity
 
 ---
 
