@@ -15,6 +15,7 @@ import {
 } from './database/users';
 import config from './config';
 import './database/db'; // Initialize database
+import { sessionManager } from './session-manager';
 
 const app = express();
 const server = createServer(app);
@@ -186,6 +187,10 @@ io.on('connection', (socket: any) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    
+    // Clean up session
+    sessionManager.removeSessionBySocket(socket.id);
+    
     if (currentUser && currentGameId) {
       // Handle game disconnect
       socket.to(`game:${currentGameId}`).emit('player-disconnected', {
@@ -205,9 +210,15 @@ io.on('connection', (socket: any) => {
 
   // Authentication for socket
   socket.on('authenticate', (data: { userId: number; username: string }) => {
+    const userId = data.userId.toString();
+    const username = data.username;
+    
+    // Handle session management
+    const sessionResult = sessionManager.authenticateUser(userId, username, socket);
+    
     currentUser = {
-      id: data.userId.toString(),
-      username: data.username
+      id: userId,
+      username: username
     };
     
     // Check if user was already in a game and try to reconnect
@@ -215,6 +226,9 @@ io.on('connection', (socket: any) => {
     if (reconnectResult.success && reconnectResult.gameId) {
       currentGameId = reconnectResult.gameId;
       socket.join(`game:${reconnectResult.gameId}`);
+      
+      // Update session with game info
+      sessionManager.setUserGame(userId, reconnectResult.gameId);
       
       if (reconnectResult.gameState) {
         socket.emit('game-reconnected', { 
@@ -231,7 +245,14 @@ io.on('connection', (socket: any) => {
       }
     }
     
-    socket.emit('authenticated', { success: true });
+    // Send authentication response with session info
+    socket.emit('authenticated', { 
+      success: true,
+      sessionInfo: {
+        hasConflict: sessionResult.hasConflict,
+        message: sessionResult.message
+      }
+    });
   });
 
   // Lobby events
@@ -338,6 +359,9 @@ io.on('connection', (socket: any) => {
       currentGameId = gameId;
       socket.join(`game:${gameId}`);
       
+      // Update session with game info
+      sessionManager.setUserGame(currentUser.id, gameId);
+      
       console.log('✅ Game created successfully:', gameId);
       socket.emit('game-created', { gameId });
       
@@ -363,6 +387,9 @@ io.on('connection', (socket: any) => {
     if (reconnectResult.success && reconnectResult.gameId === data.gameId) {
       currentGameId = data.gameId;
       socket.join(`game:${data.gameId}`);
+      
+      // Update session with game info
+      sessionManager.setUserGame(currentUser.id, data.gameId);
       
       // Send game chat history to the reconnecting user
       const gameHistory = chatHistory.getGameHistory(data.gameId);
@@ -392,6 +419,9 @@ io.on('connection', (socket: any) => {
       currentGameId = data.gameId;
       socket.join(`game:${data.gameId}`);
       
+      // Update session with game info
+      sessionManager.setUserGame(currentUser.id, data.gameId);
+      
       // Send game chat history to the newly joined user
       const gameHistory = chatHistory.getGameHistory(data.gameId);
       if (gameHistory.length > 0) {
@@ -416,6 +446,10 @@ io.on('connection', (socket: any) => {
         username: currentUser.username
       });
       currentGameId = null;
+      
+      // Clear game from session
+      sessionManager.setUserGame(currentUser.id, undefined);
+      
       socket.to('lobby').emit('game-list-updated', gameManager.getActiveGames());
     }
   });
