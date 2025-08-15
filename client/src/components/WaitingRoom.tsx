@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { gameService } from '../services/gameService';
-import { User, GameState } from '../types';
+import { User, GameState, ChatMessage } from '../types';
 import './WaitingRoom.css';
 
 interface WaitingRoomProps {
@@ -14,16 +14,60 @@ interface WaitingRoomProps {
 export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLeaveGame }: WaitingRoomProps) {
   const [gameState, setGameState] = useState<GameState | null>(initialGameState || null);
   const [isHost, setIsHost] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Store listener references for cleanup
+  const listenersRef = useRef<{
+    gameStateUpdate?: Function;
+    playerLeft?: Function;
+    chatMessage?: Function;
+    error?: Function;
+  }>({});
 
   useEffect(() => {
     setupEventListeners();
     if (!initialGameState) {
       gameService.getGameState();
     }
+    
+    // Cleanup listeners on unmount
+    return () => {
+      cleanupEventListeners();
+    };
   }, [initialGameState]);
 
+  useEffect(() => {
+    // Auto scroll chat to bottom
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  const cleanupEventListeners = () => {
+    // Remove existing listeners
+    if (listenersRef.current.gameStateUpdate) {
+      gameService.off('game-state-update', listenersRef.current.gameStateUpdate);
+    }
+    if (listenersRef.current.playerLeft) {
+      gameService.off('player-left', listenersRef.current.playerLeft);
+    }
+    if (listenersRef.current.chatMessage) {
+      gameService.off('chat-message', listenersRef.current.chatMessage);
+    }
+    if (listenersRef.current.error) {
+      gameService.off('error', listenersRef.current.error);
+    }
+    
+    // Clear references
+    listenersRef.current = {};
+  };
+
   const setupEventListeners = () => {
-    gameService.on('game-state-update', (newGameState: GameState) => {
+    // Clean up any existing listeners first
+    cleanupEventListeners();
+    
+    // Create new listener functions and store references
+    listenersRef.current.gameStateUpdate = (newGameState: GameState) => {
       setGameState(newGameState);
       
       // Check if current user is the host (first player)
@@ -35,15 +79,41 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
       if (newGameState.phase === 'playing') {
         onGameStart();
       }
-    });
+    };
 
-    gameService.on('player-left', (data: { playerId: string; username: string }) => {
+    listenersRef.current.playerLeft = (data: { playerId: string; username: string }) => {
       console.log('Player left:', data.username);
-    });
+    };
 
-    gameService.on('error', (error: { message: string }) => {
+    listenersRef.current.chatMessage = (message: ChatMessage) => {
+      // Only show messages for this game or lobby messages
+      if (message.room === 'game' && message.gameId === gameId) {
+        setChatMessages(prev => [...prev, message]);
+      }
+    };
+
+    const chatHistoryHandler = (data: { room: string; gameId?: string; messages: ChatMessage[] }) => {
+      console.log('🎮 WaitingRoom received chat history:', data);
+      if (data.room === 'game' && data.gameId === gameId) {
+        console.log('🎮 Setting waiting room chat messages:', data.messages.length, 'messages');
+        setChatMessages(data.messages);
+      }
+    };
+
+    listenersRef.current.error = (error: { message: string }) => {
       alert(`Error: ${error.message}`);
-    });
+    };
+    
+    // Add the listeners
+    gameService.on('game-state-update', listenersRef.current.gameStateUpdate);
+    gameService.on('player-left', listenersRef.current.playerLeft);
+    gameService.on('chat-message', listenersRef.current.chatMessage);
+    gameService.on('chat-history', chatHistoryHandler);
+    gameService.on('error', listenersRef.current.error);
+
+    // Request chat history for current game after setting up listeners
+    console.log('🎮 WaitingRoom requesting chat history for game:', gameId);
+    gameService.joinGame(gameId);
   };
 
   const handleStartGame = () => {
@@ -68,6 +138,14 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
 
   const handleSwitchTeam = (teamNumber: number) => {
     gameService.switchTeam(teamNumber);
+  };
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (chatInput.trim()) {
+      gameService.sendChatMessage(chatInput.trim(), 'game', gameId);
+      setChatInput('');
+    }
   };
 
   if (!gameState) {
@@ -209,6 +287,44 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
           </div>
         </div>
       )}
+
+      <div className="game-chat">
+        <h3>Game Chat</h3>
+        <div className="chat-messages">
+          {chatMessages.length === 0 ? (
+            <div className="no-messages">No messages yet. Start the conversation!</div>
+          ) : (
+            chatMessages.map((message, index) => (
+              <div key={`${message.id}-${index}`} className="chat-message">
+                <span className="message-author">{message.username}:</span>
+                <span className="message-text">{message.message}</span>
+                <span className="message-time">
+                  {new Date(message.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+            ))
+          )}
+          <div ref={chatEndRef} />
+        </div>
+        
+        <form onSubmit={handleSendChat} className="chat-input-form">
+          <input
+            type="text"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="Type a message to your team..."
+            maxLength={200}
+            className="chat-input"
+          />
+          <button 
+            type="submit"
+            disabled={!chatInput.trim()}
+            className="chat-send-button"
+          >
+            Send
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

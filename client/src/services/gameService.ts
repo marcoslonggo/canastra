@@ -16,7 +16,7 @@ export class GameService {
     // Initialize empty listener arrays for each event type
     const events = [
       'authenticated', 'game-created', 'game-state-update', 'game-ended',
-      'chat-message', 'error', 'action-error', 'player-disconnected',
+      'chat-message', 'chat-history', 'error', 'action-error', 'player-disconnected',
       'player-left', 'game-list-updated', 'game-reconnected', 'waiting-room-reconnected'
     ];
     
@@ -27,6 +27,20 @@ export class GameService {
 
   public connect(user: User): Promise<boolean> {
     return new Promise((resolve, reject) => {
+      // If already connected with same user, don't reconnect
+      if (this.socket && this.socket.connected && this.user?.id === user.id) {
+        console.log('Already connected with same user, skipping reconnection');
+        resolve(true);
+        return;
+      }
+      
+      // Disconnect existing connection if any
+      if (this.socket) {
+        console.log('Disconnecting existing connection before reconnecting');
+        this.socket.disconnect();
+        this.socket = null;
+      }
+      
       this.user = user;
       const serverUrl = config.websocket.url;
       
@@ -66,6 +80,19 @@ export class GameService {
 
   private setupEventListeners() {
     if (!this.socket) return;
+
+    // Remove any existing socket listeners to prevent duplicates
+    this.socket.removeAllListeners('game-created');
+    this.socket.removeAllListeners('game-state-update');
+    this.socket.removeAllListeners('game-ended');
+    this.socket.removeAllListeners('action-error');
+    this.socket.removeAllListeners('game-list-updated');
+    this.socket.removeAllListeners('player-disconnected');
+    this.socket.removeAllListeners('player-left');
+    this.socket.removeAllListeners('chat:message');
+    this.socket.removeAllListeners('chat:history');
+    this.socket.removeAllListeners('game-reconnected');
+    this.socket.removeAllListeners('waiting-room-reconnected');
 
     // Game events
     this.socket.on('game-created', (data) => {
@@ -110,6 +137,11 @@ export class GameService {
     this.socket.on('chat:message', (message) => {
       console.log('Chat message:', message);
       this.emit('chat-message', message);
+    });
+
+    this.socket.on('chat:history', (data) => {
+      console.log('📋 Chat history received from server:', data);
+      this.emit('chat-history', data);
     });
 
     // Reconnection events
@@ -236,14 +268,27 @@ export class GameService {
     }
   }
 
-  public sendChatMessage(message: string, room: 'lobby' | 'game' = 'lobby') {
+  public sendChatMessage(message: string, room: 'lobby' | 'game' = 'lobby', gameId?: string) {
+    console.log('sendChatMessage called:', { message, room, gameId, socketConnected: !!this.socket });
+    
     if (this.socket) {
       if (room === 'lobby') {
+        console.log('Sending lobby chat message');
         this.socket.emit('chat:lobby', {
           username: this.user?.username,
           text: message
         });
+      } else if (room === 'game' && gameId) {
+        console.log('Sending game chat message to room:', gameId);
+        this.socket.emit('chat:game', {
+          gameId: gameId,
+          message: message
+        });
+      } else {
+        console.log('Game chat not sent - missing gameId or room type invalid');
       }
+    } else {
+      console.log('No socket connection available');
     }
   }
 
@@ -287,11 +332,15 @@ export class GameService {
   }
 
   public disconnect() {
+    console.log('Disconnecting game service');
     if (this.socket) {
+      // Remove all socket listeners to prevent memory leaks
+      this.socket.removeAllListeners();
       this.socket.disconnect();
       this.socket = null;
     }
     this.gameState = null;
+    this.user = null;
   }
 }
 

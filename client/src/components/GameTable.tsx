@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { GameState, Player, Card as CardType, Sequence, User } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { GameState, Player, Card as CardType, Sequence, User, ChatMessage } from '../types';
 import { Card, CardBack, CardGroup } from './Card';
 import { gameService } from '../services/gameService';
 import './GameTable.css';
@@ -29,6 +29,19 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     allowDiscardDrawnCards: false
   });
   const [keySequence, setKeySequence] = useState('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  // Store listener references for cleanup
+  const listenersRef = useRef<{
+    gameStateUpdate?: Function;
+    gameEnded?: Function;
+    actionError?: Function;
+    chatMessage?: Function;
+    error?: Function;
+  }>({});
 
   useEffect(() => {
     setupGameEventListeners();
@@ -49,7 +62,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
     return () => {
       clearInterval(connectionCheck);
-      // Clean up event listeners
+      cleanupEventListeners();
     };
   }, []);
 
@@ -58,6 +71,11 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       updateTurnStatus(gameState);
     }
   }, [gameState, user.id]);
+
+  useEffect(() => {
+    // Auto scroll chat to bottom
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -81,28 +99,90 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [keySequence]);
 
+  const cleanupEventListeners = () => {
+    // Remove existing listeners
+    if (listenersRef.current.gameStateUpdate) {
+      gameService.off('game-state-update', listenersRef.current.gameStateUpdate);
+    }
+    if (listenersRef.current.gameEnded) {
+      gameService.off('game-ended', listenersRef.current.gameEnded);
+    }
+    if (listenersRef.current.actionError) {
+      gameService.off('action-error', listenersRef.current.actionError);
+    }
+    if (listenersRef.current.chatMessage) {
+      gameService.off('chat-message', listenersRef.current.chatMessage);
+    }
+    if (listenersRef.current.error) {
+      gameService.off('error', listenersRef.current.error);
+    }
+    
+    // Clear references
+    listenersRef.current = {};
+  };
+
   const setupGameEventListeners = () => {
-    gameService.on('game-state-update', (newGameState: GameState) => {
+    console.log('🕹️ GameTable setupGameEventListeners called');
+    // Clean up any existing listeners first
+    cleanupEventListeners();
+    
+    // Create new listener functions and store references
+    listenersRef.current.gameStateUpdate = (newGameState: GameState) => {
       setGameState(newGameState);
       setActionMessage('');
-    });
+    };
 
-    gameService.on('game-ended', (data: { winner: number; scores: number[] }) => {
+    listenersRef.current.gameEnded = (data: { winner: number; scores: number[] }) => {
       setGameEnded(true);
       setActionMessage(`Game ended! Team ${data.winner} wins! Scores: ${data.scores[0]} - ${data.scores[1]}`);
-    });
+    };
 
-    gameService.on('action-error', (error: { message: string }) => {
+    listenersRef.current.actionError = (error: { message: string }) => {
       setActionMessage(`Error: ${error.message}`);
       setTimeout(() => setActionMessage(''), 3000);
-    });
+    };
 
-    // Add disconnect/error handling
-    gameService.on('error', (error: any) => {
+    listenersRef.current.error = (error: any) => {
       console.error('Game service error:', error);
       setActionMessage('Connection error. Trying to reconnect...');
       setTimeout(() => setActionMessage(''), 5000);
-    });
+    };
+
+    listenersRef.current.chatMessage = (message: ChatMessage) => {
+      // Only show messages for this game
+      if (message.room === 'game' && message.gameId === gameState?.id) {
+        setChatMessages(prev => [...prev, message]);
+      }
+    };
+
+    const chatHistoryHandler = (data: { room: string; gameId?: string; messages: ChatMessage[] }) => {
+      console.log('🕹️ GameTable received chat history:', data);
+      console.log('🕹️ Current gameState?.id:', gameState?.id);
+      console.log('🕹️ Condition check - room:', data.room === 'game', 'gameId match:', data.gameId === gameState?.id);
+      if (data.room === 'game' && data.gameId === gameState?.id) {
+        console.log('🕹️ Setting game table chat messages:', data.messages.length, 'messages');
+        setChatMessages(data.messages);
+      } else {
+        console.log('🕹️ Not setting messages - condition failed');
+      }
+    };
+    
+    // Add the listeners
+    gameService.on('game-state-update', listenersRef.current.gameStateUpdate);
+    gameService.on('game-ended', listenersRef.current.gameEnded);
+    gameService.on('action-error', listenersRef.current.actionError);
+    gameService.on('chat-message', listenersRef.current.chatMessage);
+    gameService.on('chat-history', chatHistoryHandler);
+    gameService.on('error', listenersRef.current.error);
+    
+    console.log('🕹️ GameTable event listeners added, including chat-history');
+    
+    // Request chat history for current game if we have gameState
+    if (gameState?.id) {
+      console.log('🕹️ Requesting chat history for game:', gameState.id);
+      // Re-join the game room to trigger chat history send
+      gameService.joinGame(gameState.id);
+    }
 
     // Handle connection issues
     if (!gameService.isConnected()) {
@@ -123,6 +203,14 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const getMyHand = (): CardType[] => {
     const player = getCurrentPlayer();
     return player ? player.hand : [];
+  };
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (chatInput.trim() && gameState) {
+      gameService.sendChatMessage(chatInput.trim(), 'game', gameState.id);
+      setChatInput('');
+    }
   };
 
   const handleCardSelect = (cardIndex: number) => {
@@ -974,6 +1062,64 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Chat Toggle Button */}
+      <button 
+        onClick={() => setShowChat(!showChat)}
+        className="chat-toggle-button"
+        title={showChat ? 'Hide Chat' : 'Show Chat'}
+      >
+        💬 {showChat ? 'Hide' : 'Chat'}
+      </button>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <div className="game-chat-panel">
+          <div className="chat-header">
+            <h4>Game Chat</h4>
+            <button 
+              onClick={() => setShowChat(false)}
+              className="chat-close-button"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="chat-messages">
+            {chatMessages.length === 0 ? (
+              <div className="no-messages">No messages yet. Start the conversation!</div>
+            ) : (
+              chatMessages.map((message, index) => (
+                <div key={`${message.id}-${index}`} className="chat-message">
+                  <span className="message-author">{message.username}:</span>
+                  <span className="message-text">{message.message}</span>
+                  <span className="message-time">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+              ))
+            )}
+            <div ref={chatEndRef} />
+          </div>
+          
+          <form onSubmit={handleSendChat} className="chat-input-form">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Type a message..."
+              maxLength={200}
+              className="chat-input"
+            />
+            <button 
+              type="submit"
+              disabled={!chatInput.trim()}
+              className="chat-send-button"
+            >
+              Send
+            </button>
+          </form>
         </div>
       )}
 
