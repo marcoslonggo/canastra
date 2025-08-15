@@ -1,0 +1,36 @@
+Bugs:
+
+
+- IF a player logs off and needs to re-login, they should be able to enter the same game they are still playing.
+- Chat currently shows duplicated messages
+- When backend dies or player disconnectw, the message says click reconnect, but thereś no reconnect button.
+- LOW: ther's a very quick flicker of the login screen when refreshing.
+X currently, a player can withdraw as many cards from the main deck, he should ONLY be able to take one.
+X HIGH: the baixar button does nothing
+X Medium: scroll bar in the game sequences, but there's plenty of screen space.
+X High: How to add cards to an already played game (player should be able to do that).
+X Medium: Able to move  the cards with mouse (or touch if mobile plafor) to the games already played (from their team)
+X Cards show in the Sequences in play, should be ordered automatically. When a card is played in an allowed sequence, specially around Wildcards, the wildcard should move to the appropriate position to fill in gap. eg: if a 8, 2 , 10  ar in game, and a player drops in a 9, then the wildcard should move to the lowest part of the sequence automatically (2,8,9,10). later, a player must be able to drop in either a 6 (wildcard is in place of the 7)  OR a Q, (wildcard can also be used as J in this case). The wildcard should move to the appropriate place.
+
+Features:
+- Expectator mode (other people can see the game, players hands if allowed, statistics)
+- THe player that started the game should be able to end the game. There should be an option to end without prejudice or ending as it is, declaring a winner and a loser based on the current score (ignoring the current hand)
+- Easy mode: Possible combinations of cards are indicated (hightlight ). This should be an optinal toggle.
+X there should be an auto-sort of cards (number from lowers to highets, grouped by suits)
+X Players should be able to sort their cards.
+X The card section should be more visible, currently it's too small.
+- If a player logs in again from a different browser/device, the earlier connection should be broken (but he should be able to re-join the game)
+- chat should have #channels Lobby and one per game.
+- chat Should be visible also inside the game
+- Very Low Priority: Voice chat
+- Should work well with a mobile
+
+
+
+
+
+Technical:
+- All text shown to user should be variables that can be easily read from a file, to allow us proper localization. There has to be sanitization of the input in the files before importing to the game
+
+
+
