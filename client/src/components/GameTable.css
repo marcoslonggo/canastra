@@ -937,3 +937,59 @@
     font-size: 0.8rem;
   }
 }
+
+/* Debug and Testing Modes */
+.debug-show-all-hands .opponent-hand .card,
+.debug-show-all-hands .team-hand .card {
+  transform: rotateY(0deg) !important;
+  background: var(--card-bg) !important;
+}
+
+.debug-show-all-hands .opponent-hand .card::before,
+.debug-show-all-hands .team-hand .card::before {
+  content: attr(data-debug-card) !important;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+  color: #333;
+  font-weight: bold;
+}
+
+.speed-test-mode * {
+  transition-duration: 0.1s !important;
+  animation-duration: 0.1s !important;
+}
+
+.speed-test-mode .card {
+  transition: transform 0.1s ease !important;
+}
+
+.debug-show-all-hands::before {
+  content: "🔍 DEBUG MODE: All hands visible";
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 0, 0, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  z-index: 10000;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.speed-test-mode::after {
+  content: "⚡ SPEED MODE: Fast animations";
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: rgba(0, 150, 255, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  z-index: 10000;
+  font-size: 0.8rem;
+  font-weight: bold;
+}

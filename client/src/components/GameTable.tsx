@@ -87,11 +87,41 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       const newSequence = (keySequence + e.key.toLowerCase()).slice(-5); // Keep last 5 chars
       setKeySequence(newSequence);
 
+      // Testing cheat codes
       if (newSequence === 'iddqd') {
         setCheatMode(true);
         setActionMessage('Cheat mode activated! 🎮');
         setTimeout(() => setActionMessage(''), 2000);
         setKeySequence(''); // Reset sequence
+      } else if (newSequence === 'cardy') {
+        // Show all players' hands (debug mode)
+        setActionMessage('🔍 Card spy mode activated! All hands visible');
+        setTimeout(() => setActionMessage(''), 3000);
+        setKeySequence('');
+        // This will be handled by CSS class changes
+        document.body.classList.toggle('debug-show-all-hands');
+      } else if (newSequence === 'winme') {
+        // Auto-win current game for testing
+        setActionMessage('🏆 Auto-win activated for testing!');
+        setTimeout(() => setActionMessage(''), 3000);
+        setKeySequence('');
+        // Send test win signal (we'll implement this in backend)
+        if (gameState) {
+          gameService.sendChatMessage('DEV_AUTO_WIN_TEST', 'game', gameState.id);
+        }
+      } else if (newSequence === 'speedx') {
+        // Speed up game animations and delays
+        setActionMessage('⚡ Speed mode activated! Fast animations');
+        setTimeout(() => setActionMessage(''), 3000);
+        setKeySequence('');
+        document.body.classList.toggle('speed-test-mode');
+      } else if (newSequence === 'reset') {
+        // Reset all test modes
+        setCheatMode(false);
+        setActionMessage('🔄 All test modes disabled');
+        setTimeout(() => setActionMessage(''), 2000);
+        setKeySequence('');
+        document.body.classList.remove('debug-show-all-hands', 'speed-test-mode');
       }
     };
 
