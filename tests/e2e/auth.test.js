@@ -13,16 +13,16 @@ test.describe('Authentication', () => {
 
   test('should display login form by default', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('Family Canastra');
-    await expect(page.locator('button:has-text("Login")')).toBeVisible();
-    await expect(page.locator('button:has-text("Register")')).toBeVisible();
+    await expect(page.locator('.tab:has-text("Login")')).toBeVisible();
+    await expect(page.locator('button:has-text("Register here")')).toBeVisible();
   });
 
   test('should switch to register form', async ({ page }) => {
     await page.click('button:has-text("Register here")');
-    await expect(page.locator('h1')).toContainText('Register');
-    await expect(page.locator('input[placeholder*="Username"]')).toBeVisible();
-    await expect(page.locator('input[placeholder*="Password"]')).toBeVisible();
-    await expect(page.locator('input[placeholder*="Email"]')).toBeVisible();
+    await expect(page.locator('button[type="submit"]:has-text("Register")')).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Username' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Email (optional)' })).toBeVisible();
   });
 
   test('should register a new user successfully', async ({ page }) => {
@@ -36,15 +36,15 @@ test.describe('Authentication', () => {
     await page.click('button:has-text("Register here")');
     
     // Fill registration form
-    await page.fill('input[placeholder*="Username"]', testUser.username);
-    await page.fill('input[placeholder*="Password"]', testUser.password);
-    await page.fill('input[placeholder*="Email"]', testUser.email);
+    await page.getByRole('textbox', { name: 'Username' }).fill(testUser.username);
+    await page.getByRole('textbox', { name: 'Password' }).fill(testUser.password);
+    await page.getByRole('textbox', { name: 'Email (optional)' }).fill(testUser.email);
     
     // Submit registration
-    await page.click('button:has-text("Register")');
+    await page.locator('button[type="submit"]:has-text("Register")').click();
     
     // Should navigate to lobby after successful registration
-    await expect(page.locator('h2')).toContainText('Game Lobby');
+    await expect(page.locator('h2')).toContainText('Family Canastra - Game Lobby');
     await expect(page.locator('text*="Welcome"')).toContainText(testUser.username);
   });
 
