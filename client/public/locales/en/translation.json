@@ -163,9 +163,6 @@
       "cards": "{{count}} cards",
       "disconnected": "Disconnected"
     },
-    "chat": {
-      "title": "💬 Chat"
-    },
     "messages": {
       "notYourTurn": "Not your turn!",
       "selectCards": "Select cards to discard!",

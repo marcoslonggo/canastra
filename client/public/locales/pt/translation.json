@@ -163,9 +163,6 @@
       "cards": "{{count}} cartas",
       "disconnected": "Desconectado"
     },
-    "chat": {
-      "title": "💬 Bate-papo"
-    },
     "messages": {
       "notYourTurn": "Não é sua vez!",
       "selectCards": "Selecione cartas para descartar!",

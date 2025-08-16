@@ -37,7 +37,13 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [overlayMessages, setOverlayMessages] = useState<ChatMessage[]>([]);
+  const [fadeTimeouts, setFadeTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map());
+  const [hasNewMessages, setHasNewMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const maxOverlayMessages = 3;
+  const overlayFadeDelay = 4000; // 4 seconds
+  const maxChatHistory = 100; // Limit chat history to prevent performance issues
   
   // Store listener references for cleanup
   const listenersRef = useRef<{
@@ -135,6 +141,58 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [keySequence]);
 
+  // Add message to overlay with auto-fade
+  const addOverlayMessage = (message: ChatMessage) => {
+    setOverlayMessages(prev => {
+      const updated = [...prev, message].slice(-maxOverlayMessages);
+      
+      // Trigger notification animation on toggle button
+      setHasNewMessages(true);
+      setTimeout(() => setHasNewMessages(false), 600);
+      
+      // Set up fade timeout for this message
+      const timeoutId = setTimeout(() => {
+        removeOverlayMessage(message.id);
+      }, overlayFadeDelay);
+      
+      setFadeTimeouts(prev => {
+        const newMap = new Map(prev);
+        newMap.set(message.id, timeoutId);
+        return newMap;
+      });
+      
+      return updated;
+    });
+  };
+
+  // Remove message from overlay
+  const removeOverlayMessage = (messageId: string) => {
+    setOverlayMessages(prev => prev.filter(msg => msg.id !== messageId));
+    setFadeTimeouts(prev => {
+      const newMap = new Map(prev);
+      const timeoutId = newMap.get(messageId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        newMap.delete(messageId);
+      }
+      return newMap;
+    });
+  };
+
+  // Clear overlay messages when chat is opened
+  const handleChatToggle = () => {
+    const newShowChat = !showChat;
+    setShowChat(newShowChat);
+    
+    if (newShowChat) {
+      // Clear overlay messages and timeouts when opening chat
+      fadeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+      setFadeTimeouts(new Map());
+      setOverlayMessages([]);
+      setHasNewMessages(false);
+    }
+  };
+
   const cleanupEventListeners = () => {
     // Remove existing listeners
     if (listenersRef.current.gameStateUpdate) {
@@ -231,7 +289,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     listenersRef.current.chatMessage = (message: ChatMessage) => {
       // Only show messages for this game
       if (message.room === 'game' && message.gameId === gameState?.id) {
-        setChatMessages(prev => [...prev, message]);
+        setChatMessages(prev => [...prev, message].slice(-maxChatHistory));
+        
+        // Add to overlay messages if chat is closed
+        if (!showChat) {
+          addOverlayMessage(message);
+        }
       }
     };
 
@@ -241,7 +304,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       console.log('🕹️ Condition check - room:', data.room === 'game', 'gameId match:', data.gameId === gameState?.id);
       if (data.room === 'game' && data.gameId === gameState?.id) {
         console.log('🕹️ Setting game table chat messages:', data.messages.length, 'messages');
-        setChatMessages(data.messages);
+        setChatMessages(data.messages.slice(-maxChatHistory));
       } else {
         console.log('🕹️ Not setting messages - condition failed');
       }
@@ -293,6 +356,13 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       setChatInput('');
     }
   };
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      fadeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    };
+  }, [fadeTimeouts]);
 
   const handleCardSelect = (cardIndex: number) => {
     setSelectedCards(prev => {
@@ -1167,13 +1237,13 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         </div>
       )}
 
-      {/* Chat Toggle Button */}
+      {/* Modern Chat Toggle Button */}
       <button 
-        onClick={() => setShowChat(!showChat)}
-        className="chat-toggle-button"
+        onClick={handleChatToggle}
+        className={`chat-toggle-button ${showChat ? 'chat-open' : ''} ${hasNewMessages ? 'new-message' : ''}`}
         title={showChat ? t('game.chat.hideChat') : t('game.chat.showChat')}
       >
-        {t('game.chat.title')} {showChat ? t('game.chat.hide') : ''}
+{t('game.chat.title')}{overlayMessages.length > 0 && !showChat ? ` (${overlayMessages.length})` : ''}
       </button>
 
       {/* Chat Panel */}
@@ -1222,6 +1292,18 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               {t('game.chat.send')}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Floating Overlay Messages (Auto-fade) */}
+      {!showChat && overlayMessages.length > 0 && (
+        <div className="chat-overlay-messages">
+          {overlayMessages.map((message) => (
+            <div key={message.id} className="overlay-message">
+              <span className="message-author">{message.username}:</span>
+              <span className="message-text">{message.message}</span>
+            </div>
+          ))}
         </div>
       )}
 
