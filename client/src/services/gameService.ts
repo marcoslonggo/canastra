@@ -22,7 +22,7 @@ export class GameService {
       'authenticated', 'game-created', 'game-state-update', 'game-ended',
       'chat-message', 'chat-history', 'error', 'action-error', 'player-disconnected',
       'player-left', 'game-list-updated', 'game-reconnected', 'waiting-room-reconnected',
-      'connection-status-changed'
+      'connection-status-changed', 'player-action'
     ];
     
     events.forEach(event => {
@@ -178,6 +178,7 @@ export class GameService {
     this.socket.removeAllListeners('game-reconnected');
     this.socket.removeAllListeners('waiting-room-reconnected');
     this.socket.removeAllListeners('session-terminated');
+    this.socket.removeAllListeners('player-action');
 
     // Game events
     this.socket.on('game-created', (data) => {
@@ -239,6 +240,12 @@ export class GameService {
     this.socket.on('waiting-room-reconnected', (data) => {
       console.log('Waiting room reconnected:', data);
       this.emit('waiting-room-reconnected', data);
+    });
+
+    // Player action events  
+    this.socket.on('player-action', (data) => {
+      console.log('Player action received:', data);
+      this.emit('player-action', data);
     });
 
     // Session management events

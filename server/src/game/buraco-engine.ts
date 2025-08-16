@@ -14,6 +14,7 @@ export interface GameActionResult {
   newGameState?: GameState;
   gameEnded?: boolean;
   data?: any; // Additional data for special cases (like morto selection)
+  actionDetails?: any; // Details about the action for broadcasting
 }
 
 export class BuracoGame {
@@ -251,7 +252,10 @@ export class BuracoGame {
       return {
         success: true,
         message: 'Pique! You must announce you have only one card left.',
-        newGameState: this.gameState
+        newGameState: this.gameState,
+        actionDetails: {
+          discardedCard: discardedCard
+        }
       };
     }
 
@@ -265,12 +269,19 @@ export class BuracoGame {
 
     return {
       success: true,
-      newGameState: this.gameState
+      newGameState: this.gameState,
+      actionDetails: {
+        discardedCard: discardedCard
+      }
     };
   }
 
   private handleBater(player: Player, data?: { mortoChoice?: number }): GameActionResult {
+    console.log('🎮 Bater action received:', { playerId: player.id, mortoChoice: data?.mortoChoice });
+    console.log('🎮 Player hand size:', player.hand.length);
+    
     if (!this.canPlayerBater(player)) {
+      console.log('🎮 Player cannot Bater - hand size:', player.hand.length);
       return { success: false, message: 'Cannot Bater yet' };
     }
 
@@ -283,13 +294,14 @@ export class BuracoGame {
 
     // Get available Mortos
     const availableMortos = this.getAvailableMortos();
+    console.log('🎮 Available Mortos:', availableMortos);
     
     if (availableMortos.length === 0) {
       return { success: false, message: 'No Morto available' };
     }
 
     // If no choice specified and multiple Mortos available, require choice
-    if (!data?.mortoChoice && availableMortos.length > 1) {
+    if (data?.mortoChoice === undefined && availableMortos.length > 1) {
       return {
         success: false,
         message: 'multiple_mortos_available',
@@ -302,24 +314,34 @@ export class BuracoGame {
     let mortoToTake: number;
     if (data?.mortoChoice !== undefined) {
       // Validate player's choice
+      console.log('🎮 Validating choice:', data.mortoChoice, 'against available:', availableMortos);
       if (!availableMortos.includes(data.mortoChoice)) {
+        console.log('🎮 Choice rejected - not in available list');
         return { success: false, message: 'Selected Morto is not available' };
       }
       mortoToTake = data.mortoChoice;
+      console.log('🎮 Choice accepted, taking Morto:', mortoToTake);
     } else {
       // Only one Morto available, take it
       mortoToTake = availableMortos[0];
+      console.log('🎮 Auto-selecting Morto:', mortoToTake);
     }
 
     // Give Morto to player
-    player.hand.push(...this.gameState.mortos[mortoToTake]);
+    const mortoCards = this.gameState.mortos[mortoToTake];
+    console.log('🎮 Morto', mortoToTake, 'has', mortoCards.length, 'cards');
+    player.hand.push(...mortoCards);
     this.gameState.mortos[mortoToTake] = [];
     this.gameState.mortosUsed[mortoToTake] = true;
 
+    console.log('🎮 Bater successful! Player now has', player.hand.length, 'cards');
     return {
       success: true,
       message: `Bateu! Took Morto ${mortoToTake + 1}. Continue playing.`,
-      newGameState: this.gameState
+      newGameState: this.gameState,
+      actionDetails: {
+        mortoChoice: mortoToTake
+      }
     };
   }
 
@@ -388,6 +410,14 @@ export class BuracoGame {
 
   private handleEndTurn(player: Player, data?: { cheatMode?: boolean }): GameActionResult {
     console.log('🎮 End turn action received:', { cheatMode: data?.cheatMode });
+    
+    // Check if player has 0 cards - they must Bater instead of ending turn
+    if (player.hand.length === 0 && !data?.cheatMode) {
+      return { 
+        success: false, 
+        message: 'You have no cards! You must Bater instead of ending turn' 
+      };
+    }
     
     // Check if player has drawn at least one card this turn
     if (!this.gameState.turnState.hasDrawn) {
@@ -597,10 +627,11 @@ export class BuracoGame {
 
   private getAvailableMortos(): number[] {
     const available: number[] = [];
-    if (this.gameState.mortos[0].length > 0 && !this.gameState.mortosUsed[0]) {
+    // A Morto is available if it has cards, regardless of whether it was used before
+    if (this.gameState.mortos[0].length > 0) {
       available.push(0);
     }
-    if (this.gameState.mortos[1].length > 0 && !this.gameState.mortosUsed[1]) {
+    if (this.gameState.mortos[1].length > 0) {
       available.push(1);
     }
     return available;

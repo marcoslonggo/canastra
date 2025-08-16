@@ -52,7 +52,6 @@ function validateWildcardLimits(cards: Card[]): SequenceValidation {
  * This allows for an additional wildcard to be used elsewhere
  */
 function hasWildcard2InNaturalPosition(cards: Card[]): boolean {
-  // Sort cards by value for analysis
   const naturalCards = cards.filter(c => !isWildCard(c)).sort((a, b) => a.value - b.value);
   const wildcards = cards.filter(c => isWildCard(c));
   
@@ -63,20 +62,84 @@ function hasWildcard2InNaturalPosition(cards: Card[]): boolean {
     return false; // No wildcard 2s
   }
   
-  // Check if any wildcard 2 could be in its natural position (value 2)
-  // This happens when we have A (value 1) and 3 (value 3) as natural cards
-  const hasAce = naturalCards.some(c => c.value === 1);
-  const hasThree = naturalCards.some(c => c.value === 3);
+  // Check if all cards are same suit (required for sequences)
+  const allNaturalSuits = naturalCards.map(c => c.suit);
+  const uniqueSuits = [...new Set(allNaturalSuits)];
   
-  // If we have both A and 3, and a wildcard 2, then the 2 could be in its natural position
-  if (hasAce && hasThree && wildcard2s.length > 0) {
-    // Check if they're all the same suit (for regular sequences)
-    const suits = naturalCards.map(c => c.suit);
-    const uniqueSuits = [...new Set(suits)];
+  if (uniqueSuits.length > 1) {
+    return false; // Mixed suits, can't form valid sequence
+  }
+  
+  if (naturalCards.length === 0) {
+    return false; // Need at least one natural card to determine suit/sequence
+  }
+  
+  // Try to determine if a 2 could be in its natural position (value 2)
+  // This happens when the sequence structure allows for a 2 to have value 2
+  
+  // Get all natural values
+  const naturalValues = naturalCards.map(c => c.value).sort((a, b) => a - b);
+  
+  // Check different scenarios where 2 could be natural:
+  
+  // Scenario 1: We have value 1 (A) and value 3, so 2 fits naturally between them
+  if (naturalValues.includes(1) && naturalValues.includes(3)) {
+    console.log('🃏 Wildcard 2 exception: A-2(wild as natural)-3 pattern detected');
+    return true;
+  }
+  
+  // Scenario 2: We have value 3 (and possibly higher), so 2 could be at the start
+  if (naturalValues.includes(3)) {
+    console.log('🃏 Wildcard 2 exception: 2(wild as natural)-3+ pattern detected');
+    return true;
+  }
+  
+  // Scenario 3: We have value 1 (A) and the sequence would naturally include 2
+  if (naturalValues.includes(1)) {
+    // If we have A and any higher value, check if 2 would fit naturally
+    const maxValue = Math.max(...naturalValues);
+    const totalLength = cards.length;
     
-    if (uniqueSuits.length === 1) {
-      console.log('🃏 Wildcard 2 exception: Found A-2(wild)-3 pattern, allowing additional wildcard');
+    // If starting from A(1), a sequence of this length would include 2
+    if (maxValue <= totalLength) {
+      console.log('🃏 Wildcard 2 exception: A-2(wild as natural)-... pattern detected');
       return true;
+    }
+  }
+  
+  // Scenario 4: Try to build the sequence and see if 2 would naturally have value 2
+  // For a sequence to be valid, wildcards must fill gaps in consecutive values
+  
+  const minValue = Math.min(...naturalValues);
+  const maxValue = Math.max(...naturalValues);
+  const sequenceLength = cards.length;
+  
+  // Try different starting positions for the sequence
+  for (let startValue = Math.max(1, minValue - wildcards.length); 
+       startValue <= minValue; 
+       startValue++) {
+    
+    // Check if in this arrangement, the 2 would represent value 2
+    const sequenceValues = [];
+    for (let i = 0; i < sequenceLength; i++) {
+      sequenceValues.push(startValue + i);
+    }
+    
+    // If value 2 is in the sequence and would be represented by a wildcard
+    if (sequenceValues.includes(2) && !naturalValues.includes(2)) {
+      // Check if this arrangement uses all natural cards correctly
+      let allNaturalsUsed = true;
+      for (const natValue of naturalValues) {
+        if (!sequenceValues.includes(natValue)) {
+          allNaturalsUsed = false;
+          break;
+        }
+      }
+      
+      if (allNaturalsUsed) {
+        console.log(`🃏 Wildcard 2 exception: In sequence ${sequenceValues.join('-')}, 2 would be natural position`);
+        return true;
+      }
     }
   }
   

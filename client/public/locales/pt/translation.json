@@ -197,6 +197,17 @@
       "addedToSequence": "Adicionou {{count}} cartas à sequência",
       "bateuTookMorto": "Bateu! Pegou Morto {{number}}. Continue jogando."
     },
+    "playerActions": {
+      "drewFromDeck": "{{playerName}} comprou do baralho",
+      "drewFromDiscard": "{{playerName}} comprou do lixo",
+      "discardedCard": "{{playerName}} descartou {{card}}",
+      "discardedACard": "{{playerName}} descartou uma carta",
+      "playedSequence": "{{playerName}} baixou uma sequência de {{count}} cartas",
+      "bateu": "{{playerName}} bateu",
+      "bateuWithMorto": "{{playerName}} bateu e escolheu Morto {{mortoNumber}}",
+      "addedToSequence": "{{playerName}} adicionou {{count}} carta(s) à sequência",
+      "endedTurn": "{{playerName}} terminou o turno"
+    },
     "cheat": {
       "title": "🎮 Menu de Trapaça",
       "activated": "Modo de trapaça ativado! 🎮",

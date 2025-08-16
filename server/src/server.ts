@@ -17,6 +17,66 @@ import config from './config';
 import './database/db'; // Initialize database
 import { sessionManager } from './session-manager';
 
+// Helper function to generate action data for broadcasting (client will localize)
+function generateActionData(playerName: string, action: any, result: any): any | null {
+  switch (action.type) {
+    case 'draw':
+      return {
+        key: action.data?.source === 'deck' ? 'game.playerActions.drewFromDeck' : 'game.playerActions.drewFromDiscard',
+        params: { playerName }
+      };
+    
+    case 'discard':
+      if (result.actionDetails?.discardedCard) {
+        const card = result.actionDetails.discardedCard;
+        return {
+          key: 'game.playerActions.discardedCard',
+          params: { playerName, card: `${card.value} of ${card.suit}` }
+        };
+      }
+      return {
+        key: 'game.playerActions.discardedACard',
+        params: { playerName }
+      };
+    
+    case 'baixar':
+      const cardCount = result.actionDetails?.sequenceLength || action.data?.cardIndices?.length || 0;
+      return {
+        key: 'game.playerActions.playedSequence',
+        params: { playerName, count: cardCount }
+      };
+    
+    case 'bater':
+      const mortoChoice = result.actionDetails?.mortoChoice || action.data?.mortoChoice;
+      if (mortoChoice !== undefined) {
+        return {
+          key: 'game.playerActions.bateuWithMorto',
+          params: { playerName, mortoNumber: mortoChoice + 1 }
+        };
+      }
+      return {
+        key: 'game.playerActions.bateu',
+        params: { playerName }
+      };
+    
+    case 'addToSequence':
+      const addedCount = action.data?.cardIndices?.length || 1;
+      return {
+        key: 'game.playerActions.addedToSequence',
+        params: { playerName, count: addedCount }
+      };
+    
+    case 'endTurn':
+      return {
+        key: 'game.playerActions.endedTurn',
+        params: { playerName }
+      };
+    
+    default:
+      return null; // Don't broadcast unknown actions
+  }
+}
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
@@ -555,6 +615,19 @@ io.on('connection', (socket: any) => {
     if (result.success && result.newGameState) {
       // Broadcast updated game state to all players
       io.to(`game:${currentGameId}`).emit('game-state-update', result.newGameState);
+      
+      // Broadcast action data to other players (not the acting player)
+      const actionData = generateActionData(currentUser.username, action, result);
+      if (actionData) {
+        socket.to(`game:${currentGameId}`).emit('player-action', {
+          playerId: currentUser.id,
+          playerName: currentUser.username,
+          action: action.type,
+          translationKey: actionData.key,
+          translationParams: actionData.params,
+          details: result.actionDetails || {}
+        });
+      }
       
       if (result.gameEnded) {
         io.to(`game:${currentGameId}`).emit('game-ended', {

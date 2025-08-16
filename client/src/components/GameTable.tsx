@@ -46,6 +46,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     actionError?: Function;
     chatMessage?: Function;
     error?: Function;
+    playerAction?: Function;
   }>({});
 
   useEffect(() => {
@@ -151,6 +152,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     if (listenersRef.current.error) {
       gameService.off('error', listenersRef.current.error);
     }
+    if (listenersRef.current.playerAction) {
+      gameService.off('player-action', listenersRef.current.playerAction);
+    }
     
     // Clear references
     listenersRef.current = {};
@@ -194,6 +198,36 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       setTimeout(() => setActionMessage(''), 5000);
     };
 
+    // Handle player actions from other players
+    listenersRef.current.playerAction = (data: any) => {
+      console.log('🎯 PlayerAction handler received:', data);
+      console.log('🎯 Current user ID:', user.id, 'Data playerId:', data.playerId);
+      
+      // Only show if it's not the current user's action
+      if (data.playerId !== user.id.toString()) {
+        let message = '';
+        
+        // Handle both old format (message) and new format (translationKey + translationParams)
+        if (data.translationKey && data.translationParams) {
+          message = t(data.translationKey, data.translationParams);
+          console.log('🎯 Using translation key:', data.translationKey, 'Result:', message);
+        } else if (data.message) {
+          message = data.message;
+          console.log('🎯 Using direct message:', message);
+        }
+        
+        if (message) {
+          console.log('🎯 Setting action message:', message);
+          setActionMessage(message);
+          setTimeout(() => setActionMessage(''), 4000);
+        } else {
+          console.log('🎯 No message to display');
+        }
+      } else {
+        console.log('🎯 Skipping message - own action');
+      }
+    };
+
     listenersRef.current.chatMessage = (message: ChatMessage) => {
       // Only show messages for this game
       if (message.room === 'game' && message.gameId === gameState?.id) {
@@ -220,6 +254,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     gameService.on('chat-message', listenersRef.current.chatMessage);
     gameService.on('chat-history', chatHistoryHandler);
     gameService.on('error', listenersRef.current.error);
+    gameService.on('player-action', listenersRef.current.playerAction);
     
     console.log('🕹️ GameTable event listeners added, including chat-history');
     

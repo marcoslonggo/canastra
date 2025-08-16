@@ -197,6 +197,17 @@
       "addedToSequence": "Added {{count}} cards to sequence",
       "bateuTookMorto": "Bateu! Took Morto {{number}}. Continue playing."
     },
+    "playerActions": {
+      "drewFromDeck": "{{playerName}} drew from deck",
+      "drewFromDiscard": "{{playerName}} drew from discard pile",
+      "discardedCard": "{{playerName}} discarded {{card}}",
+      "discardedACard": "{{playerName}} discarded a card",
+      "playedSequence": "{{playerName}} played a sequence of {{count}} cards",
+      "bateu": "{{playerName}} bateu",
+      "bateuWithMorto": "{{playerName}} bateu and chose Morto {{mortoNumber}}",
+      "addedToSequence": "{{playerName}} added {{count}} card(s) to sequence",
+      "endedTurn": "{{playerName}} ended their turn"
+    },
     "cheat": {
       "title": "🎮 Cheat Menu",
       "activated": "Cheat mode activated! 🎮",
