@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GameState, Player, Card as CardType, Sequence, User, ChatMessage } from '../types';
 import { Card, CardBack, CardGroup } from './Card';
 import { gameService } from '../services/gameService';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -11,6 +13,7 @@ interface GameTableProps {
 }
 
 export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProps) {
+  const { t } = useTranslation();
   const [gameState, setGameState] = useState<GameState | null>(initialGameState || null);
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [isMyTurn, setIsMyTurn] = useState(false);
@@ -58,7 +61,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     // Check connection status periodically
     const connectionCheck = setInterval(() => {
       if (!gameService.isConnected()) {
-        setActionMessage('Connection lost. Reconnecting...');
+        setActionMessage(t('game.messages.connectionError'));
       }
     }, 5000);
 
@@ -92,19 +95,19 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       // Testing cheat codes
       if (newSequence === 'iddqd') {
         setCheatMode(true);
-        setActionMessage('Cheat mode activated! 🎮');
+        setActionMessage(t('game.cheat.activated'));
         setTimeout(() => setActionMessage(''), 2000);
         setKeySequence(''); // Reset sequence
       } else if (newSequence === 'cardy') {
         // Show all players' hands (debug mode)
-        setActionMessage('🔍 Card spy mode activated! All hands visible');
+        setActionMessage(t('game.cheat.spyMode'));
         setTimeout(() => setActionMessage(''), 3000);
         setKeySequence('');
         // This will be handled by CSS class changes
         document.body.classList.toggle('debug-show-all-hands');
       } else if (newSequence === 'winme') {
         // Auto-win current game for testing
-        setActionMessage('🏆 Auto-win activated for testing!');
+        setActionMessage(t('game.cheat.autoWin'));
         setTimeout(() => setActionMessage(''), 3000);
         setKeySequence('');
         // Send test win signal (we'll implement this in backend)
@@ -113,14 +116,14 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         }
       } else if (newSequence === 'speedx') {
         // Speed up game animations and delays
-        setActionMessage('⚡ Speed mode activated! Fast animations');
+        setActionMessage(t('game.cheat.speedMode'));
         setTimeout(() => setActionMessage(''), 3000);
         setKeySequence('');
         document.body.classList.toggle('speed-test-mode');
       } else if (newSequence === 'reset') {
         // Reset all test modes
         setCheatMode(false);
-        setActionMessage('🔄 All test modes disabled');
+        setActionMessage(t('game.cheat.reset'));
         setTimeout(() => setActionMessage(''), 2000);
         setKeySequence('');
         document.body.classList.remove('debug-show-all-hands', 'speed-test-mode');
@@ -166,7 +169,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
     listenersRef.current.gameEnded = (data: { winner: number; scores: number[] }) => {
       setGameEnded(true);
-      setActionMessage(`Game ended! Team ${data.winner} wins! Scores: ${data.scores[0]} - ${data.scores[1]}`);
+      setActionMessage(t('game.messages.gameEnded', { team: data.winner, score1: data.scores[0], score2: data.scores[1] }));
     };
 
     listenersRef.current.actionError = (error: { message: string; data?: any }) => {
@@ -174,18 +177,20 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       
       if (error.message === 'multiple_mortos_available' && error.data?.availableMortos) {
         console.log('🎮 Multiple Mortos available, showing selection:', error.data.availableMortos);
+        console.log('🎮 Setting availableMortos state to:', error.data.availableMortos);
         setAvailableMortos(error.data.availableMortos);
         setShowMortoSelection(true);
-        setActionMessage('Choose which Morto to take');
+        setActionMessage(t('game.messages.chooseMoreto'));
       } else {
-        setActionMessage(`Error: ${error.message}`);
+        console.log('🎮 Other error message:', error.message);
+        setActionMessage(`${t('common.error')}: ${error.message}`);
         setTimeout(() => setActionMessage(''), 3000);
       }
     };
 
     listenersRef.current.error = (error: any) => {
       console.error('Game service error:', error);
-      setActionMessage('Connection error. Trying to reconnect...');
+      setActionMessage(t('game.messages.connectionError'));
       setTimeout(() => setActionMessage(''), 5000);
     };
 
@@ -227,7 +232,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
     // Handle connection issues
     if (!gameService.isConnected()) {
-      setActionMessage('Connection lost. Please refresh if issues persist.');
+      setActionMessage(t('game.messages.connectionLost'));
     }
   };
 
@@ -266,27 +271,27 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleDrawFromDeck = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
     
     gameService.drawCard('deck');
-    setActionMessage('Drawing from deck...');
+    setActionMessage(t('game.messages.drawingFromDeck'));
   };
 
   const handleDrawFromDiscard = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
     
     gameService.drawCard('discard');
-    setActionMessage('Taking discard pile...');
+    setActionMessage(t('game.messages.takingDiscardPile'));
   };
 
   const handleBaixar = () => {
     if (selectedCards.length < 3) {
-      setActionMessage('Select at least 3 cards to baixar');
+      setActionMessage(t('game.messages.selectAtLeast', { count: 3 }));
       return;
     }
 
@@ -299,76 +304,58 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     gameService.baixar(sequences);
     setSelectedCards([]);
     setShowBaixarDialog(false);
-    setActionMessage('Playing sequence...');
+    setActionMessage(t('game.messages.playingSequence'));
   };
 
   const handleDiscard = (cardIndex: number) => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
 
     gameService.discardCard(cardIndex, cheatsEnabled.allowMultipleDiscard);
     setSelectedCards([]);
-    setActionMessage('Discarding card...');
+    setActionMessage(t('game.messages.discardingCard'));
   };
 
   const handleMultipleDiscard = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
 
     if (selectedCards.length === 0) {
-      setActionMessage('Select cards to discard!');
+      setActionMessage(t('game.messages.selectCards'));
       return;
     }
 
-    const myHand = getMyHand();
-    const cardsToDiscard = selectedCards.map(index => myHand[index]);
     const discardCount = selectedCards.length;
-    
-    setActionMessage(`Discarding ${discardCount} cards...`);
+    setActionMessage(t('game.messages.discardingCards', { count: discardCount }));
 
-    // Create a queue of cards to discard
-    let discardQueue = [...cardsToDiscard];
+    // Sort indices in descending order to discard from highest to lowest
+    // This prevents index shifting issues when removing cards
+    const sortedIndices = [...selectedCards].sort((a, b) => b - a);
+    
     let discardedCount = 0;
+    let remainingIndices = [...sortedIndices];
 
     // Function to process the next discard
     const processNextDiscard = () => {
-      if (discardQueue.length === 0) {
-        setActionMessage(`Successfully discarded ${discardedCount} cards!`);
+      if (remainingIndices.length === 0) {
+        setActionMessage(t('game.messages.discardedCards', { count: discardedCount }));
         setTimeout(() => setActionMessage(''), 3000);
         return;
       }
 
-      // Get current hand state
-      const currentPlayer = getCurrentPlayer();
-      if (!currentPlayer) {
-        setActionMessage('Failed to get current player state');
-        return;
-      }
-
-      const currentHand = currentPlayer.hand;
-      const cardToDiscard = discardQueue[0];
+      const nextIndex = remainingIndices.shift()!;
+      discardedCount++;
       
-      // Find current index of this card
-      const currentIndex = currentHand.findIndex(card => card.id === cardToDiscard.id);
+      console.log(`🎮 Discarding card at index ${nextIndex} (${discardedCount}/${discardCount})`);
       
-      if (currentIndex >= 0) {
-        // Remove from queue and discard
-        discardQueue = discardQueue.slice(1);
-        discardedCount++;
-        
-        gameService.discardCard(currentIndex, cheatsEnabled.allowMultipleDiscard);
-        
-        // Wait for game state update before processing next
-        setTimeout(processNextDiscard, 300);
-      } else {
-        // Card not found in hand (maybe already discarded), skip it
-        discardQueue = discardQueue.slice(1);
-        setTimeout(processNextDiscard, 50);
-      }
+      gameService.discardCard(nextIndex, cheatsEnabled.allowMultipleDiscard);
+      
+      // Wait for game state update before processing next
+      setTimeout(processNextDiscard, 400);
     };
 
     // Clear selection and start processing
@@ -380,16 +367,17 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleBater = (mortoChoice?: number) => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
 
     gameService.bater(mortoChoice);
-    setActionMessage('Attempting to Bater...');
+    setActionMessage(t('game.messages.attemptingBater'));
   };
 
   const handleMortoSelection = (mortoIndex: number) => {
     console.log('🎮 Player selected Morto:', mortoIndex);
+    console.log('🎮 Available Mortos before selection:', availableMortos);
     setShowMortoSelection(false);
     setAvailableMortos([]);
     handleBater(mortoIndex);
@@ -403,12 +391,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleEndTurn = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
 
     gameService.endTurn(cheatsEnabled.allowDiscardDrawnCards);
-    setActionMessage('Ending turn...');
+    setActionMessage(t('game.messages.endingTurn'));
   };
 
   const canPlayerBater = (): boolean => {
@@ -422,16 +410,16 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   };
 
   const getSequenceTypeDisplay = (sequence: Sequence): string => {
-    if (sequence.type === 'aces') return 'Three Aces';
+    if (sequence.type === 'aces') return t('game.sequences.threeAces');
     if (sequence.isCanastra) {
       switch (sequence.canastraType) {
-        case 'as-a-as': return 'Canastra Ás-à-Ás (+1000)';
-        case 'limpa': return 'Canastra Limpa (+200)';
-        case 'suja': return 'Canastra Suja (+100)';
-        default: return 'Canastra';
+        case 'as-a-as': return t('game.sequences.canastraAsAAs');
+        case 'limpa': return t('game.sequences.canastraLimpa');
+        case 'suja': return t('game.sequences.canastraSuja');
+        default: return t('game.sequences.canastra');
       }
     }
-    return 'Sequence';
+    return t('game.sequences.sequence');
   };
 
   const getSortedDiscardPile = (): CardType[] => {
@@ -587,18 +575,18 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleAddToSequence = (sequenceId: string) => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage('Not your turn!');
+      setActionMessage(t('game.messages.notYourTurn'));
       return;
     }
 
     if (selectedCards.length === 0) {
-      setActionMessage('Select cards first!');
+      setActionMessage(t('game.messages.selectCardsFirst'));
       return;
     }
 
     gameService.addToSequence(sequenceId, selectedCards);
     setSelectedCards([]);
-    setActionMessage('Adding cards to sequence...');
+    setActionMessage(t('game.messages.addingToSequence'));
   };
 
   const handleCardDragStart = (cardIndex: number) => {
@@ -625,7 +613,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     // Add the dragged card to the sequence
     gameService.addToSequence(sequenceId, [draggedCardIndex]);
     setDraggedCardIndex(null);
-    setActionMessage('Adding card to sequence...');
+    setActionMessage(t('game.messages.addingCardToSequence'));
   };
 
   const handleSequenceDragOver = (e: React.DragEvent) => {
@@ -646,8 +634,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   if (!gameState) {
     return (
       <div className="game-loading">
-        <h2>Loading game...</h2>
-        <p>Connecting to game server...</p>
+        <h2>{t('game.loading.title')}</h2>
+        <p>{t('game.loading.connecting')}</p>
       </div>
     );
   }
@@ -656,9 +644,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   if (!myPlayer) {
     return (
       <div className="game-error">
-        <h2>Error</h2>
-        <p>Could not find player data</p>
-        <button onClick={onLeaveGame}>Back to Lobby</button>
+        <h2>{t('common.error')}</h2>
+        <p>{t('game.error.playerData')}</p>
+        <button onClick={onLeaveGame}>{t('game.backToLobby')}</button>
       </div>
     );
   }
@@ -671,23 +659,24 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     <div className="game-table">
       <div className="game-header">
         <div className="game-info">
-          <h2>Buraco - Room {gameState.id}</h2>
+          <h2>{t('game.title', { roomCode: gameState.id })}</h2>
           <div className="game-scores">
             <div className={`team-score ${myTeam === 1 ? 'my-team' : ''}`}>
-              Team 1: {gameState.scores[0]} points
+              {t('game.teamScore', { team: 1, score: gameState.scores[0] })}
             </div>
             <div className={`team-score ${myTeam === 2 ? 'my-team' : ''}`}>
-              Team 2: {gameState.scores[1]} points
+              {t('game.teamScore', { team: 2, score: gameState.scores[1] })}
             </div>
           </div>
         </div>
         
         <div className="game-controls">
+          <LanguageSwitcher />
           <div className="turn-indicator">
             {isMyTurn ? (
-              <span className="my-turn">Your Turn</span>
+              <span className="my-turn">{t('game.yourTurn')}</span>
             ) : (
-              <span className="other-turn">{currentPlayer.username}'s Turn</span>
+              <span className="other-turn">{t('game.opponentTurn', { player: currentPlayer.username })}</span>
             )}
           </div>
           {cheatMode && (
@@ -696,11 +685,11 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               className="cheat-button"
               title="Cheat Menu"
             >
-              🎮 Cheats
+              {t('game.cheat.title')}
             </button>
           )}
           <button onClick={onLeaveGame} className="leave-button">
-            Leave Game
+            {t('game.leaveGame')}
           </button>
         </div>
       </div>
@@ -715,7 +704,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         {/* Team Sequences */}
         <div className="team-sequences">
           <div className="team-area">
-            <h3>Team 1 Sequences</h3>
+            <h3>{t('game.sequences.team1')}</h3>
             <div className="sequences-container">
               {getTeamSequences(1).map((sequence, index) => (
                 <div 
@@ -733,7 +722,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                         className="add-to-sequence-button"
                         title="Add selected cards to this sequence"
                       >
-                        + Add Cards
+                        {t('game.hand.actions.addCards')}
                       </button>
                     )}
                   </div>
@@ -745,7 +734,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                   />
                   {myTeam === 1 && isMyTurnOrCheat() && draggedCardIndex !== null && (
                     <div className="drop-indicator">
-                      Drop card here
+                      {t('game.hand.dropCardHere')}
                     </div>
                   )}
                 </div>
@@ -754,7 +743,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           </div>
 
           <div className="team-area">
-            <h3>Team 2 Sequences</h3>
+            <h3>{t('game.sequences.team2')}</h3>
             <div className="sequences-container">
               {getTeamSequences(2).map((sequence, index) => (
                 <div 
@@ -772,7 +761,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                         className="add-to-sequence-button"
                         title="Add selected cards to this sequence"
                       >
-                        + Add Cards
+                        {t('game.hand.actions.addCards')}
                       </button>
                     )}
                   </div>
@@ -784,7 +773,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                   />
                   {myTeam === 2 && isMyTurnOrCheat() && draggedCardIndex !== null && (
                     <div className="drop-indicator">
-                      Drop card here
+                      {t('game.hand.dropCardHere')}
                     </div>
                   )}
                 </div>
@@ -797,7 +786,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         <div className="center-area">
           <div className="deck-area">
             <div className="deck-section">
-              <div className="deck-label">Main Deck ({gameState.mainDeck.length})</div>
+              <div className="deck-label">{t('game.deck.mainDeck', { count: gameState.mainDeck.length })}</div>
               <div 
                 className="deck-pile"
                 onClick={handleDrawFromDeck}
@@ -805,13 +794,13 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                 {gameState.mainDeck.length > 0 ? (
                   <CardBack className="deck-card" />
                 ) : (
-                  <div className="empty-deck">Empty</div>
+                  <div className="empty-deck">{t('game.deck.empty')}</div>
                 )}
               </div>
             </div>
 
             <div className="deck-section">
-              <div className="deck-label">Discard Pile ({gameState.discardPile.length})</div>
+              <div className="deck-label">{t('game.deck.discardPile', { count: gameState.discardPile.length })}</div>
               <div 
                 className="discard-pile-container"
                 onClick={handleDrawFromDiscard}
@@ -828,7 +817,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-discard">Empty</div>
+                  <div className="empty-discard">{t('game.deck.empty')}</div>
                 )}
               </div>
             </div>
@@ -844,10 +833,10 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                     <div className="morto-card morto-card-3"></div>
                   </div>
                   <div className="morto-label">
-                    <span className="morto-title">📦 Morto 1</span>
-                    <span className="morto-count">({gameState.mortos[0].length} cards)</span>
+                    <span className="morto-title">{t('game.morto.title', { number: 1 })}</span>
+                    <span className="morto-count">{t('game.morto.cardCount', { count: gameState.mortos[0].length })}</span>
                     <span className="morto-status-text">
-                      {gameState.mortosUsed[0] ? '✅ Used' : '🟢 Available'}
+                      {gameState.mortosUsed[0] ? t('game.morto.used') : t('game.morto.available')}
                     </span>
                   </div>
                 </div>
@@ -860,10 +849,10 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                     <div className="morto-card morto-card-3"></div>
                   </div>
                   <div className="morto-label">
-                    <span className="morto-title">📦 Morto 2</span>
-                    <span className="morto-count">({gameState.mortos[1].length} cards)</span>
+                    <span className="morto-title">{t('game.morto.title', { number: 2 })}</span>
+                    <span className="morto-count">{t('game.morto.cardCount', { count: gameState.mortos[1].length })}</span>
                     <span className="morto-status-text">
-                      {gameState.mortosUsed[1] ? '✅ Used' : '🟢 Available'}
+                      {gameState.mortosUsed[1] ? t('game.morto.used') : t('game.morto.available')}
                     </span>
                   </div>
                 </div>
@@ -881,16 +870,16 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                 className={`player-info ${player.id === user.id.toString() ? 'current-user' : ''} ${index === gameState.currentTurn ? 'active-player' : ''}`}
               >
                 <span className="player-name">{player.username}</span>
-                <span className="player-team">Team {player.team}</span>
-                <span className="player-cards">{player.hand.length} cards</span>
-                {!player.isConnected && <span className="disconnected">Disconnected</span>}
+                <span className="player-team">{t('game.players.team', { team: player.team })}</span>
+                <span className="player-cards">{t('game.players.cards', { count: player.hand.length })}</span>
+                {!player.isConnected && <span className="disconnected">{t('game.players.disconnected')}</span>}
               </div>
             ))}
           </div>
 
           <div className="my-hand">
             <div className="hand-header">
-              <h3>Your Hand ({myPlayer.hand.length} cards)</h3>
+              <h3>{t('game.hand.title', { count: myPlayer.hand.length })}</h3>
               <div className="hand-actions">
                 {selectedCards.length > 0 && (
                   <>
@@ -899,24 +888,24 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                       className="action-button baixar-button"
                       disabled={!isMyTurnOrCheat() || selectedCards.length < 3}
                     >
-                      Baixar ({selectedCards.length})
+                      {t('game.hand.actions.baixar')} ({selectedCards.length})
                     </button>
                     <button 
                       onClick={() => setSelectedCards([])}
                       className="action-button clear-button"
                     >
-                      Clear Selection
+                      {t('game.hand.actions.clearSelection')}
                     </button>
                   </>
                 )}
                 
                 {canPlayerBater() && (
                   <button 
-                    onClick={handleBater}
+                    onClick={() => handleBater()}
                     className="action-button bater-button"
                     disabled={!isMyTurnOrCheat()}
                   >
-                    Bater
+                    {t('game.hand.actions.bater')}
                   </button>
                 )}
                 
@@ -925,7 +914,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                     onClick={handleEndTurn}
                     className="action-button end-turn-button"
                   >
-                    End Turn
+                    {t('game.hand.actions.endTurn')}
                   </button>
                 )}
                 
@@ -933,7 +922,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                   <button 
                     onClick={toggleSortOrder}
                     className="action-button sort-direction-button"
-                    title={`Sort ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
+                    title={t('game.hand.sort.direction', { direction: sortOrder === 'asc' ? t('game.hand.sort.ascending') : t('game.hand.sort.descending') })}
                   >
                     {sortOrder === 'asc' ? '↑' : '↓'}
                   </button>
@@ -941,7 +930,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                   <button 
                     onClick={cycleSortType}
                     className="action-button sort-pattern-button"
-                    title={`Sort by ${sortType === 'suit' ? 'suit order' : sortType === 'blackred1' ? 'black/black/red/red' : 'black/red/black/red'}`}
+                    title={t('game.hand.sort.pattern', { pattern: sortType === 'suit' ? t('game.hand.sort.suitOrder') : sortType === 'blackred1' ? t('game.hand.sort.blackBlackRedRed') : t('game.hand.sort.blackRedBlackRed') })}
                   >
                     {sortType === 'suit' ? (
                       <span>
@@ -1023,7 +1012,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                   onClick={() => handleDiscard(selectedCards[0])}
                   className="action-button discard-button"
                 >
-                  Discard Selected Card
+                  {t('game.hand.actions.discard')}
                 </button>
               ) : (
                 <>
@@ -1031,14 +1020,14 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                     onClick={() => handleDiscard(selectedCards[0])}
                     className="action-button discard-button"
                   >
-                    Discard One Card
+                    {t('game.hand.actions.discardOne')}
                   </button>
                   {cheatsEnabled.allowMultipleDiscard && selectedCards.length > 1 && (
                     <button 
                       onClick={handleMultipleDiscard}
                       className="action-button discard-button cheat-multi-discard"
                     >
-                      🎮 Discard All {selectedCards.length} Cards
+                      {t('game.hand.actions.discardMultiple', { count: selectedCards.length })}
                     </button>
                   )}
                 </>
@@ -1051,8 +1040,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       {showBaixarDialog && (
         <div className="baixar-dialog-overlay">
           <div className="baixar-dialog">
-            <h3>Confirm Baixar</h3>
-            <p>Do you want to baixar {selectedCards.length} selected cards?</p>
+            <h3>{t('game.baixar.confirmTitle')}</h3>
+            <p>{t('game.baixar.confirmMessage', { count: selectedCards.length })}</p>
             <div className="selected-cards-preview">
               {selectedCards.map(index => {
                 const card = myPlayer.hand[index];
@@ -1071,13 +1060,13 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                 onClick={handleBaixar}
                 className="action-button confirm-button"
               >
-                Confirm Baixar
+                {t('game.baixar.confirm')}
               </button>
               <button 
                 onClick={() => setShowBaixarDialog(false)}
                 className="action-button cancel-button"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -1087,7 +1076,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       {showCheatMenu && (
         <div className="cheat-menu-overlay">
           <div className="cheat-menu">
-            <h3>🎮 Cheat Menu</h3>
+            <h3>{t('game.cheat.title')}</h3>
             <div className="cheat-options">
               <div className="cheat-option">
                 <label>
@@ -1097,9 +1086,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                       checked={cheatsEnabled.allowPlayAllCards}
                       onChange={() => toggleCheat('allowPlayAllCards')}
                     />
-                    <span className="cheat-label">Allow play all cards (ignore turn)</span>
+                    <span className="cheat-label">{t('game.cheat.options.allowPlayAllCards.title')}</span>
                   </div>
-                  <span className="cheat-description">Play cards even when it's not your turn</span>
+                  <span className="cheat-description">{t('game.cheat.options.allowPlayAllCards.description')}</span>
                 </label>
               </div>
               
@@ -1111,9 +1100,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                       checked={cheatsEnabled.allowMultipleDiscard}
                       onChange={() => toggleCheat('allowMultipleDiscard')}
                     />
-                    <span className="cheat-label">Allow multiple card discard</span>
+                    <span className="cheat-label">{t('game.cheat.options.allowMultipleDiscard.title')}</span>
                   </div>
-                  <span className="cheat-description">Discard as many cards as you want at once</span>
+                  <span className="cheat-description">{t('game.cheat.options.allowMultipleDiscard.description')}</span>
                 </label>
               </div>
               
@@ -1125,9 +1114,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                       checked={cheatsEnabled.allowDiscardDrawnCards}
                       onChange={() => toggleCheat('allowDiscardDrawnCards')}
                     />
-                    <span className="cheat-label">Allow discarding drawn cards</span>
+                    <span className="cheat-label">{t('game.cheat.options.allowDiscardDrawnCards.title')}</span>
                   </div>
-                  <span className="cheat-description">End turn even if you discard the same card you drew</span>
+                  <span className="cheat-description">{t('game.cheat.options.allowDiscardDrawnCards.description')}</span>
                 </label>
               </div>
             </div>
@@ -1136,7 +1125,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                 onClick={() => setShowCheatMenu(false)}
                 className="action-button cancel-button"
               >
-                Close
+                {t('common.close')}
               </button>
             </div>
           </div>
@@ -1147,16 +1136,16 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       <button 
         onClick={() => setShowChat(!showChat)}
         className="chat-toggle-button"
-        title={showChat ? 'Hide Chat' : 'Show Chat'}
+        title={showChat ? t('game.chat.hideChat') : t('game.chat.showChat')}
       >
-        💬 {showChat ? 'Hide' : 'Chat'}
+        {t('game.chat.title')} {showChat ? t('game.chat.hide') : ''}
       </button>
 
       {/* Chat Panel */}
       {showChat && (
         <div className="game-chat-panel">
           <div className="chat-header">
-            <h4>Game Chat</h4>
+            <h4>{t('game.chat.title')}</h4>
             <button 
               onClick={() => setShowChat(false)}
               className="chat-close-button"
@@ -1166,7 +1155,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           </div>
           <div className="chat-messages">
             {chatMessages.length === 0 ? (
-              <div className="no-messages">No messages yet. Start the conversation!</div>
+              <div className="no-messages">{t('game.chat.noMessages')}</div>
             ) : (
               chatMessages.map((message, index) => (
                 <div key={`${message.id}-${index}`} className="chat-message">
@@ -1186,7 +1175,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Type a message..."
+              placeholder={t('game.chat.placeholder')}
               maxLength={200}
               className="chat-input"
             />
@@ -1195,7 +1184,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               disabled={!chatInput.trim()}
               className="chat-send-button"
             >
-              Send
+              {t('game.chat.send')}
             </button>
           </form>
         </div>
@@ -1205,8 +1194,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       {showMortoSelection && (
         <div className="morto-selection-overlay">
           <div className="morto-selection-dialog">
-            <h2>🎯 Choose Your Morto</h2>
-            <p>Multiple Mortos are available. Choose which one to take:</p>
+            <h2>{t('game.morto.selection.title')}</h2>
+            <p>{t('game.morto.selection.description')}</p>
             
             <div className="morto-selection-options">
               {availableMortos.map(mortoIndex => (
@@ -1222,9 +1211,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                       <div className="morto-card morto-card-3"></div>
                     </div>
                     <div className="morto-selection-info">
-                      <span className="morto-selection-title">📦 Morto {mortoIndex + 1}</span>
+                      <span className="morto-selection-title">{t('game.morto.title', { number: mortoIndex + 1 })}</span>
                       <span className="morto-selection-count">
-                        {gameState?.mortos[mortoIndex]?.length || 11} cards
+                        {t('game.morto.cardCount', { count: gameState?.mortos[mortoIndex]?.length || 11 })}
                       </span>
                     </div>
                   </div>
@@ -1237,7 +1226,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                 onClick={cancelMortoSelection}
                 className="action-button cancel-button"
               >
-                Cancel
+                {t('game.morto.selection.cancel')}
               </button>
             </div>
           </div>
@@ -1247,16 +1236,16 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       {gameEnded && (
         <div className="game-ended-overlay">
           <div className="game-ended-dialog">
-            <h2>Game Ended!</h2>
+            <h2>{t('game.gameEnded.title')}</h2>
             <div className="final-scores">
-              <div>Team 1: {gameState.scores[0]} points</div>
-              <div>Team 2: {gameState.scores[1]} points</div>
+              <div>{t('game.teamScore', { team: 1, score: gameState.scores[0] })}</div>
+              <div>{t('game.teamScore', { team: 2, score: gameState.scores[1] })}</div>
               <div className="winner">
-                Team {gameState.winner} Wins! 🎉
+                {t('game.gameEnded.winner', { team: gameState.winner })}
               </div>
             </div>
             <button onClick={onLeaveGame} className="primary-button">
-              Back to Lobby
+              {t('game.backToLobby')}
             </button>
           </div>
         </div>

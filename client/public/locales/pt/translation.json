@@ -1,0 +1,251 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Fechar",
+    "login": "Entrar",
+    "register": "Registrar",
+    "logout": "Sair",
+    "username": "Nome de usuário",
+    "password": "Senha",
+    "email": "E-mail"
+  },
+  "auth": {
+    "title": "Canastra da Família",
+    "welcome": "Bem-vindo, {{username}}!",
+    "gamesStats": "Jogos: {{played}} | Vitórias: {{won}}",
+    "loginButton": "Entrar",
+    "registerButton": "Registrar",
+    "logoutButton": "Sair",
+    "noAccount": "Não tem uma conta?",
+    "registerHere": "Registre-se aqui",
+    "haveAccount": "Já tem uma conta?",
+    "loginHere": "Entre aqui"
+  },
+  "lobby": {
+    "title": "Canastra da Família - Saguão do Jogo",
+    "welcome": "Bem-vindo, {{username}}!",
+    "userStats": "Jogos: {{played}} | Vitórias: {{won}}",
+    "connected": "Conectado",
+    "connecting": "Conectando...",
+    "disconnected": "Desconectado",
+    "reconnect": "Reconectar",
+    "creating": "Criando...",
+    "joining": "Entrando...",
+    "connectingToServer": "Conectando ao servidor do jogo...",
+    "connectionLost": "Conexão perdida. Clique em Reconectar para tentar novamente.",
+    "createGame": {
+      "title": "Criar Novo Jogo",
+      "description": "Inicie um novo jogo de Buraco para sua família",
+      "button": "Criar Jogo"
+    },
+    "joinGame": {
+      "title": "Entrar no Jogo com Código",
+      "description": "Digite o código de 6 letras para entrar",
+      "placeholder": "Digite o código do jogo (ex: ABC123)",
+      "button": "Entrar no Jogo",
+      "enterCode": "Por favor digite um código do jogo"
+    },
+    "availableGames": {
+      "title": "Jogos Disponíveis",
+      "code": "Código: {{code}}",
+      "players": "Jogadores: {{current}}/{{max}}",
+      "noGames": "Nenhum jogo disponível. Crie um!",
+      "status": {
+        "waiting": "aguardando",
+        "playing": "jogando",
+        "finished": "finalizado"
+      },
+      "rejoin": "Voltar",
+      "join": "Entrar"
+    },
+    "chat": {
+      "title": "Bate-papo do Saguão",
+      "placeholder": "Digite uma mensagem...",
+      "send": "Enviar",
+      "noMessages": "Nenhuma mensagem ainda. Diga olá!"
+    }
+  },
+  "game": {
+    "title": "Buraco - Sala {{roomCode}}",
+    "yourTurn": "Sua Vez",
+    "opponentTurn": "Vez do {{player}}",
+    "teamScore": "Equipe {{team}}: {{score}} pontos",
+    "leaveGame": "Sair do Jogo",
+    "loading": {
+      "title": "Carregando jogo...",
+      "connecting": "Conectando ao servidor do jogo..."
+    },
+    "error": {
+      "playerData": "Não foi possível encontrar dados do jogador"
+    },
+    "backToLobby": "Voltar ao Saguão",
+    "hand": {
+      "title": "Suas Cartas ({{count}} cartas)",
+      "dropCardHere": "Solte a carta aqui",
+      "actions": {
+        "baixar": "Baixar",
+        "bater": "Bater",
+        "discard": "Descartar Carta Selecionada",
+        "discardOne": "Descartar Uma Carta",
+        "discardMultiple": "🎮 Descartar Todas as {{count}} Cartas",
+        "endTurn": "Finalizar Turno",
+        "addCards": "+ Adicionar Cartas",
+        "clearSelection": "Limpar Seleção"
+      },
+      "sort": {
+        "direction": "Ordenar {{direction}}",
+        "ascending": "crescente",
+        "descending": "decrescente",
+        "pattern": "Ordenar por {{pattern}}",
+        "suitOrder": "ordem dos naipes",
+        "blackBlackRedRed": "preto/preto/vermelho/vermelho",
+        "blackRedBlackRed": "preto/vermelho/preto/vermelho"
+      }
+    },
+    "baixar": {
+      "confirmTitle": "Confirmar Baixar",
+      "confirmMessage": "Deseja baixar {{count}} cartas selecionadas?",
+      "confirm": "Confirmar Baixar"
+    },
+    "sequences": {
+      "team1": "Sequências da Equipe 1",
+      "team2": "Sequências da Equipe 2",
+      "threeAces": "Três Áses",
+      "canastraAsAAs": "Canastra Ás-à-Ás (+1000)",
+      "canastraLimpa": "Canastra Limpa (+200)",
+      "canastraSuja": "Canastra Suja (+100)",
+      "canastra": "Canastra",
+      "sequence": "Sequência"
+    },
+    "players": {
+      "team": "Equipe {{team}}",
+      "cards": "{{count}} cartas",
+      "disconnected": "Desconectado"
+    },
+    "gameEnded": {
+      "title": "Jogo Finalizado!",
+      "winner": "Equipe {{team}} Venceu! 🎉"
+    },
+    "chat": {
+      "title": "💬 Bate-papo",
+      "showChat": "Mostrar Bate-papo",
+      "hideChat": "Ocultar Bate-papo",
+      "hide": "Ocultar",
+      "placeholder": "Digite uma mensagem...",
+      "send": "Enviar",
+      "noMessages": "Nenhuma mensagem ainda. Inicie a conversa!"
+    },
+    "deck": {
+      "mainDeck": "Monte Principal ({{count}})",
+      "discardPile": "Monte de Descarte ({{count}})",
+      "empty": "Vazio"
+    },
+    "morto": {
+      "title": "📦 Morto {{number}}",
+      "available": "🟢 Disponível",
+      "used": "🔴 Usado",
+      "cardCount": "({{count}} cartas)",
+      "selection": {
+        "title": "🎯 Escolha Seu Morto",
+        "description": "Múltiplos Mortos estão disponíveis. Escolha qual você quer pegar:",
+        "cancel": "Cancelar"
+      }
+    },
+    "sequences": {
+      "team1": "Sequências da Equipe 1",
+      "team2": "Sequências da Equipe 2"
+    },
+    "players": {
+      "team": "Equipe {{team}}",
+      "cards": "{{count}} cartas",
+      "disconnected": "Desconectado"
+    },
+    "chat": {
+      "title": "💬 Bate-papo"
+    },
+    "messages": {
+      "notYourTurn": "Não é sua vez!",
+      "selectCards": "Selecione cartas para descartar!",
+      "selectCardsFirst": "Selecione cartas primeiro!",
+      "selectAtLeast": "Selecione pelo menos {{count}} cartas para baixar",
+      "connectionError": "Erro de conexão. Tentando reconectar...",
+      "connectionLost": "Conexão perdida. Atualize a página se os problemas persistirem.",
+      "gameEnded": "Jogo finalizado! Equipe {{team}} venceu! Pontuação: {{score1}} - {{score2}}",
+      "pique": "Pique! Você deve anunciar que tem apenas uma carta restante.",
+      "cannotBater": "Ainda não pode Bater",
+      "chooseMoreto": "Escolha qual Morto pegar",
+      "discardingCard": "Descartando carta...",
+      "discardingCards": "Descartando {{count}} cartas...",
+      "discardedCards": "{{count}} cartas descartadas com sucesso!",
+      "attemptingBater": "Tentando Bater...",
+      "endingTurn": "Finalizando turno...",
+      "drawingFromDeck": "Comprando do monte...",
+      "takingDiscardPile": "Pegando monte de descarte...",
+      "playingSequence": "Jogando sequência...",
+      "addingToSequence": "Adicionando cartas à sequência...",
+      "addingCardToSequence": "Adicionando carta à sequência...",
+      "cardDrawn": "Carta comprada. Você pode Bater e pegar Morto se disponível.",
+      "drewFromDiscard": "Comprou {{count}} cartas do monte de descarte. Você deve descartar uma carta diferente para finalizar o turno.",
+      "mustDraw": "Você deve comprar pelo menos uma carta antes de finalizar seu turno",
+      "mustDiscard": "Você deve descartar uma carta antes de finalizar seu turno",
+      "cannotDiscardSame": "Você não pode finalizar o turno descartando a(s) mesma(s) carta(s) que comprou neste turno",
+      "turnEnded": "Turno finalizado",
+      "baixouSequences": "Baixou {{count}} sequências por {{points}} pontos",
+      "addedToSequence": "Adicionou {{count}} cartas à sequência",
+      "bateuTookMorto": "Bateu! Pegou Morto {{number}}. Continue jogando."
+    },
+    "cheat": {
+      "title": "🎮 Menu de Trapaça",
+      "activated": "Modo de trapaça ativado! 🎮",
+      "spyMode": "🔍 Modo espião ativado! Todas as mãos visíveis",
+      "autoWin": "🏆 Auto-vitória ativada para teste!",
+      "speedMode": "⚡ Modo velocidade ativado! Animações rápidas",
+      "reset": "🔄 Todos os modos de teste desabilitados",
+      "options": {
+        "allowPlayAllCards": {
+          "title": "Permitir jogar todas as cartas (ignorar turno)",
+          "description": "Jogue cartas mesmo quando não for sua vez"
+        },
+        "allowMultipleDiscard": {
+          "title": "Permitir descarte múltiplo de cartas",
+          "description": "Descarte quantas cartas quiser de uma vez"
+        },
+        "allowDiscardDrawnCards": {
+          "title": "Permitir descartar cartas compradas",
+          "description": "Finalize o turno mesmo se descartar a mesma carta que comprou"
+        }
+      }
+    },
+    "cheat": {
+      "title": "🎮 Menu de Trapaça",
+      "options": {
+        "allowMultipleDiscard": {
+          "title": "Permitir descarte múltiplo de cartas",
+          "description": "Descarte quantas cartas quiser de uma vez"
+        },
+        "allowDiscardDrawnCards": {
+          "title": "Permitir descartar cartas compradas",
+          "description": "Finalize o turno mesmo se descartar a mesma carta que comprou"
+        }
+      }
+    }
+  },
+  "admin": {
+    "panelTitle": "🛠️ Painel Administrativo",
+    "showPanel": "⚙️ Painel Admin",
+    "hidePanel": "🎮 Ocultar Admin",
+    "userManagement": "Gerenciamento de Usuários",
+    "loadingUsers": "Carregando usuários...",
+    "makeAdmin": "Tornar Admin",
+    "removeAdmin": "Remover Admin",
+    "resetPassword": "Redefinir Senha",
+    "resetPasswordTitle": "Redefinir Senha",
+    "enterNewPassword": "Digite a nova senha para o usuário:",
+    "newPasswordPlaceholder": "Nova senha (mín 4 caracteres)",
+    "passwordResetSuccess": "Senha redefinida com sucesso",
+    "passwordResetFailed": "Falha ao redefinir senha"
+  }
+}

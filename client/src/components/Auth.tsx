@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { loginUser, registerUser } from '../api';
 import { User } from '../types';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import './Auth.css';
 
 interface AuthProps {
@@ -8,6 +10,7 @@ interface AuthProps {
 }
 
 export function Auth({ onLogin }: AuthProps) {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: '',
@@ -52,27 +55,28 @@ export function Auth({ onLogin }: AuthProps) {
 
   return (
     <div className="auth-container">
+      <LanguageSwitcher />
       <div className="auth-card">
-        <h1 className="auth-title">Family Canastra</h1>
+        <h1 className="auth-title">{t('auth.title')}</h1>
         
         <div className="auth-tabs">
           <button 
             className={isLogin ? 'tab active' : 'tab'}
             onClick={() => setIsLogin(true)}
           >
-            Login
+            {t('auth.loginButton')}
           </button>
           <button 
             className={!isLogin ? 'tab active' : 'tab'}
             onClick={() => setIsLogin(false)}
           >
-            Register
+            {t('auth.registerButton')}
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">{t('common.username')}</label>
             <input
               type="text"
               id="username"
@@ -82,12 +86,12 @@ export function Auth({ onLogin }: AuthProps) {
               required
               minLength={3}
               maxLength={20}
-              placeholder="Enter your username"
+              placeholder={t('common.username')}
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">{t('common.password')}</label>
             <input
               type="password"
               id="password"
@@ -96,20 +100,20 @@ export function Auth({ onLogin }: AuthProps) {
               onChange={handleInputChange}
               required
               minLength={6}
-              placeholder="Enter your password"
+              placeholder={t('common.password')}
             />
           </div>
 
           {!isLogin && (
             <div className="form-group">
-              <label htmlFor="email">Email (optional)</label>
+              <label htmlFor="email">{t('common.email')}</label>
               <input
                 type="email"
                 id="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="Enter your email"
+                placeholder={t('common.email')}
               />
             </div>
           )}
@@ -121,17 +125,17 @@ export function Auth({ onLogin }: AuthProps) {
             className="submit-button"
             disabled={loading}
           >
-            {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Register')}
+            {loading ? t('common.loading') : (isLogin ? t('auth.loginButton') : t('auth.registerButton'))}
           </button>
         </form>
 
         <p className="auth-footer">
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          {isLogin ? t('auth.noAccount') + ' ' : t('auth.haveAccount') + ' '}
           <button 
             className="link-button"
             onClick={() => setIsLogin(!isLogin)}
           >
-            {isLogin ? 'Register here' : 'Login here'}
+            {isLogin ? t('auth.registerHere') : t('auth.loginHere')}
           </button>
         </p>
       </div>
