@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { gameService } from '../services/gameService';
 import { User, ChatMessage, GameState } from '../types';
-import { fetchAllUsers, promoteUser, demoteUser, resetUserPassword } from '../api';
+import { fetchAllUsers, promoteUser, demoteUser, resetUserPassword, fetchAllGames, terminateGame, restartServer } from '../api';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import './GameLobby.css';
 
@@ -11,6 +11,14 @@ interface GameInfo {
   playerCount: number;
   status: string;
   players: string[];
+}
+
+interface AdminGameInfo {
+  id: string;
+  playerCount: number;
+  status: string;
+  players: string[];
+  createdAt: string;
 }
 
 interface GameLobbyProps {
@@ -31,8 +39,12 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
   // Admin state
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allGames, setAllGames] = useState<AdminGameInfo[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [gamesLoading, setGamesLoading] = useState(false);
   const [resetPasswordData, setResetPasswordData] = useState<{userId: number; newPassword: string} | null>(null);
+  const [confirmTerminate, setConfirmTerminate] = useState<string | null>(null);
+  const [confirmRestart, setConfirmRestart] = useState(false);
   
   // Store listener references for cleanup
   const listenersRef = useRef<{
@@ -222,6 +234,23 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     }
   };
 
+  const loadAllGames = async () => {
+    if (!user.isAdmin) return;
+    
+    setGamesLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        const games = await fetchAllGames(token);
+        setAllGames(games);
+      }
+    } catch (error) {
+      console.error('Failed to load games:', error);
+    } finally {
+      setGamesLoading(false);
+    }
+  };
+
   const handlePromoteUser = async (userId: number) => {
     if (!user.isAdmin) return;
     
@@ -266,9 +295,43 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     }
   };
 
+  const handleTerminateGame = async (gameId: string) => {
+    if (!user.isAdmin) return;
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        await terminateGame(token, gameId);
+        setConfirmTerminate(null);
+        await loadAllGames(); // Refresh games list
+        alert(t('admin.gameTerminated'));
+      }
+    } catch (error) {
+      console.error('Failed to terminate game:', error);
+      alert(t('admin.gameTerminateFailed'));
+    }
+  };
+
+  const handleRestartServer = async () => {
+    if (!user.isAdmin) return;
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        await restartServer(token);
+        setConfirmRestart(false);
+        alert(t('admin.serverRestarting'));
+      }
+    } catch (error) {
+      console.error('Failed to restart server:', error);
+      alert(t('admin.serverRestartFailed'));
+    }
+  };
+
   const toggleAdminPanel = () => {
     if (!showAdminPanel && user.isAdmin) {
       loadAllUsers();
+      loadAllGames();
     }
     setShowAdminPanel(!showAdminPanel);
   };
@@ -366,6 +429,70 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
                 </div>
               )}
             </div>
+
+            <div className="admin-section">
+              <h4>{t('admin.gameManagement')}</h4>
+              {gamesLoading ? (
+                <p>{t('admin.loadingGames')}</p>
+              ) : (
+                <div className="games-list">
+                  {allGames.length === 0 ? (
+                    <p className="no-games">{t('admin.noActiveGames')}</p>
+                  ) : (
+                    <div className="admin-games-table">
+                      <div className="table-header">
+                        <span>{t('admin.gameId')}</span>
+                        <span>{t('admin.players')}</span>
+                        <span>{t('admin.status')}</span>
+                        <span>{t('admin.createdAt')}</span>
+                        <span>{t('admin.actions')}</span>
+                      </div>
+                      {allGames.map((game) => (
+                        <div key={game.id} className="table-row">
+                          <span className="game-id">{game.id}</span>
+                          <span className="game-players">
+                            {game.playerCount}/4: {game.players.join(', ')}
+                          </span>
+                          <span className={`game-status status-${game.status}`}>
+                            {game.status}
+                          </span>
+                          <span className="game-created">
+                            {new Date(game.createdAt).toLocaleString()}
+                          </span>
+                          <span className="game-actions">
+                            <button 
+                              onClick={() => setConfirmTerminate(game.id)}
+                              className="terminate-button"
+                            >
+                              {t('admin.terminateGame')}
+                            </button>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button 
+                    onClick={loadAllGames}
+                    className="refresh-button"
+                    disabled={gamesLoading}
+                  >
+                    🔄 Refresh Games
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="admin-section">
+              <h4>{t('admin.serverManagement')}</h4>
+              <div className="server-controls">
+                <button 
+                  onClick={() => setConfirmRestart(true)}
+                  className="restart-server-button"
+                >
+                  {t('admin.restartServer')}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -392,6 +519,52 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
               </button>
               <button 
                 onClick={() => setResetPasswordData(null)}
+                className="cancel-button"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmTerminate && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>{t('admin.terminateGame')}</h3>
+            <p>{t('admin.terminateGameConfirm', { gameId: confirmTerminate })}</p>
+            <div className="modal-actions">
+              <button 
+                onClick={() => handleTerminateGame(confirmTerminate)}
+                className="confirm-button danger"
+              >
+                {t('admin.terminateGame')}
+              </button>
+              <button 
+                onClick={() => setConfirmTerminate(null)}
+                className="cancel-button"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmRestart && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>{t('admin.restartServer')}</h3>
+            <p>{t('admin.restartServerConfirm')}</p>
+            <div className="modal-actions">
+              <button 
+                onClick={handleRestartServer}
+                className="confirm-button danger"
+              >
+                {t('admin.restartServer')}
+              </button>
+              <button 
+                onClick={() => setConfirmRestart(false)}
                 className="cancel-button"
               >
                 {t('common.cancel')}

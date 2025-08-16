@@ -225,7 +225,10 @@
     "showPanel": "⚙️ Admin Panel",
     "hidePanel": "🎮 Hide Admin",
     "userManagement": "User Management",
+    "gameManagement": "Game Management",
+    "serverManagement": "Server Management",
     "loadingUsers": "Loading users...",
+    "loadingGames": "Loading games...",
     "makeAdmin": "Make Admin",
     "removeAdmin": "Remove Admin",
     "resetPassword": "Reset Password",
@@ -233,6 +236,20 @@
     "enterNewPassword": "Enter new password for user:",
     "newPasswordPlaceholder": "New password (min 4 characters)",
     "passwordResetSuccess": "Password reset successfully",
-    "passwordResetFailed": "Failed to reset password"
+    "passwordResetFailed": "Failed to reset password",
+    "terminateGame": "Terminate Game",
+    "terminateGameConfirm": "Are you sure you want to terminate game {{gameId}}? This will kick all players.",
+    "gameTerminated": "Game terminated successfully",
+    "gameTerminateFailed": "Failed to terminate game",
+    "restartServer": "🔄 Restart Server",
+    "restartServerConfirm": "Are you sure you want to restart the server? All players will be disconnected.",
+    "serverRestarting": "Server restart initiated",
+    "serverRestartFailed": "Failed to restart server",
+    "noActiveGames": "No active games",
+    "gameId": "Game ID",
+    "players": "Players",
+    "status": "Status",
+    "createdAt": "Created",
+    "actions": "Actions"
   }
 }

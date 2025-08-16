@@ -238,7 +238,10 @@
     "showPanel": "⚙️ Painel Admin",
     "hidePanel": "🎮 Ocultar Admin",
     "userManagement": "Gerenciamento de Usuários",
+    "gameManagement": "Gerenciamento de Jogos",
+    "serverManagement": "Gerenciamento do Servidor",
     "loadingUsers": "Carregando usuários...",
+    "loadingGames": "Carregando jogos...",
     "makeAdmin": "Tornar Admin",
     "removeAdmin": "Remover Admin",
     "resetPassword": "Redefinir Senha",
@@ -246,6 +249,20 @@
     "enterNewPassword": "Digite a nova senha para o usuário:",
     "newPasswordPlaceholder": "Nova senha (mín 4 caracteres)",
     "passwordResetSuccess": "Senha redefinida com sucesso",
-    "passwordResetFailed": "Falha ao redefinir senha"
+    "passwordResetFailed": "Falha ao redefinir senha",
+    "terminateGame": "Terminar Jogo",
+    "terminateGameConfirm": "Tem certeza que deseja terminar o jogo {{gameId}}? Isso vai desconectar todos os jogadores.",
+    "gameTerminated": "Jogo terminado com sucesso",
+    "gameTerminateFailed": "Falha ao terminar jogo",
+    "restartServer": "🔄 Reiniciar Servidor",
+    "restartServerConfirm": "Tem certeza que deseja reiniciar o servidor? Todos os jogadores serão desconectados.",
+    "serverRestarting": "Reinicialização do servidor iniciada",
+    "serverRestartFailed": "Falha ao reiniciar servidor",
+    "noActiveGames": "Nenhum jogo ativo",
+    "gameId": "ID do Jogo",
+    "players": "Jogadores",
+    "status": "Status",
+    "createdAt": "Criado em",
+    "actions": "Ações"
   }
 }

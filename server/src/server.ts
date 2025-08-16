@@ -179,6 +179,62 @@ app.post('/api/admin/users/:userId/reset-password', authenticateToken, requireAd
   }
 });
 
+// Admin game management routes
+app.get('/api/admin/games', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    const games = gameManager.getAllGamesForAdmin();
+    res.json(games);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch games' });
+  }
+});
+
+app.post('/api/admin/games/:gameId/terminate', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    const gameId = req.params.gameId;
+    const result = gameManager.terminateGame(gameId);
+    
+    if (result.success) {
+      // Notify all players in the game that it was terminated
+      io.to(`game:${gameId}`).emit('game-terminated', {
+        message: 'Game terminated by administrator'
+      });
+      
+      // Update lobby with refreshed game list
+      io.to('lobby').emit('game-list-updated', gameManager.getActiveGames());
+      
+      res.json({ success: true, message: 'Game terminated successfully' });
+    } else {
+      res.status(404).json({ error: result.message });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to terminate game' });
+  }
+});
+
+app.post('/api/admin/server/restart', authenticateToken, requireAdmin, async (req: any, res) => {
+  try {
+    // Send immediate response before restarting
+    res.json({ success: true, message: 'Server restart initiated' });
+    
+    console.log('🔄 Server restart requested by admin');
+    
+    // Notify all connected clients about server restart
+    io.emit('server-restarting', {
+      message: 'Server is restarting. Please refresh your page in a few moments.',
+      countdown: 5
+    });
+    
+    // Give clients time to receive the message, then restart
+    setTimeout(() => {
+      console.log('🔄 Restarting server...');
+      process.exit(0); // This will cause the server to restart if using a process manager like pm2
+    }, 3000);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to restart server' });
+  }
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket: any) => {
   console.log('User connected:', socket.id);
@@ -507,7 +563,10 @@ io.on('connection', (socket: any) => {
         });
       }
     } else {
-      socket.emit('action-error', { message: result.message });
+      socket.emit('action-error', { 
+        message: result.message,
+        data: result.data 
+      });
     }
   });
 

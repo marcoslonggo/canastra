@@ -98,3 +98,48 @@ export async function resetUserPassword(token: string, userId: number, newPasswo
 
   return response.json();
 }
+
+// Admin game management API functions
+export async function fetchAllGames(token: string) {
+  const response = await fetch(`${API_BASE}/api/admin/games`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch games');
+  }
+
+  return response.json();
+}
+
+export async function terminateGame(token: string, gameId: string) {
+  const response = await fetch(`${API_BASE}/api/admin/games/${gameId}/terminate`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to terminate game');
+  }
+
+  return response.json();
+}
+
+export async function restartServer(token: string) {
+  const response = await fetch(`${API_BASE}/api/admin/server/restart`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to restart server');
+  }
+
+  return response.json();
+}

@@ -303,6 +303,44 @@ export class GameManager {
     return result;
   }
 
+  // Admin method to forcefully terminate a specific game
+  public terminateGame(gameId: string): { success: boolean; message?: string } {
+    const gameRoom = this.games.get(gameId);
+    if (!gameRoom) {
+      return { success: false, message: 'Game not found' };
+    }
+
+    // Force end the game regardless of status
+    gameRoom.status = 'finished';
+    
+    // Remove all players from this game
+    for (const player of gameRoom.players) {
+      this.playerGameMap.delete(player.id);
+    }
+    
+    // Remove the game completely
+    this.games.delete(gameId);
+    
+    return { success: true };
+  }
+
+  // Admin method to get all active games with detailed info
+  public getAllGamesForAdmin(): Array<{id: string; playerCount: number; status: string; players: string[]; createdAt: Date}> {
+    const allGames = [];
+    
+    for (const [gameId, gameRoom] of this.games) {
+      allGames.push({
+        id: gameId,
+        playerCount: gameRoom.players.length,
+        status: gameRoom.status,
+        players: gameRoom.players.map(p => p.username),
+        createdAt: gameRoom.createdAt
+      });
+    }
+    
+    return allGames;
+  }
+
   // Cleanup old finished games periodically
   public cleanupOldGames(): void {
     const now = new Date();
