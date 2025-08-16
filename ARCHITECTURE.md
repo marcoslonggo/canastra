@@ -103,6 +103,14 @@ A web-based multiplayer Brazilian Buraco (Canastra) card game with real-time Web
 - Player actions (draw, baixar, discard, bater)
 - Turn management
 - Game completion handling
+- **Modern chat overlay system** (Issue #15 implementation)
+
+**Chat System Features**:
+- **Non-intrusive overlay**: Glassmorphism design that doesn't consume game space
+- **Auto-fade messaging**: Messages auto-fade after 4 seconds when chat is closed
+- **Mobile-responsive**: Touch-friendly design with comprehensive breakpoints
+- **Message management**: Limited to 100 messages for performance
+- **Smooth animations**: Enter/exit animations with accessibility support
 
 ## Frontend Services
 
@@ -340,7 +348,23 @@ PORT=3004 npm start    # Start development server
 - **Implemented**: Wildcard validation rules according to Brazilian Buraco regulations
 - **Impact**: Prevents invalid sequences with excessive wildcards, enforces game authenticity
 
+### Feature #4: Modern In-Game Chat Overlay System (Issue #15)
+- **Implemented**: Non-intrusive glassmorphism chat overlay system
+- **Key Features**:
+  - **Overlay Design**: Translucent backdrop-blur chat that doesn't consume game space
+  - **Auto-fade Messages**: 4-second auto-fade with max 3 overlay messages
+  - **Mobile-First Responsive**: Touch-friendly design with 4+ breakpoints
+  - **Performance Optimized**: Message history limited to 100 messages
+  - **Accessibility Support**: Smooth animations with prefers-reduced-motion support
+  - **Smooth UX**: Enter/exit animations, notification pulses, scroll management
+- **Technical Implementation**:
+  - **CSS**: 470+ lines of modern styling with glassmorphism effects
+  - **React State**: Auto-fade logic with timeout management and cleanup
+  - **Responsive Breakpoints**: 1024px (tablet), 768px (phone), 480px (small phone), landscape
+  - **Translation Support**: Fixed duplicate translation keys causing display issues
+- **Impact**: Chat no longer interferes with gameplay, provides modern mobile-friendly experience
+
 ---
 
-*Last Updated: Session 6 - December 2024*
-*Architecture documented after implementing team selection and fixing connection issues*
+*Last Updated: Session 7 - December 2024*
+*Architecture documented after implementing modern chat overlay system (Issue #15)*
