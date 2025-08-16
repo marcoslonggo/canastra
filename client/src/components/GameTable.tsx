@@ -40,6 +40,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [overlayMessages, setOverlayMessages] = useState<ChatMessage[]>([]);
   const [fadeTimeouts, setFadeTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map());
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const maxOverlayMessages = 3;
   const overlayFadeDelay = 4000; // 4 seconds
@@ -146,7 +147,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     setOverlayMessages(prev => {
       const updated = [...prev, message].slice(-maxOverlayMessages);
       
-      // Trigger notification animation on toggle button
+      // Increment unread count and trigger notification animation
+      setUnreadCount(prev => prev + 1);
       setHasNewMessages(true);
       setTimeout(() => setHasNewMessages(false), 600);
       
@@ -185,11 +187,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     setShowChat(newShowChat);
     
     if (newShowChat) {
-      // Clear overlay messages and timeouts when opening chat
+      // Clear overlay messages, timeouts, and unread count when opening chat
       fadeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
       setFadeTimeouts(new Map());
       setOverlayMessages([]);
       setHasNewMessages(false);
+      setUnreadCount(0); // Reset unread count when chat is opened
     }
   };
 
@@ -1243,7 +1246,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         className={`chat-toggle-button ${showChat ? 'chat-open' : ''} ${hasNewMessages ? 'new-message' : ''}`}
         title={showChat ? t('game.chat.hideChat') : t('game.chat.showChat')}
       >
-{t('game.chat.title')}{overlayMessages.length > 0 && !showChat ? ` (${overlayMessages.length})` : ''}
+{t('game.chat.title')}{unreadCount > 0 && !showChat ? ` (${unreadCount})` : ''}
       </button>
 
       {/* Chat Panel */}
