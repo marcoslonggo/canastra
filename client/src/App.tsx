@@ -15,6 +15,7 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('auth');
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const handleGameReconnected = useCallback((data: { gameId: string; gameState: GameState }) => {
     console.log('Reconnected to game:', data.gameId);
@@ -78,16 +79,22 @@ function App() {
           console.log('Reconnected to game service');
           setCurrentScreen('lobby');
           setupReconnectionListeners();
+          setIsInitializing(false);
         }).catch((error) => {
           console.error('Failed to reconnect to game service:', error);
           setCurrentScreen('lobby'); // Still show lobby even if connection fails
           setupReconnectionListeners();
+          setIsInitializing(false);
         });
       } catch (err) {
         // Clear invalid stored data
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        setIsInitializing(false);
       }
+    } else {
+      // No stored credentials, show auth screen
+      setIsInitializing(false);
     }
   }, [setupReconnectionListeners]);
 
@@ -114,6 +121,7 @@ function App() {
     
     setCurrentScreen('lobby');
     setupReconnectionListeners();
+    setIsInitializing(false);
   };
 
   const handleLogout = () => {
@@ -152,6 +160,19 @@ function App() {
     setCurrentGameId(null);
     setGameState(null);
   };
+
+  // Show loading screen during initialization
+  if (isInitializing) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <h1>Family Canastra</h1>
+          <div className="loading-spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show authentication screen
   if (currentScreen === 'auth' || !user || !token) {
