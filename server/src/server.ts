@@ -83,7 +83,13 @@ const io = new Server(server, {
   cors: {
     origin: config.cors.allowedOrigins,
     methods: ["GET", "POST"]
-  }
+  },
+  // Mobile-friendly WebSocket configuration
+  transports: ['websocket', 'polling'],
+  pingTimeout: 60000,  // 60 seconds
+  pingInterval: 25000, // 25 seconds
+  upgradeTimeout: 30000, // 30 seconds
+  allowEIO3: true // Support older clients
 });
 
 const PORT = config.server.port;
@@ -160,9 +166,30 @@ const chatHistory = new ChatHistoryManager();
 // Middleware
 app.use(cors({
   origin: config.cors.allowedOrigins,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// Simple test endpoint for mobile debugging
+app.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Mobile connectivity test successful!', 
+    timestamp: new Date().toISOString(),
+    serverIP: req.headers.host 
+  });
+});
+
+// Test POST endpoint to check if POST requests work
+app.post('/test-post', (req, res) => {
+  console.log('📱 Mobile POST test request received!');
+  res.json({ 
+    message: 'Mobile POST test successful!', 
+    timestamp: new Date().toISOString(),
+    body: req.body 
+  });
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -170,8 +197,16 @@ app.get('/health', (req, res) => {
 });
 
 // Authentication routes
-app.post('/auth/register', register);
-app.post('/auth/login', login);
+app.post('/auth/register', (req, res) => {
+  console.log('🔐 Register request received from:', req.headers.origin || req.ip);
+  register(req, res);
+});
+
+app.post('/auth/login', (req, res) => {
+  console.log('🔐 Login request received from:', req.headers.origin || req.ip);
+  console.log('🔐 Request headers:', req.headers);
+  login(req, res);
+});
 
 // Protected route example
 app.get('/api/profile', authenticateToken, (req: any, res) => {
@@ -642,6 +677,70 @@ io.on('connection', (socket: any) => {
         message: result.message,
         data: result.data 
       });
+    }
+  });
+
+  socket.on('end-game', (data: { 
+    gameId?: string; 
+    type: 'no-prejudice' | 'declare-winner'; 
+    winnerTeam?: number; 
+    reason?: string 
+  }) => {
+    if (!currentUser) {
+      socket.emit('action-error', { message: 'Not authenticated' });
+      return;
+    }
+
+    // Get gameId from data or current user's game
+    const gameId = data.gameId || gameManager.getPlayerCurrentGame(currentUser.id);
+    if (!gameId) {
+      socket.emit('action-error', { message: 'No game to end' });
+      return;
+    }
+
+    // Check if user is admin
+    const isAdmin = currentUser.isAdmin || false;
+
+    const result = gameManager.endGameEarly(
+      gameId,
+      currentUser.id,
+      {
+        type: data.type,
+        winnerTeam: data.winnerTeam,
+        reason: data.reason
+      },
+      isAdmin
+    );
+
+    if (result.success) {
+      // Notify all players in the game about early termination
+      io.to(`game-${gameId}`).emit('game-ended-early', {
+        type: data.type,
+        winnerTeam: data.winnerTeam,
+        reason: result.message,
+        gameState: result.gameState,
+        terminatedBy: isAdmin ? 'admin' : 'owner'
+      });
+
+      // Also emit updated game state
+      if (result.gameState) {
+        io.to(`game-${gameId}`).emit('game-state-update', result.gameState);
+      }
+
+      // Update lobby with game list
+      io.to('lobby').emit('game-list-updated', gameManager.getActiveGames());
+
+      // Also emit the standard game-ended event to all players with proper format
+      if (result.gameState) {
+        io.to(`game-${gameId}`).emit('game-ended', {
+          winner: result.gameState.winner || 0,
+          scores: result.gameState.scores
+        });
+      }
+
+      socket.emit('action-success', { message: result.message });
+    } else {
+      socket.emit('action-error', { message: result.message });
     }
   });
 

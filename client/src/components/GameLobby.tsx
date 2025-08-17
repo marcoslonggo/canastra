@@ -4,6 +4,7 @@ import { gameService } from '../services/gameService';
 import { User, ChatMessage, GameState } from '../types';
 import { fetchAllUsers, promoteUser, demoteUser, resetUserPassword, fetchAllGames, terminateGame, restartServer } from '../api';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import config from '../config';
 import './GameLobby.css';
 
 interface GameInfo {
@@ -38,6 +39,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
   
   // Admin state
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allGames, setAllGames] = useState<AdminGameInfo[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -338,6 +340,55 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
 
   return (
     <div className="game-lobby">
+      {/* Debug Panel Toggle Button */}
+      <button 
+        onClick={() => setShowDebugPanel(!showDebugPanel)}
+        style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          zIndex: 10000,
+          padding: '5px 10px',
+          fontSize: '12px',
+          backgroundColor: showDebugPanel ? '#f44336' : '#2196F3',
+          color: 'white',
+          border: 'none',
+          borderRadius: '3px',
+          cursor: 'pointer'
+        }}
+      >
+        🔧 Debug
+      </button>
+
+      {/* Debug Panel - Show only when toggled */}
+      {showDebugPanel && (
+        <div className="debug-panel" style={{
+          position: 'fixed',
+          top: '50px',
+          left: '10px',
+          right: '10px',
+          zIndex: 9999,
+          backgroundColor: '#f0f0f0',
+          padding: '10px',
+          border: '2px solid #f44336',
+          borderRadius: '5px',
+          fontSize: '11px',
+          fontFamily: 'monospace',
+          maxHeight: '200px',
+          overflow: 'auto'
+        }}>
+          <strong>🔧 DEBUG:</strong><br/>
+          📍 URL: {window.location.href}<br/>
+          🏠 Host: {window.location.hostname}<br/>
+          🔗 Protocol: {window.location.protocol}<br/>
+          🌐 Generated WS: {`${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname}:3002`}<br/>
+          📡 Status: {connectionStatus}<br/>
+          🔄 Attempts: {reconnectAttempts}<br/>
+          👤 User: {user.username}<br/>
+          📱 Mobile: {/iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'YES' : 'NO'}
+        </div>
+      )}
+
       <div className="lobby-header">
         <div className="header-left">
           <h2>{t('lobby.title')}</h2>
@@ -374,6 +425,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
           </div>
         </div>
       </div>
+
 
       {user.isAdmin && showAdminPanel && (
         <div className="admin-panel">

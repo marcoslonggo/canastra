@@ -19,7 +19,7 @@ export class GameService {
   private initializeEventMap() {
     // Initialize empty listener arrays for each event type
     const events = [
-      'authenticated', 'game-created', 'game-state-update', 'game-ended',
+      'authenticated', 'game-created', 'game-state-update', 'game-ended', 'game-ended-early',
       'chat-message', 'chat-history', 'error', 'action-error', 'player-disconnected',
       'player-left', 'game-list-updated', 'game-reconnected', 'waiting-room-reconnected',
       'connection-status-changed', 'player-action'
@@ -58,7 +58,20 @@ export class GameService {
       this.user = user;
       const serverUrl = config.websocket.url;
       
-      this.socket = io(serverUrl);
+      console.log('🔌 Attempting WebSocket connection to:', serverUrl);
+      console.log('🔌 Current location:', window.location.href);
+      
+      this.socket = io(serverUrl, {
+        // Mobile-friendly configuration
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        forceNew: true,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        randomizationFactor: 0.5
+      });
 
       this.socket.on('connect', () => {
         console.log('Connected to server');
@@ -84,7 +97,9 @@ export class GameService {
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
+        console.error('🔌 WebSocket connection error:', error);
+        console.error('🔌 Error message:', error.message);
+        console.error('🔌 Attempted URL:', serverUrl);
         this.setConnectionStatus('disconnected');
         reject(error);
       });
@@ -378,6 +393,16 @@ export class GameService {
         type: 'bater',
         data
       });
+    }
+  }
+
+  public endGame(options: {
+    type: 'no-prejudice' | 'declare-winner';
+    winnerTeam?: number;
+    reason?: string;
+  }) {
+    if (this.socket) {
+      this.socket.emit('end-game', options);
     }
   }
 

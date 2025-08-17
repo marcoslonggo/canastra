@@ -10,23 +10,33 @@ interface Config {
   };
 }
 
+function getWebSocketUrl(): string {
+  if (process.env.REACT_APP_WS_URL) {
+    return process.env.REACT_APP_WS_URL;
+  }
+  if (process.env.REACT_APP_SERVER_URL) {
+    return process.env.REACT_APP_SERVER_URL;
+  }
+  
+  // Dynamic URL based on current location
+  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:3002`;
+}
+
 const config: Config = {
   api: {
-    baseUrl: process.env.REACT_APP_API_BASE || 'http://localhost:3002',
+    baseUrl: '',  // Force empty for proxy - no environment variable override
   },
   websocket: {
-    url: process.env.REACT_APP_WS_URL || process.env.REACT_APP_SERVER_URL || 'http://localhost:3002',
+    url: getWebSocketUrl(),
   },
   app: {
     port: parseInt(process.env.PORT || '3004', 10),
   },
 };
 
-// Validate configuration
-if (!config.api.baseUrl) {
-  throw new Error('REACT_APP_API_BASE environment variable is required');
-}
-
+// Validate configuration - allow empty baseUrl for proxy setup
 if (!config.websocket.url) {
   throw new Error('REACT_APP_WS_URL or REACT_APP_SERVER_URL environment variable is required');
 }
