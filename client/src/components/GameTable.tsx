@@ -29,7 +29,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [cheatsEnabled, setCheatsEnabled] = useState({
     allowPlayAllCards: false,
     allowMultipleDiscard: false,
-    allowDiscardDrawnCards: false
+    allowDiscardDrawnCards: false,
+    allowViewAllHands: false
   });
   const [showMortoSelection, setShowMortoSelection] = useState(false);
   const [availableMortos, setAvailableMortos] = useState<number[]>([]);
