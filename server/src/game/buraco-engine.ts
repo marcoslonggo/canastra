@@ -41,6 +41,7 @@ export class BuracoGame {
       discardPile: [],
       mortos,
       mortosUsed: [false, false],
+      mortosUsedByTeam: [null, null],
       teamSequences: [[], []],
       scores: [0, 0],
       phase: 'playing',
@@ -377,6 +378,7 @@ export class BuracoGame {
     player.hand.push(...mortoCards);
     this.gameState.mortos[mortoToTake] = [];
     this.gameState.mortosUsed[mortoToTake] = true;
+    this.gameState.mortosUsedByTeam[mortoToTake] = player.team;
 
     console.log('🎮 Bater successful! Player now has', player.hand.length, 'cards');
     return {
@@ -596,17 +598,17 @@ export class BuracoGame {
   }
 
   private canTeamFinishGame(team: number): boolean {
-    // Team needs: at least one Canastra Limpa + Morto taken
+    // Team needs: at least one Canastra Limpa + any Morto taken by team
     const teamSequences = this.gameState.teamSequences[team - 1];
     const hasCanstraLimpa = teamSequences.some(seq => 
       seq.isCanastra && (seq.canastraType === 'limpa' || seq.canastraType === 'as-a-as')
     );
     
-    const teamMortoTaken = team === 1 ? 
-      this.gameState.mortosUsed[0] : 
-      this.gameState.mortosUsed[1];
+    // Check if this team has taken ANY Morto
+    // mortosUsedByTeam[i] contains the team number that took Morto i (1-indexed)
+    const teamHasTakenMorto = this.gameState.mortosUsedByTeam.some(takenByTeam => takenByTeam === team);
 
-    return hasCanstraLimpa && teamMortoTaken;
+    return hasCanstraLimpa && teamHasTakenMorto;
   }
 
   private finishGame(player: Player): GameActionResult {

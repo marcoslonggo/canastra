@@ -168,3 +168,9 @@ temp_tokens/
 test-results/
 playwright-report/
 test-artifacts/
+
+# Deployment planning (local only)
+DEPLOYMENT-PLAN.md
+deployment-notes.md
+production-config/
+security-checklist.md

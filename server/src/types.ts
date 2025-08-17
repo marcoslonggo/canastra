@@ -46,6 +46,7 @@ export interface GameState {
   discardPile: Card[];
   mortos: [Card[], Card[]]; // Two Morto decks
   mortosUsed: [boolean, boolean]; // Track which Mortos taken
+  mortosUsedByTeam: [number | null, number | null]; // Track which team took each Morto (null = not taken)
   teamSequences: [Sequence[], Sequence[]]; // Team 1 and Team 2 sequences
   scores: [number, number];
   phase: 'waiting' | 'playing' | 'finished';

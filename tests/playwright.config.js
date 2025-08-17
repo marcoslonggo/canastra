@@ -80,9 +80,5 @@ module.exports = defineConfig({
     timeout: 10000 // 10 seconds for assertions
   },
 
-  // Retry configuration for flaky tests
-  retries: {
-    mode: 'failed-tests-only',
-    max: 2
-  }
+  // No additional retry configuration needed (already defined above)
 });
