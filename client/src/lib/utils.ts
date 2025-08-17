@@ -27,16 +27,16 @@ export const deviceUtils = {
 export const animations = {
   // Spring animation configs for Framer Motion
   spring: {
-    default: { type: "spring", damping: 20, stiffness: 300 },
-    gentle: { type: "spring", damping: 25, stiffness: 200 },
-    snappy: { type: "spring", damping: 15, stiffness: 400 },
+    default: { type: "spring" as const, damping: 20, stiffness: 300 },
+    gentle: { type: "spring" as const, damping: 25, stiffness: 200 },
+    snappy: { type: "spring" as const, damping: 15, stiffness: 400 },
   },
   
   // Transition configs
   transition: {
-    fast: { duration: 0.15, ease: "easeOut" },
-    default: { duration: 0.25, ease: "easeInOut" },
-    slow: { duration: 0.4, ease: "easeInOut" },
+    fast: { duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] as const },
+    default: { duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] as const },
+    slow: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 }
 

@@ -24,9 +24,23 @@ function getWebSocketUrl(): string {
   return `${protocol}//${hostname}:3002`;
 }
 
+function getApiBaseUrl(): string {
+  if (process.env.REACT_APP_API_BASE) {
+    return process.env.REACT_APP_API_BASE;
+  }
+  if (process.env.REACT_APP_SERVER_URL) {
+    return process.env.REACT_APP_SERVER_URL;
+  }
+  
+  // Dynamic URL based on current location for cross-device testing
+  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:3002`;
+}
+
 const config: Config = {
   api: {
-    baseUrl: '',  // Force empty for proxy - no environment variable override
+    baseUrl: getApiBaseUrl(),
   },
   websocket: {
     url: getWebSocketUrl(),
@@ -36,9 +50,13 @@ const config: Config = {
   },
 };
 
-// Validate configuration - allow empty baseUrl for proxy setup
+// Validate configuration
 if (!config.websocket.url) {
-  throw new Error('REACT_APP_WS_URL or REACT_APP_SERVER_URL environment variable is required');
+  throw new Error('WebSocket URL configuration is required');
+}
+
+if (!config.api.baseUrl) {
+  throw new Error('API base URL configuration is required');
 }
 
 export default config;
