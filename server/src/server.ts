@@ -605,6 +605,8 @@ io.on('connection', (socket: any) => {
 
   // Game action events
   socket.on('game-action', (action: any) => {
+    console.log('🎯 Server received game-action:', JSON.stringify(action, null, 2));
+    
     if (!currentUser || !currentGameId) {
       socket.emit('error', { message: 'Not in a game' });
       return;

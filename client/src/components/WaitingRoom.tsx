@@ -111,9 +111,8 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
     gameService.on('chat-history', chatHistoryHandler);
     gameService.on('error', listenersRef.current.error);
 
-    // Request chat history for current game after setting up listeners
-    console.log('🎮 WaitingRoom requesting chat history for game:', gameId);
-    gameService.joinGame(gameId);
+    // Note: Already joined the game when entering waiting room
+    console.log('🎮 WaitingRoom event listeners set up for game:', gameId);
   };
 
   const handleStartGame = () => {

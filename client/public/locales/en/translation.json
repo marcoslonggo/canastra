@@ -143,6 +143,17 @@
       "discardPile": "Discard Pile ({{count}})",
       "empty": "Empty"
     },
+    "discardPile": {
+      "viewerTitle": "🃏 Discard Pile",
+      "drawSelected": "Draw Selected",
+      "drawAll": "Draw All",
+      "leaveSelected": "Leave Selected",
+      "takeAllExceptSelected": "Take All Except Selected",
+      "clearSelection": "Clear Selection",
+      "positionIndicator": "Position {{position}}",
+      "noCardsSelected": "No cards selected",
+      "selectCardsFirst": "Select cards first"
+    },
     "morto": {
       "title": "📦 Morto {{number}}",
       "available": "🟢 Available",
@@ -208,6 +219,7 @@
     "cheat": {
       "title": "🎮 Cheat Menu",
       "activated": "Cheat mode activated! 🎮",
+      "allEnabled": "🚀 ALL CHEATS ENABLED! Complete god mode activated",
       "spyMode": "🔍 Card spy mode activated! All hands visible",
       "autoWin": "🏆 Auto-win activated for testing!",
       "speedMode": "⚡ Speed mode activated! Fast animations",

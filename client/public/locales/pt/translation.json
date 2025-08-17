@@ -143,6 +143,17 @@
       "discardPile": "Monte de Descarte ({{count}})",
       "empty": "Vazio"
     },
+    "discardPile": {
+      "viewerTitle": "🃏 Monte de Descarte",
+      "drawSelected": "Pegar Selecionadas",
+      "drawAll": "Pegar Todas",
+      "leaveSelected": "Deixar Selecionadas",
+      "takeAllExceptSelected": "Pegar Todas Exceto Selecionadas",
+      "clearSelection": "Limpar Seleção",
+      "positionIndicator": "Posição {{position}}",
+      "noCardsSelected": "Nenhuma carta selecionada",
+      "selectCardsFirst": "Selecione cartas primeiro"
+    },
     "morto": {
       "title": "📦 Morto {{number}}",
       "available": "🟢 Disponível",
@@ -208,6 +219,7 @@
     "cheat": {
       "title": "🎮 Menu de Trapaça",
       "activated": "Modo de trapaça ativado! 🎮",
+      "allEnabled": "🚀 TODAS AS TRAPAÇAS ATIVADAS! Modo deus completo ativado",
       "spyMode": "🔍 Modo espião ativado! Todas as mãos visíveis",
       "autoWin": "🏆 Auto-vitória ativada para teste!",
       "speedMode": "⚡ Modo velocidade ativado! Animações rápidas",
@@ -217,19 +229,6 @@
           "title": "Permitir jogar todas as cartas (ignorar turno)",
           "description": "Jogue cartas mesmo quando não for sua vez"
         },
-        "allowMultipleDiscard": {
-          "title": "Permitir descarte múltiplo de cartas",
-          "description": "Descarte quantas cartas quiser de uma vez"
-        },
-        "allowDiscardDrawnCards": {
-          "title": "Permitir descartar cartas compradas",
-          "description": "Finalize o turno mesmo se descartar a mesma carta que comprou"
-        }
-      }
-    },
-    "cheat": {
-      "title": "🎮 Menu de Trapaça",
-      "options": {
         "allowMultipleDiscard": {
           "title": "Permitir descarte múltiplo de cartas",
           "description": "Descarte quantas cartas quiser de uma vez"

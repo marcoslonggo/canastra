@@ -85,7 +85,9 @@ export class BuracoGame {
     }
   }
 
-  private handleDraw(player: Player, data: { source: 'deck' | 'discard' }): GameActionResult {
+  private handleDraw(player: Player, data: { source: 'deck' | 'discard', selectedCards?: string[] }): GameActionResult {
+    console.log('🎮 handleDraw called with:', { source: data.source, selectedCards: data.selectedCards });
+    
     // Check if player has already drawn this turn
     if (this.gameState.turnState.hasDrawn) {
       return { success: false, message: 'You can only draw one card per turn' };
@@ -99,7 +101,7 @@ export class BuracoGame {
     if (data.source === 'deck') {
       return this.drawFromDeck(player);
     } else {
-      return this.drawFromDiscardPile(player);
+      return this.drawFromDiscardPile(player, data.selectedCards);
     }
   }
 
@@ -138,25 +140,67 @@ export class BuracoGame {
     };
   }
 
-  private drawFromDiscardPile(player: Player): GameActionResult {
+  private drawFromDiscardPile(player: Player, selectedCardIds?: string[]): GameActionResult {
+    
     if (this.gameState.discardPile.length === 0) {
       return { success: false, message: 'Discard pile is empty' };
     }
 
-    // Take entire discard pile and track all card IDs
-    const discardCards = [...this.gameState.discardPile];
-    const discardCount = discardCards.length;
+    let cardsToTake: Card[];
+    let remainingCards: Card[];
+
+    if (selectedCardIds && selectedCardIds.length > 0) {
+      console.log('🎮 Selective drawing mode - cards to leave:', selectedCardIds.length);
+      // Selective drawing - take only selected cards
+      cardsToTake = [];
+      remainingCards = [];
+
+      // Validate that all selected cards exist in discard pile
+      for (const cardId of selectedCardIds) {
+        const cardInPile = this.gameState.discardPile.find(card => card.id === cardId);
+        if (!cardInPile) {
+          console.log('🎮 ERROR: Selected card not found in pile:', cardId);
+          return { success: false, message: 'Selected card not found in discard pile' };
+        }
+      }
+
+      // Separate cards to take from cards to leave (selected)
+      for (const card of this.gameState.discardPile) {
+        console.log(`🔍 Checking card ${card.id} against selected IDs:`, selectedCardIds);
+        console.log(`🔍 Includes check: ${card.id} in [${selectedCardIds.join(', ')}] = ${selectedCardIds.includes(card.id)}`);
+        
+        if (selectedCardIds.includes(card.id)) {
+          // These are selected to LEAVE in the pile
+          console.log(`✅ LEAVING card ${card.id} in pile`);
+          remainingCards.push(card);
+        } else {
+          // These are the cards to TAKE
+          console.log(`📤 TAKING card ${card.id}`);
+          cardsToTake.push(card);
+        }
+      }
+      
+      console.log('🎮 Cards to take:', cardsToTake.length);
+      console.log('🎮 Cards to leave in pile:', remainingCards.length);
+
+      // Update discard pile to keep only the selected cards
+      this.gameState.discardPile = remainingCards;
+    } else {
+      // Traditional behavior - take entire discard pile
+      cardsToTake = [...this.gameState.discardPile];
+      this.gameState.discardPile = [];
+    }
     
-    player.hand.push(...discardCards);
-    this.gameState.discardPile = [];
+    const cardCount = cardsToTake.length;
+    player.hand.push(...cardsToTake);
     
     // Mark that player has drawn this turn and track all card IDs
     this.gameState.turnState.hasDrawn = true;
-    this.gameState.turnState.drawnCardIds.push(...discardCards.map(card => card.id));
+    this.gameState.turnState.drawnCardIds.push(...cardsToTake.map(card => card.id));
 
     return {
       success: true,
-      message: `Drew ${discardCount} cards from discard pile. You must discard a different card to end turn.`,
+      message: `Drew ${cardCount} cards from discard pile. You must discard a different card to end turn.`,
       newGameState: this.gameState
     };
   }

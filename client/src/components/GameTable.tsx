@@ -33,6 +33,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   });
   const [showMortoSelection, setShowMortoSelection] = useState(false);
   const [availableMortos, setAvailableMortos] = useState<number[]>([]);
+  const [showDiscardViewer, setShowDiscardViewer] = useState(false);
+  const [selectedDiscardCards, setSelectedDiscardCards] = useState<Set<string>>(new Set());
   const [keySequence, setKeySequence] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
@@ -103,8 +105,15 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       // Testing cheat codes
       if (newSequence === 'iddqd') {
         setCheatMode(true);
-        setActionMessage(t('game.cheat.activated'));
-        setTimeout(() => setActionMessage(''), 2000);
+        // Enable all cheats automatically
+        setCheatsEnabled({
+          allowPlayAllCards: true,
+          allowMultipleDiscard: true,
+          allowDiscardDrawnCards: true,
+          allowViewAllHands: true
+        });
+        setActionMessage(t('game.cheat.allEnabled'));
+        setTimeout(() => setActionMessage(''), 3000);
         setKeySequence(''); // Reset sequence
       } else if (newSequence === 'cardy') {
         // Show all players' hands (debug mode)
@@ -324,12 +333,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     
     console.log('🕹️ GameTable event listeners added, including chat-history');
     
-    // Request chat history for current game if we have gameState
-    if (gameState?.id) {
-      console.log('🕹️ Requesting chat history for game:', gameState.id);
-      // Re-join the game room to trigger chat history send
-      gameService.joinGame(gameState.id);
-    }
+    // Note: Chat history will be requested when gameState is available
+    // We don't automatically rejoin here to avoid connection loops
 
     // Handle connection issues
     if (!gameService.isConnected()) {
@@ -387,6 +392,37 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     setActionMessage(t('game.messages.drawingFromDeck'));
   };
 
+  const handleDiscardPileClick = () => {
+    if (!gameState || gameState.discardPile.length === 0) {
+      return;
+    }
+    
+    // Always allow viewing the discard pile
+    setShowDiscardViewer(true);
+    setSelectedDiscardCards(new Set());
+  };
+
+  // Card sorting function for discard pile viewer
+  const sortDiscardCards = (cards: CardType[]) => {
+    const suitOrder = { '♠': 0, '♣': 1, '♥': 2, '♦': 3 };
+    const valueOrder: { [key: string]: number } = {
+      'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, 
+      '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'Joker': 14
+    };
+    
+    return [...cards].sort((a, b) => {
+      // Sort by suit first
+      const suitA = suitOrder[a.suit as keyof typeof suitOrder] ?? 99;
+      const suitB = suitOrder[b.suit as keyof typeof suitOrder] ?? 99;
+      if (suitA !== suitB) return suitA - suitB;
+      
+      // Then by value
+      const valueA = valueOrder[a.value] ?? 99;
+      const valueB = valueOrder[b.value] ?? 99;
+      return valueA - valueB;
+    });
+  };
+
   const handleDrawFromDiscard = () => {
     if (!isMyTurnOrCheat()) {
       setActionMessage(t('game.messages.notYourTurn'));
@@ -395,7 +431,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     
     gameService.drawCard('discard');
     setActionMessage(t('game.messages.takingDiscardPile'));
+    setShowDiscardViewer(false);
   };
+
 
   const handleBaixar = () => {
     if (selectedCards.length < 3) {
@@ -911,7 +949,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               <div className="deck-label">{t('game.deck.discardPile', { count: gameState.discardPile.length })}</div>
               <div 
                 className="discard-pile-container"
-                onClick={handleDrawFromDiscard}
+                onClick={handleDiscardPileClick}
               >
                 {gameState.discardPile.length > 0 ? (
                   <div className="discard-pile-cards">
@@ -1350,6 +1388,128 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Discard Pile Viewer Panel (Chat-style) */}
+      {showDiscardViewer && gameState && (
+        <div className="discard-pile-panel">
+          <div className="discard-header">
+            <h4>{t('game.discardPile.viewerTitle')} ({gameState.discardPile.length})</h4>
+            <button 
+              onClick={() => setShowDiscardViewer(false)}
+              className="discard-close-button"
+            >
+              ×
+            </button>
+          </div>
+          
+          <div className="discard-content">
+            {gameState.discardPile.length === 0 ? (
+              <div className="empty-discard">
+                <p>{t('game.deck.empty')}</p>
+              </div>
+            ) : (
+              <div className="discard-cards-container">
+                <div className="discard-cards-list">
+                  {sortDiscardCards(gameState.discardPile).map((card, index) => {
+                    // IMPORTANT: Use the actual card.id, not a fallback
+                    const cardId = card.id;
+                    if (!cardId) {
+                      console.warn('Card in discard pile missing ID:', card);
+                      return null;
+                    }
+                    const isSelected = selectedDiscardCards.has(cardId);
+                    const originalIndex = gameState.discardPile.findIndex(c => c.id === cardId);
+                    const actualPosition = originalIndex + 1;
+                    
+                    return (
+                      <div
+                        key={`discard-${cardId}-${index}`}
+                        className={`discard-card-item ${isSelected ? 'selected' : ''} ${!isMyTurnOrCheat() ? 'view-only' : ''}`}
+                        onClick={() => {
+                          if (isMyTurnOrCheat()) {
+                            const newSelected = new Set(selectedDiscardCards);
+                            if (isSelected) {
+                              newSelected.delete(cardId);
+                            } else {
+                              newSelected.add(cardId);
+                            }
+                            setSelectedDiscardCards(newSelected);
+                          }
+                        }}
+                      >
+                        <div className="card-position-indicator">
+                          #{actualPosition}
+                        </div>
+                        <div className="card-display">
+                          <Card 
+                            card={card}
+                            isDrawnThisTurn={isCardDrawnThisTurn(card)}
+                            className="discard-list-card"
+                          />
+                        </div>
+                        <div className="card-info">
+                          <span className="card-name">{card.suit} {card.value}</span>
+                          {isSelected && <span className="selected-indicator">✓ Leave</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {isMyTurnOrCheat() && gameState.discardPile.length > 0 && (
+            <div className="discard-actions">
+              <button 
+                onClick={() => {
+                  // Take all cards EXCEPT selected ones (leave selected in pile)
+                  if (selectedDiscardCards.size > 0) {
+                    const cardsToLeave = Array.from(selectedDiscardCards);
+                    const cardsToTakeCount = gameState.discardPile.length - selectedDiscardCards.size;
+                    
+                    console.log('🎮 CLIENT: Drawing from discard with selection:');
+                    console.log('  - Selected cards to LEAVE:', JSON.stringify(cardsToLeave));
+                    console.log('  - Cards to LEAVE (raw):', cardsToLeave);
+                    console.log('  - Total pile size:', gameState.discardPile.length);
+                    console.log('  - Cards to take:', cardsToTakeCount);
+                    console.log('  - Discard pile cards:', gameState.discardPile.map(c => ({ id: c.id, card: `${c.value}${c.suit}` })));
+                    
+                    if (cardsToTakeCount > 0) {
+                      gameService.drawCard('discard', cardsToLeave);
+                      setActionMessage(t('game.messages.takingDiscardPile'));
+                    } else {
+                      setActionMessage('Cannot leave all cards - must take at least one');
+                      return;
+                    }
+                  } else {
+                    // Take all cards
+                    console.log('🎮 CLIENT: Drawing ALL cards from discard pile');
+                    handleDrawFromDiscard();
+                  }
+                  setShowDiscardViewer(false);
+                  setSelectedDiscardCards(new Set());
+                }}
+                className="discard-action-button primary"
+                disabled={gameState.discardPile.length === 0 || selectedDiscardCards.size === gameState.discardPile.length}
+              >
+                {selectedDiscardCards.size > 0 
+                  ? `Take ${gameState.discardPile.length - selectedDiscardCards.size} cards (Leave ${selectedDiscardCards.size})`
+                  : t('game.discardPile.drawAll')
+                }
+              </button>
+              {selectedDiscardCards.size > 0 && (
+                <button 
+                  onClick={() => setSelectedDiscardCards(new Set())}
+                  className="discard-action-button secondary"
+                >
+                  {t('game.discardPile.clearSelection')}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -62,8 +62,8 @@ export class GameManager {
       return { success: false, message: 'Already in game' };
     }
 
-    // Default team assignment (players can switch later)
-    const team = gameRoom.players.length < 2 ? 1 : 2;
+    // Auto team assignment: 1st player → Team 1, 2nd player → Team 2, 3rd+ players → Team 1 (can switch later)
+    const team = gameRoom.players.length === 0 ? 1 : gameRoom.players.length === 1 ? 2 : 1;
     
     const newPlayer: Player = {
       id: playerId,

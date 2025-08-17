@@ -249,8 +249,8 @@
 }
 
 .deck-pile, .discard-pile, .discard-pile-container {
-  width: 80px;
-  height: 110px;
+  width: 92px;
+  height: 126px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -261,8 +261,8 @@
 }
 
 .discard-pile-container {
-  width: 200px;
-  max-height: 140px;
+  width: 220px;
+  max-height: 150px;
   overflow-y: auto;
   overflow-x: hidden;
   background: rgba(255, 255, 255, 0.1);
@@ -279,8 +279,8 @@
 }
 
 .discard-card-small {
-  transform: scale(0.4);
-  margin: -20px -15px;
+  transform: scale(0.55);
+  margin: -15px -10px;
   pointer-events: none;
 }
 
@@ -1092,8 +1092,8 @@
   }
   
   .deck-pile, .discard-pile {
-    width: 60px;
-    height: 84px;
+    width: 69px;
+    height: 97px;
   }
   
   .hand-cards {
@@ -1759,6 +1759,395 @@
   }
   
   .chat-message:hover {
+    transform: none;
+  }
+}
+
+/* Discard Pile Viewer Panel (Chat-style) */
+.discard-pile-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  max-height: 85vh;
+  background: rgba(17, 24, 39, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 15px 25px -5px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  color: white;
+  animation: zoomFromDiscardPile 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity;
+}
+
+.discard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px 16px 0 0;
+}
+
+.discard-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f3f4f6;
+}
+
+.discard-close-button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.discard-close-button:hover {
+  color: #f3f4f6;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.discard-content {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.empty-discard {
+  text-align: center;
+  padding: 32px 16px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.discard-cards-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.discard-cards-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-start;
+  min-height: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.discard-card-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  flex-shrink: 0;
+  min-height: 120px;
+  justify-content: space-between;
+  min-height: 60px;
+}
+
+.discard-card-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.discard-card-item.selected {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+
+.discard-card-item.view-only {
+  cursor: default;
+}
+
+.discard-card-item.view-only:hover {
+  transform: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-position-indicator {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  min-width: 24px;
+  text-align: center;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 2;
+}
+
+.card-display {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.discard-list-card {
+  width: 50px !important;
+  height: 70px !important;
+  font-size: 0.8rem !important;
+  transform: scale(0.9);
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.card-name {
+  font-size: 0.8rem;
+  color: #f3f4f6;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.selected-indicator {
+  font-size: 0.7rem;
+  color: #ef4444;
+  font-weight: 600;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.discard-actions {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.discard-action-button {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.discard-action-button.primary {
+  background: linear-gradient(135deg, #059669, #047857);
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.discard-action-button.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #047857, #065f46);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.4);
+}
+
+.discard-action-button.secondary {
+  background: rgba(107, 114, 128, 0.8);
+  color: white;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.discard-action-button.secondary:hover:not(:disabled) {
+  background: rgba(75, 85, 99, 0.9);
+  border-color: rgba(156, 163, 175, 0.5);
+}
+
+.discard-action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Animations */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomFromDiscardPile {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.1);
+    transform-origin: center;
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: center;
+  }
+}
+
+/* Responsive Design for Discard Panel */
+@media (max-width: 1024px) {
+  .discard-pile-panel {
+    width: 550px;
+    max-height: 80vh;
+  }
+  
+  .discard-cards-list {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .discard-pile-panel {
+    width: calc(100vw - 40px);
+    max-width: 500px;
+    max-height: 75vh;
+  }
+  
+  .discard-content {
+    padding: 10px;
+  }
+  
+  .discard-cards-list {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  
+  .discard-card-item {
+    padding: 8px 6px;
+    gap: 6px;
+    min-height: 100px;
+  }
+  
+  .discard-list-card {
+    width: 32px !important;
+    height: 44px !important;
+  }
+  
+  .discard-cards-list {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .discard-pile-panel {
+    width: calc(100vw - 20px);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 80vh;
+    border-radius: 12px;
+  }
+  
+  .discard-cards-list {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 6px;
+    max-height: 45vh;
+  }
+  
+  .discard-header {
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .discard-header h4 {
+    font-size: 1rem;
+  }
+  
+  .discard-content {
+    max-height: 220px;
+    padding: 10px;
+  }
+  
+  .discard-card-item {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .discard-list-card {
+    width: 32px !important;
+    height: 44px !important;
+  }
+  
+  .card-name {
+    font-size: 0.8rem;
+  }
+  
+  .discard-actions {
+    padding: 12px 16px;
+  }
+  
+  .discard-action-button {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .discard-pile-panel {
+    max-height: 60vh;
+    width: 350px;
+  }
+  
+  .discard-content {
+    max-height: 40vh;
+  }
+}
+
+/* Accessibility support for discard panel */
+@media (prefers-reduced-motion: reduce) {
+  .discard-pile-panel,
+  .discard-card-item,
+  .discard-action-button,
+  .discard-close-button {
+    animation: none;
+    transition: none;
+  }
+  
+  .discard-card-item:hover {
+    transform: none;
+  }
+  
+  .discard-close-button:hover {
     transform: none;
   }
 }

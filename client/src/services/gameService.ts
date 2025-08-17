@@ -335,12 +335,21 @@ export class GameService {
     }
   }
 
-  public drawCard(source: 'deck' | 'discard') {
+  public drawCard(source: 'deck' | 'discard', selectedCards?: string[]) {
+    console.log('🌐 CLIENT: Emitting game-action:', {
+      type: 'draw',
+      data: { source, selectedCards }
+    });
+    console.log('🌐 CLIENT: Socket connected?', !!this.socket);
+    
     if (this.socket) {
       this.socket.emit('game-action', {
         type: 'draw',
-        data: { source }
+        data: { source, selectedCards }
       });
+      console.log('🌐 CLIENT: game-action emitted successfully');
+    } else {
+      console.error('🌐 CLIENT: No socket connection!');
     }
   }
 
