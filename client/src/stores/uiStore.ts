@@ -23,6 +23,10 @@ interface UIState {
   // Error state
   error: string | null
   
+  // Action message state
+  actionMessage: string | null
+  actionMessageType: 'info' | 'success' | 'warning' | 'error'
+  
   // Theme and preferences
   theme: 'light' | 'dark'
   reducedMotion: boolean
@@ -46,6 +50,7 @@ interface UIState {
   toggleSettings: () => void
   setLoading: (loading: boolean, message?: string) => void
   setError: (error: string | null) => void
+  setActionMessage: (message: string | null, type?: 'info' | 'success' | 'warning' | 'error') => void
   setTheme: (theme: 'light' | 'dark') => void
   toggleCardDetails: (card?: any) => void
   toggleGameMenu: () => void
@@ -115,6 +120,10 @@ export const useUIStore = create<UIState>()(
     loadingMessage: '',
     error: null,
     
+    // Action message state
+    actionMessage: null,
+    actionMessageType: 'info',
+    
     // Theme and preferences
     theme: 'light',
     
@@ -153,6 +162,11 @@ export const useUIStore = create<UIState>()(
     }),
     
     setError: (error) => set({ error }),
+    
+    setActionMessage: (message, type = 'info') => set({ 
+      actionMessage: message, 
+      actionMessageType: type 
+    }),
     
     setTheme: (theme) => set({ theme }),
     

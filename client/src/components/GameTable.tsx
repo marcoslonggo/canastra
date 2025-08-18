@@ -5,6 +5,7 @@ import { Card, CardBack, CardGroup } from './Card';
 import { gameService } from '../services/gameService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ChatSystem } from './organisms/ChatSystem';
+import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -19,7 +20,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
-  const [actionMessage, setActionMessage] = useState<string>('');
+  
+  // Use the action message hook instead of local state
+  const { showInfo, showError, showSuccess, showWarning } = useActionMessage();
   const [showBaixarDialog, setShowBaixarDialog] = useState(false);
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -61,7 +64,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     // Check connection status periodically
     const connectionCheck = setInterval(() => {
       if (!gameService.isConnected()) {
-        setActionMessage(t('game.messages.connectionError'));
+        showError(t('game.messages.connectionError'));
       }
     }, 5000);
 
@@ -98,20 +101,17 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           allowDiscardDrawnCards: true,
           allowViewAllHands: true
         });
-        setActionMessage(t('game.cheat.allEnabled'));
-        setTimeout(() => setActionMessage(''), 3000);
+        showSuccess(t('game.cheat.allEnabled'));
         setKeySequence(''); // Reset sequence
       } else if (newSequence === 'cardy') {
         // Show all players' hands (debug mode)
-        setActionMessage(t('game.cheat.spyMode'));
-        setTimeout(() => setActionMessage(''), 3000);
+        showInfo(t('game.cheat.spyMode'));
         setKeySequence('');
         // This will be handled by CSS class changes
         document.body.classList.toggle('debug-show-all-hands');
       } else if (newSequence === 'winme') {
         // Auto-win current game for testing
-        setActionMessage(t('game.cheat.autoWin'));
-        setTimeout(() => setActionMessage(''), 3000);
+        showSuccess(t('game.cheat.autoWin'));
         setKeySequence('');
         // Send test win signal (we'll implement this in backend)
         if (gameState) {
@@ -119,15 +119,13 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         }
       } else if (newSequence === 'speedx') {
         // Speed up game animations and delays
-        setActionMessage(t('game.cheat.speedMode'));
-        setTimeout(() => setActionMessage(''), 3000);
+        showInfo(t('game.cheat.speedMode'));
         setKeySequence('');
         document.body.classList.toggle('speed-test-mode');
       } else if (newSequence === 'reset') {
         // Reset all test modes
         setCheatMode(false);
-        setActionMessage(t('game.cheat.reset'));
-        setTimeout(() => setActionMessage(''), 2000);
+        showInfo(t('game.cheat.reset'), 2000);
         setKeySequence('');
         document.body.classList.remove('debug-show-all-hands', 'speed-test-mode');
       }
@@ -170,12 +168,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     // Create new listener functions and store references
     listenersRef.current.gameStateUpdate = (newGameState: GameState) => {
       setGameState(newGameState);
-      setActionMessage('');
+      // Action messages are auto-managed by the store now
     };
 
     listenersRef.current.gameEnded = (data: { winner: number; scores: number[] }) => {
       setGameEnded(true);
-      setActionMessage(t('game.messages.gameEnded', { team: data.winner, score1: data.scores[0], score2: data.scores[1] }));
+      showSuccess(t('game.messages.gameEnded', { team: data.winner, score1: data.scores[0], score2: data.scores[1] }));
     };
 
     listenersRef.current.actionError = (error: { message: string; data?: any }) => {
@@ -186,18 +184,16 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         console.log('🎮 Setting availableMortos state to:', error.data.availableMortos);
         setAvailableMortos(error.data.availableMortos);
         setShowMortoSelection(true);
-        setActionMessage(t('game.messages.chooseMoreto'));
+        showInfo(t('game.messages.chooseMoreto'));
       } else {
         console.log('🎮 Other error message:', error.message);
-        setActionMessage(`${t('common.error')}: ${error.message}`);
-        setTimeout(() => setActionMessage(''), 3000);
+        showError(`${t('common.error')}: ${error.message}`);
       }
     };
 
     listenersRef.current.error = (error: any) => {
       console.error('Game service error:', error);
-      setActionMessage(t('game.messages.connectionError'));
-      setTimeout(() => setActionMessage(''), 5000);
+      showError(t('game.messages.connectionError'), 5000);
     };
 
     // Handle player actions from other players
@@ -220,8 +216,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         
         if (message) {
           console.log('🎯 Setting action message:', message);
-          setActionMessage(message);
-          setTimeout(() => setActionMessage(''), 4000);
+          showInfo(message);
         } else {
           console.log('🎯 No message to display');
         }
@@ -243,7 +238,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
     // Handle connection issues
     if (!gameService.isConnected()) {
-      setActionMessage(t('game.messages.connectionLost'));
+      showError(t('game.messages.connectionLost'));
     }
   };
 
@@ -276,12 +271,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleDrawFromDeck = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
     
     gameService.drawCard('deck');
-    setActionMessage(t('game.messages.drawingFromDeck'));
+    showInfo(t('game.messages.drawingFromDeck'), 2000);
   };
 
   const handleDiscardPileClick = () => {
@@ -317,19 +312,19 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleDrawFromDiscard = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
     
     gameService.drawCard('discard');
-    setActionMessage(t('game.messages.takingDiscardPile'));
+    showInfo(t('game.messages.takingDiscardPile'), 2000);
     setShowDiscardViewer(false);
   };
 
 
   const handleBaixar = () => {
     if (selectedCards.length < 3) {
-      setActionMessage(t('game.messages.selectAtLeast', { count: 3 }));
+      showWarning(t('game.messages.selectAtLeast', { count: 3 }));
       return;
     }
 
@@ -342,33 +337,33 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     gameService.baixar(sequences);
     setSelectedCards([]);
     setShowBaixarDialog(false);
-    setActionMessage(t('game.messages.playingSequence'));
+    showInfo(t('game.messages.playingSequence'), 2000);
   };
 
   const handleDiscard = (cardIndex: number) => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
 
     gameService.discardCard(cardIndex, cheatsEnabled.allowMultipleDiscard);
     setSelectedCards([]);
-    setActionMessage(t('game.messages.discardingCard'));
+    showInfo(t('game.messages.discardingCard'), 2000);
   };
 
   const handleMultipleDiscard = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
 
     if (selectedCards.length === 0) {
-      setActionMessage(t('game.messages.selectCards'));
+      showWarning(t('game.messages.selectCards'));
       return;
     }
 
     const discardCount = selectedCards.length;
-    setActionMessage(t('game.messages.discardingCards', { count: discardCount }));
+    showInfo(t('game.messages.discardingCards', { count: discardCount }), 2000);
 
     // Sort indices in descending order to discard from highest to lowest
     // This prevents index shifting issues when removing cards
@@ -380,8 +375,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     // Function to process the next discard
     const processNextDiscard = () => {
       if (remainingIndices.length === 0) {
-        setActionMessage(t('game.messages.discardedCards', { count: discardedCount }));
-        setTimeout(() => setActionMessage(''), 3000);
+        showSuccess(t('game.messages.discardedCards', { count: discardedCount }));
         return;
       }
 
@@ -405,12 +399,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleBater = (mortoChoice?: number) => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
 
     gameService.bater(mortoChoice);
-    setActionMessage(t('game.messages.attemptingBater'));
+    showInfo(t('game.messages.attemptingBater'), 2000);
   };
 
   const handleMortoSelection = (mortoIndex: number) => {
@@ -424,17 +418,17 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const cancelMortoSelection = () => {
     setShowMortoSelection(false);
     setAvailableMortos([]);
-    setActionMessage('');
+    // Action message cleared automatically
   };
 
   const handleEndTurn = () => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
 
     gameService.endTurn(cheatsEnabled.allowDiscardDrawnCards);
-    setActionMessage(t('game.messages.endingTurn'));
+    showInfo(t('game.messages.endingTurn'), 2000);
   };
 
   const canPlayerBater = (): boolean => {
@@ -584,18 +578,18 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const handleAddToSequence = (sequenceId: string) => {
     if (!isMyTurnOrCheat()) {
-      setActionMessage(t('game.messages.notYourTurn'));
+      showWarning(t('game.messages.notYourTurn'));
       return;
     }
 
     if (selectedCards.length === 0) {
-      setActionMessage(t('game.messages.selectCardsFirst'));
+      showWarning(t('game.messages.selectCardsFirst'));
       return;
     }
 
     gameService.addToSequence(sequenceId, selectedCards);
     setSelectedCards([]);
-    setActionMessage(t('game.messages.addingToSequence'));
+    showInfo(t('game.messages.addingToSequence'), 2000);
   };
 
   const handleCardDragStart = (cardIndex: number) => {
@@ -622,7 +616,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     // Add the dragged card to the sequence
     gameService.addToSequence(sequenceId, [draggedCardIndex]);
     setDraggedCardIndex(null);
-    setActionMessage(t('game.messages.addingCardToSequence'));
+    showInfo(t('game.messages.addingCardToSequence'), 2000);
   };
 
   const handleSequenceDragOver = (e: React.DragEvent) => {
@@ -702,11 +696,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         </div>
       </div>
 
-      {actionMessage && (
-        <div className="action-message">
-          {actionMessage}
-        </div>
-      )}
+      <ConnectedActionMessage />
 
       <div className="game-board">
         {/* Team Sequences */}
@@ -1276,9 +1266,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                     
                     if (cardsToTakeCount > 0) {
                       gameService.drawCard('discard', cardsToLeave);
-                      setActionMessage(t('game.messages.takingDiscardPile'));
+                      showInfo(t('game.messages.takingDiscardPile'), 2000);
                     } else {
-                      setActionMessage('Cannot leave all cards - must take at least one');
+                      showWarning('Cannot leave all cards - must take at least one');
                       return;
                     }
                   } else {
