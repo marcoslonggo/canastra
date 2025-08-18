@@ -158,7 +158,7 @@ export function Auth({ onLogin }: AuthProps) {
               <button 
                 type="button"
                 className="quick-login-button marcos"
-                onClick={() => handleQuickLogin('marcos', 'marcos123')}
+                onClick={() => handleQuickLogin('marcos', 'marcos')}
                 disabled={loading}
               >
                 👤 Login as Marcos
@@ -166,7 +166,7 @@ export function Auth({ onLogin }: AuthProps) {
               <button 
                 type="button"
                 className="quick-login-button michele"
-                onClick={() => handleQuickLogin('michele', 'michele123')}
+                onClick={() => handleQuickLogin('michele', 'michele')}
                 disabled={loading}
               >
                 👤 Login as Michele
