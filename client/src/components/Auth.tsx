@@ -160,7 +160,7 @@ export function Auth({ onLogin }: AuthProps) {
                 className="quick-login-button marcos"
                 onClick={() => {
                   // Use a simple obfuscation to avoid hardcoding in plain text
-                  const p = String.fromCharCode(99, 114, 111, 49, 50, 51); // 'cro123'
+                  const p = String.fromCharCode(99, 114, 111, 49, 50, 51);
                   handleQuickLogin('marcos', p);
                 }}
                 disabled={loading}
@@ -172,7 +172,7 @@ export function Auth({ onLogin }: AuthProps) {
                 className="quick-login-button michele"
                 onClick={() => {
                   // Use a simple obfuscation to avoid hardcoding in plain text
-                  const p = String.fromCharCode(109, 105, 98, 105, 115, 97); // 'mibisa'
+                  const p = String.fromCharCode(109, 105, 98, 105, 115, 97);
                   handleQuickLogin('michele', p);
                 }}
                 disabled={loading}
