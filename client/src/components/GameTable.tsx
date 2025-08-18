@@ -6,6 +6,7 @@ import { gameService } from '../services/gameService';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ChatSystem } from './organisms/ChatSystem';
 import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
+import { ActionButton, DiscardButton, BaterButton, EndTurnButton } from './atoms/ActionButton';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -898,22 +899,20 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
                 )}
                 
                 {canPlayerBater() && (
-                  <button 
+                  <BaterButton 
                     onClick={() => handleBater()}
-                    className="action-button bater-button"
                     disabled={!isMyTurnOrCheat()}
                   >
                     {t('game.hand.actions.bater')}
-                  </button>
+                  </BaterButton>
                 )}
                 
                 {isMyTurnOrCheat() && (
-                  <button 
+                  <EndTurnButton 
                     onClick={handleEndTurn}
-                    className="action-button end-turn-button"
                   >
                     {t('game.hand.actions.endTurn')}
-                  </button>
+                  </EndTurnButton>
                 )}
                 
                 <div className="sort-button-group">
@@ -1006,27 +1005,25 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           {isMyTurnOrCheat() && selectedCards.length >= 1 && (
             <div className="discard-action">
               {selectedCards.length === 1 || !cheatsEnabled.allowMultipleDiscard ? (
-                <button 
+                <DiscardButton 
                   onClick={() => handleDiscard(selectedCards[0])}
-                  className="action-button discard-button"
                 >
                   {t('game.hand.actions.discard')}
-                </button>
+                </DiscardButton>
               ) : (
                 <>
-                  <button 
+                  <DiscardButton 
                     onClick={() => handleDiscard(selectedCards[0])}
-                    className="action-button discard-button"
                   >
                     {t('game.hand.actions.discardOne')}
-                  </button>
+                  </DiscardButton>
                   {cheatsEnabled.allowMultipleDiscard && selectedCards.length > 1 && (
-                    <button 
+                    <DiscardButton 
                       onClick={handleMultipleDiscard}
-                      className="action-button discard-button cheat-multi-discard"
+                      className="cheat-multi-discard"
                     >
                       {t('game.hand.actions.discardMultiple', { count: selectedCards.length })}
-                    </button>
+                    </DiscardButton>
                   )}
                 </>
               )}
@@ -1054,18 +1051,18 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               })}
             </div>
             <div className="dialog-actions">
-              <button 
+              <ActionButton 
                 onClick={handleBaixar}
-                className="action-button confirm-button"
+                variant="success"
               >
                 {t('game.baixar.confirm')}
-              </button>
-              <button 
+              </ActionButton>
+              <ActionButton 
                 onClick={() => setShowBaixarDialog(false)}
-                className="action-button cancel-button"
+                variant="ghost"
               >
                 {t('common.cancel')}
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>
