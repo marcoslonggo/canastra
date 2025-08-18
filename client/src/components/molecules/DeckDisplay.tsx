@@ -144,25 +144,104 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                   )}
                 </>
               ) : (
-                // Desktop: Show all cards in a fan layout with reduced size
-                <div className="flex items-center relative">
-                  {getSortedDiscardPile().map((card, index) => (
-                    <Card 
-                      key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
-                      card={card}
-                      className={cn(
-                        'discard-card-reduced shadow-sm w-12 h-16',
-                        index > 0 && '-ml-8', // Overlap cards to save space
-                        index === discardPile.length - 1 && 'z-10' // Top card on top
-                      )}
-                    />
-                  ))}
-                  {discardPile.length > 1 && (
-                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
-                      {discardPile.length}
-                    </div>
-                  )}
-                </div>
+                // Desktop: Adaptive layout based on card count
+                (() => {
+                  const sortedCards = getSortedDiscardPile();
+                  const cardCount = sortedCards.length;
+                  
+                  if (cardCount <= 6) {
+                    // Small number: Single row with slight overlap
+                    return (
+                      <div className="flex items-center relative">
+                        {sortedCards.map((card, index) => (
+                          <Card 
+                            key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                            card={card}
+                            className={cn(
+                              'discard-card-reduced shadow-sm w-12 h-16',
+                              index > 0 && '-ml-6', // Less overlap for better visibility
+                              index === cardCount - 1 && 'z-10'
+                            )}
+                          />
+                        ))}
+                        {cardCount > 1 && (
+                          <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
+                            {cardCount}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } else if (cardCount <= 12) {
+                    // Medium number: Two rows
+                    const firstRow = sortedCards.slice(0, 6);
+                    const secondRow = sortedCards.slice(6);
+                    
+                    return (
+                      <div className="relative">
+                        {/* First row */}
+                        <div className="flex items-center relative mb-2">
+                          {firstRow.map((card, index) => (
+                            <Card 
+                              key={`discard-r1-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                              card={card}
+                              className={cn(
+                                'discard-card-small shadow-sm w-10 h-14',
+                                index > 0 && '-ml-5'
+                              )}
+                            />
+                          ))}
+                        </div>
+                        {/* Second row */}
+                        <div className="flex items-center relative">
+                          {secondRow.map((card, index) => (
+                            <Card 
+                              key={`discard-r2-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                              card={card}
+                              className={cn(
+                                'discard-card-small shadow-sm w-10 h-14',
+                                index > 0 && '-ml-5',
+                                index === secondRow.length - 1 && 'z-10'
+                              )}
+                            />
+                          ))}
+                        </div>
+                        {/* Card count badge */}
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
+                          {cardCount}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // Large number: Show sample + overflow indicator
+                    const displayCards = sortedCards.slice(0, 8); // Show first 8 cards
+                    const overflowCount = cardCount - 8;
+                    
+                    return (
+                      <div className="relative">
+                        {/* Two rows of 4 cards each */}
+                        <div className="grid grid-cols-4 gap-1 relative">
+                          {displayCards.map((card, index) => (
+                            <Card 
+                              key={`discard-grid-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                              card={card}
+                              className="discard-card-tiny shadow-sm w-8 h-11"
+                            />
+                          ))}
+                        </div>
+                        {/* Overflow indicator */}
+                        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg flex items-center justify-center">
+                          <div className="bg-white rounded-full px-2 py-1 text-xs font-bold text-gray-800 shadow-lg">
+                            +{overflowCount} more
+                          </div>
+                        </div>
+                        {/* Card count badge */}
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
+                          {cardCount}
+                        </div>
+                      </div>
+                    );
+                  }
+                })()
               )}
             </div>
           ) : (
@@ -192,9 +271,16 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Morto Icon */}
-              <div className="morto-stack-icon bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg shadow-md flex items-center justify-center text-white font-bold w-6 h-6 text-xs">
-                📦
+              {/* Morto Icon - Card Back Design */}
+              <div className="morto-stack-icon bg-gradient-to-br from-red-500 to-red-700 rounded-lg shadow-md flex items-center justify-center text-white font-bold w-6 h-6 text-xs relative overflow-hidden">
+                {/* Card back pattern */}
+                <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 rounded-lg">
+                  <div className="absolute inset-0.5 bg-gradient-to-br from-red-400 to-red-600 rounded">
+                    <div className="absolute inset-1 bg-red-500 rounded flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full opacity-20"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {/* Availability Indicator */}
@@ -216,15 +302,48 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                   whileTap={{ scale: 0.98 }}
                   title={`${t('game.morto.title', { number: index + 1 })} - ${morto.length} ${t('game.morto.cards')} (${mortosUsed[index] ? t('game.morto.used') : t('game.morto.available')})`}
                 >
-                  {/* Morto Pile Icon */}
+                  {/* Morto Pile Icon - Card Back Design */}
                   <div className={cn(
-                    'morto-pile-icon rounded-lg shadow-md flex flex-col items-center justify-center text-white font-bold w-16 h-20 text-sm transition-colors',
+                    'morto-pile-icon rounded-lg shadow-md flex flex-col items-center justify-center text-white font-bold w-16 h-20 text-sm transition-colors relative overflow-hidden',
                     mortosUsed[index] 
-                      ? 'bg-gradient-to-br from-red-500 to-red-700' 
-                      : 'bg-gradient-to-br from-purple-500 to-purple-700'
+                      ? 'bg-gradient-to-br from-gray-400 to-gray-600' 
+                      : index % 2 === 0 
+                        ? 'bg-gradient-to-br from-red-500 to-red-700' // Red back for even indices
+                        : 'bg-gradient-to-br from-gray-800 to-gray-900' // Black back for odd indices
                   )}>
-                    <div className="text-xl">📦</div>
-                    <div className="text-xs mt-1">{index + 1}</div>
+                    {/* Card back pattern */}
+                    <div className={cn(
+                      'absolute inset-0 rounded-lg',
+                      mortosUsed[index]
+                        ? 'bg-gradient-to-br from-gray-500 to-gray-700'
+                        : index % 2 === 0
+                          ? 'bg-gradient-to-br from-red-600 to-red-800'
+                          : 'bg-gradient-to-br from-gray-900 to-black'
+                    )}>
+                      <div className={cn(
+                        'absolute inset-1 rounded',
+                        mortosUsed[index]
+                          ? 'bg-gradient-to-br from-gray-400 to-gray-600'
+                          : index % 2 === 0
+                            ? 'bg-gradient-to-br from-red-400 to-red-600'
+                            : 'bg-gradient-to-br from-gray-700 to-gray-900'
+                      )}>
+                        <div className={cn(
+                          'absolute inset-2 rounded flex flex-col items-center justify-center',
+                          mortosUsed[index]
+                            ? 'bg-gray-500'
+                            : index % 2 === 0
+                              ? 'bg-red-500'
+                              : 'bg-gray-800'
+                        )}>
+                          <div className={cn(
+                            'w-3 h-3 rounded-full opacity-20 mb-1',
+                            mortosUsed[index] ? 'bg-white' : 'bg-white'
+                          )}></div>
+                          <div className="text-xs font-bold">{index + 1}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   {/* Card Count Indicator */}
@@ -265,7 +384,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">📦 Mortos Status</h3>
+                <h3 className="text-lg font-semibold">🃏 Mortos Status</h3>
                 <button 
                   onClick={() => setShowMortoDetails(false)}
                   className="text-gray-500 hover:text-gray-700 text-xl"
@@ -286,7 +405,34 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">📦</div>
+                      <div className={cn(
+                        'w-8 h-10 rounded shadow-sm relative overflow-hidden flex items-center justify-center',
+                        mortosUsed[index] 
+                          ? 'bg-gradient-to-br from-gray-400 to-gray-600' 
+                          : index % 2 === 0 
+                            ? 'bg-gradient-to-br from-red-500 to-red-700' 
+                            : 'bg-gradient-to-br from-gray-800 to-gray-900'
+                      )}>
+                        <div className={cn(
+                          'absolute inset-0.5 rounded',
+                          mortosUsed[index]
+                            ? 'bg-gradient-to-br from-gray-500 to-gray-700'
+                            : index % 2 === 0
+                              ? 'bg-gradient-to-br from-red-600 to-red-800'
+                              : 'bg-gradient-to-br from-gray-900 to-black'
+                        )}>
+                          <div className={cn(
+                            'absolute inset-0.5 rounded flex items-center justify-center',
+                            mortosUsed[index]
+                              ? 'bg-gray-500'
+                              : index % 2 === 0
+                                ? 'bg-red-500'
+                                : 'bg-gray-800'
+                          )}>
+                            <div className="w-1.5 h-1.5 bg-white rounded-full opacity-20"></div>
+                          </div>
+                        </div>
+                      </div>
                       <div>
                         <div className="font-medium">
                           {t('game.morto.title', { number: index + 1 })}
