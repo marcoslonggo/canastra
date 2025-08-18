@@ -27,6 +27,7 @@ interface GameLobbyProps {
   showAdminPanel: boolean;
   setShowAdminPanel: (show: boolean) => void;
   showDebugPanel: boolean;
+  setShowDebugPanel: (show: boolean) => void;
   connectionStatus: 'disconnected' | 'connecting' | 'connected';
   setConnectionStatus: (status: 'disconnected' | 'connecting' | 'connected') => void;
   reconnectAttempts: number;
@@ -39,6 +40,7 @@ export function GameLobby({
   showAdminPanel,
   setShowAdminPanel,
   showDebugPanel,
+  setShowDebugPanel,
   connectionStatus,
   setConnectionStatus,
   reconnectAttempts,
@@ -353,31 +355,60 @@ export function GameLobby({
 
       {/* Debug Panel - Show only when toggled */}
       {showDebugPanel && (
-        <div className="debug-panel" style={{
-          position: 'fixed',
-          top: '50px',
-          left: '10px',
-          right: '10px',
-          zIndex: 9999,
-          backgroundColor: '#f0f0f0',
-          padding: '10px',
-          border: '2px solid #f44336',
-          borderRadius: '5px',
-          fontSize: '11px',
-          fontFamily: 'monospace',
-          maxHeight: '200px',
-          overflow: 'auto'
-        }}>
-          <strong>🔧 DEBUG:</strong><br/>
-          📍 URL: {window.location.href}<br/>
-          🏠 Host: {window.location.hostname}<br/>
-          🔗 Protocol: {window.location.protocol}<br/>
-          🌐 Generated WS: {`${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname}:3002`}<br/>
-          📡 Status: {connectionStatus}<br/>
-          🔄 Attempts: {reconnectAttempts}<br/>
-          👤 User: {user.username}<br/>
-          📱 Mobile: {/iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'YES' : 'NO'}
-        </div>
+        <>
+          {/* Backdrop to close on outside click */}
+          <div 
+            className="fixed inset-0 z-[9998]" 
+            onClick={() => setShowDebugPanel(false)}
+          />
+          <div className="debug-panel" style={{
+            position: 'fixed',
+            top: '70px',
+            left: '10px',
+            right: '10px',
+            zIndex: 9999,
+            backgroundColor: '#f0f0f0',
+            padding: '10px',
+            border: '2px solid #f44336',
+            borderRadius: '5px',
+            fontSize: '11px',
+            fontFamily: 'monospace',
+            maxHeight: '200px',
+            overflow: 'auto'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '5px' 
+            }}>
+              <strong>🔧 DEBUG:</strong>
+              <button
+                onClick={() => setShowDebugPanel(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  padding: '2px 4px',
+                  borderRadius: '3px',
+                  backgroundColor: '#f44336',
+                  color: 'white'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            📍 URL: {window.location.href}<br/>
+            🏠 Host: {window.location.hostname}<br/>
+            🔗 Protocol: {window.location.protocol}<br/>
+            🌐 Generated WS: {`${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname}:3002`}<br/>
+            📡 Status: {connectionStatus}<br/>
+            🔄 Attempts: {reconnectAttempts}<br/>
+            👤 User: {user.username}<br/>
+            📱 Mobile: {/iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 'YES' : 'NO'}
+          </div>
+        </>
       )}
 
       {/* Lobby content header - simplified */}
@@ -683,7 +714,7 @@ export function GameLobby({
 
         {/* Mobile Chat Overlay */}
         {chatOpen && (
-          <div className="fixed inset-x-4 bottom-20 top-20 z-50 bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col md:hidden">
+          <div className="fixed inset-x-4 bottom-4 z-[1100] bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col md:hidden" style={{top: '80px'}}>
             {/* Chat Header */}
             <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -749,7 +780,7 @@ export function GameLobby({
 
         {/* Desktop Chat Sidebar */}
         {chatOpen && (
-          <div className="hidden md:flex fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-gray-200 shadow-2xl flex-col z-40">
+          <div className="hidden md:flex fixed right-0 bottom-0 w-80 bg-white border-l border-gray-200 shadow-2xl flex-col z-[1100]" style={{top: '70px'}}>
             {/* Sidebar Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">

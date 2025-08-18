@@ -297,6 +297,7 @@ function App() {
         showAdminPanel={showAdminPanel}
         setShowAdminPanel={setShowAdminPanel}
         showDebugPanel={showDebugPanel}
+        setShowDebugPanel={setShowDebugPanel}
         connectionStatus={connectionStatus}
         setConnectionStatus={setConnectionStatus}
         reconnectAttempts={reconnectAttempts}
