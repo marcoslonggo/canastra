@@ -7,7 +7,8 @@
     radial-gradient(circle at 25% 25%, #4a7c59 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, #3e6b23 0%, transparent 50%);
   color: white;
-  overflow: hidden;
+  /* Enable scrolling on mobile - remove overflow: hidden */
+  overflow: auto;
 }
 
 .game-header {
@@ -108,7 +109,9 @@
   flex-direction: column;
   padding: 1rem;
   gap: 1rem;
-  overflow: hidden;
+  /* Enable natural scrolling - remove overflow: hidden */
+  overflow: visible;
+  min-height: 0; /* Allow flex child to shrink */
 }
 
 .team-sequences {
@@ -779,8 +782,9 @@
   gap: 0.5rem;
   justify-content: center;
   min-height: 100px;
-  max-height: 200px;
-  overflow-y: auto;
+  /* Remove restrictive max-height for mobile scrolling */
+  max-height: none;
+  overflow-y: visible;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
@@ -1072,7 +1076,7 @@
   }
   
   .hand-cards {
-    max-height: 150px;
+    max-height: none; /* Remove restrictive height limit */
     gap: 0.3rem;
   }
 }
