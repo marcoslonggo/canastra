@@ -399,8 +399,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
                       onClick={() => onCardSelect(mapSortedToOriginal(index))}
                       className={cn(
                         'w-full',
-                        // Card size: ultra-dense mobile for maximum grid efficiency, properly sized desktop
-                        isMobile ? 'min-h-[45px] max-h-[55px]' : 'min-h-[140px] max-h-[160px]'
+                        // Card size: ultra-compact mobile, standard desktop proportions
+                        isMobile ? 'min-h-[45px] max-h-[55px]' : 'min-h-[90px] max-h-[100px]'
                       )}
                     />
                     
