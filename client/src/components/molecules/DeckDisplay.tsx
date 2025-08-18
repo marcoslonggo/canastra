@@ -94,12 +94,12 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
           {mainDeckCount > 0 ? (
             <CardBack className={cn(
               'deck-card shadow-sm',
-              isMobile ? 'w-12 h-16' : 'w-16 h-24'
+              isMobile ? 'w-8 h-12' : 'w-16 h-24'
             )} />
           ) : (
             <div className={cn(
               'empty-deck border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400',
-              isMobile ? 'w-12 h-16 text-xs' : 'w-16 h-24 text-sm'
+              isMobile ? 'w-8 h-12 text-xs' : 'w-16 h-24 text-sm'
             )}>
               📚
             </div>
@@ -131,7 +131,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                   card={card}
                   className={cn(
                     'discard-card-small absolute shadow-sm',
-                    isMobile ? 'w-12 h-16' : 'w-16 h-24',
+                    isMobile ? 'w-8 h-12' : 'w-16 h-24',
                     index === 1 && 'translate-x-1 translate-y-1 z-10'
                   )}
                 />
@@ -148,7 +148,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
           ) : (
             <div className={cn(
               'empty-discard border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400',
-              isMobile ? 'w-12 h-16 text-xs' : 'w-16 h-24 text-sm'
+              isMobile ? 'w-8 h-12 text-xs' : 'w-16 h-24 text-sm'
             )}>
               🗑️
             </div>
@@ -166,7 +166,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
         <motion.div 
           className={cn(
             'morto-compact-icon relative cursor-pointer flex-shrink-0',
-            isMobile ? 'w-8 h-8' : 'w-10 h-10'
+            isMobile ? 'w-6 h-6' : 'w-10 h-10'
           )}
           onClick={() => setShowMortoDetails(!showMortoDetails)}
           whileHover={{ scale: 1.1 }}
@@ -175,7 +175,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
           {/* Morto Icon */}
           <div className={cn(
             'morto-stack-icon bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg shadow-md flex items-center justify-center text-white font-bold',
-            isMobile ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-base'
+            isMobile ? 'w-6 h-6 text-xs' : 'w-10 h-10 text-base'
           )}>
             📦
           </div>

@@ -746,7 +746,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         </div>
 
         {/* Center Area - Deck Area (3rd Priority) */}
-        <div className="center-deck-area order-3 lg:order-3 bg-green-800/20 rounded-lg p-3 overflow-hidden">
+        <div className="center-deck-area order-3 lg:order-3 bg-green-800/20 rounded-lg p-2 overflow-hidden flex-shrink-0 min-h-[80px]">
           <DeckDisplay
             mainDeckCount={gameState.mainDeck.length}
             onDrawFromMainDeck={handleDrawFromDeck}

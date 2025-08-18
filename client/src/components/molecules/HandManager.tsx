@@ -263,45 +263,44 @@ export const HandManager: React.FC<HandManagerProps> = ({
       'min-h-0 flex-shrink-0', 
       className
     )}>
-      {/* Hand Header - Action Buttons Only */}
-      <div className="hand-header flex flex-wrap items-center justify-between gap-2 p-3 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-        {/* Selection indicator */}
-        {selectedCards.length > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="text-xs font-medium text-blue-700">
-              {selectedCards.length} selected
-            </span>
-          </div>
-        )}
-        
-        {/* Action Buttons */}
-        {isMyTurn && (
-          <div className="flex flex-wrap gap-2 ml-auto">
+      {/* Desktop Header - Minimal styling */}
+      {!isMobile && isMyTurn && (selectedCards.length > 0 || canBaixar || canBater || hasBaixado) && (
+        <div className="hand-header flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100">
+          {/* Selection indicator */}
+          {selectedCards.length > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-xs font-medium text-blue-700">
+                {selectedCards.length} selected
+              </span>
+            </div>
+          )}
+          
+          {/* Action Buttons */}
+          <div className="flex gap-2">
             {/* Baixar Button */}
-            {canBaixar && (
+            {canBaixar && selectedCards.length >= 3 && (
               <ActionButton
                 size="sm"
                 variant="success"
                 onClick={handleBaixarClick}
-                disabled={selectedCards.length < 3}
               >
-                {t('game.hand.actions.baixar')} ({selectedCards.length}/3+)
+                {t('game.hand.actions.baixar')} ({selectedCards.length})
               </ActionButton>
             )}
             
             {/* Discard Button */}
-            <DiscardButton
-              size="sm"
-              onClick={handleDiscardClick}
-              disabled={selectedCards.length === 0}
-            >
-              {t('game.hand.actions.discard')} 
-              {allowedActions.allowMultipleDiscard && selectedCards.length > 1 
-                ? ` (${selectedCards.length})`
-                : ''
-              }
-            </DiscardButton>
+            {selectedCards.length > 0 && (
+              <DiscardButton
+                size="sm"
+                onClick={handleDiscardClick}
+              >
+                {allowedActions.allowMultipleDiscard && selectedCards.length > 1 
+                  ? `${t('game.hand.actions.discard')} (${selectedCards.length})`
+                  : t('game.hand.actions.discard')
+                }
+              </DiscardButton>
+            )}
             
             {/* Bater Button */}
             {canBater && (
@@ -323,8 +322,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
               </EndTurnButton>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
       
       {/* Hand Cards - Mobile-First Scrollable Container */}
       <div
@@ -335,9 +334,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
           'overflow-y-auto overflow-x-hidden',
           // Mobile-first responsive padding
           'p-3 sm:p-4',
-          // Natural height - let content determine size
-          'min-h-[200px]',
-          isMobile ? 'max-h-[40vh]' : 'max-h-[300px]'
+          // Compact mobile height to ensure deck visibility
+          isMobile ? 'min-h-[120px] max-h-[30vh]' : 'min-h-[200px] max-h-[300px]'
         )}
       >
         {/* Sort Button - Positioned in Cards Area */}
@@ -375,11 +373,11 @@ export const HandManager: React.FC<HandManagerProps> = ({
         ) : (
           <div className={cn(
             'card-grid',
-            // Responsive grid for different screen sizes
-            'grid gap-2',
+            // Responsive grid for better horizontal space usage
+            'grid gap-1',
             isMobile 
-              ? 'grid-cols-4 sm:grid-cols-6' // Mobile: 4 columns, larger mobile: 6
-              : 'grid-cols-8 lg:grid-cols-10' // Desktop: 8-10 columns
+              ? 'grid-cols-6 sm:grid-cols-8' // Mobile: 6 columns, larger mobile: 8
+              : 'grid-cols-10 lg:grid-cols-12' // Desktop: 10-12 columns
           )}>
             <AnimatePresence mode="popLayout">
               {sortedCards.map((card, index) => {
@@ -424,8 +422,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
                       onClick={() => onCardSelect(mapSortedToOriginal(index))}
                       className={cn(
                         'w-full',
-                        // Mobile-optimized card size
-                        isMobile ? 'min-h-[80px]' : 'min-h-[100px]'
+                        // Ultra-compact card size for better horizontal layout
+                        isMobile ? 'min-h-[60px] max-h-[70px]' : 'min-h-[90px]'
                       )}
                     />
                     
@@ -483,6 +481,72 @@ export const HandManager: React.FC<HandManagerProps> = ({
                 </svg>
               </button>
             </div>
+          </motion.div>
+        )}
+
+        {/* Floating Action Buttons - Mobile Only */}
+        {isMobile && isMyTurn && (selectedCards.length > 0 || canBater || hasBaixado) && (
+          <motion.div 
+            className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-2 justify-center z-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            {/* Selection indicator */}
+            {selectedCards.length > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white rounded-full text-xs font-medium shadow-lg">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                {selectedCards.length}
+              </div>
+            )}
+            
+            {/* Baixar Button */}
+            {canBaixar && selectedCards.length >= 3 && (
+              <ActionButton
+                size="sm"
+                variant="success"
+                onClick={handleBaixarClick}
+                className="shadow-lg"
+              >
+                {t('game.hand.actions.baixar')} ({selectedCards.length})
+              </ActionButton>
+            )}
+            
+            {/* Discard Button */}
+            {selectedCards.length > 0 && (
+              <DiscardButton
+                size="sm"
+                onClick={handleDiscardClick}
+                className="shadow-lg"
+              >
+                {allowedActions.allowMultipleDiscard && selectedCards.length > 1 
+                  ? `${t('game.hand.actions.discard')} (${selectedCards.length})`
+                  : t('game.hand.actions.discard')
+                }
+              </DiscardButton>
+            )}
+            
+            {/* Bater Button */}
+            {canBater && (
+              <BaterButton
+                size="sm"
+                onClick={() => {/* Handle bater */}}
+                className="shadow-lg"
+              >
+                {t('game.hand.actions.bater')}
+              </BaterButton>
+            )}
+            
+            {/* End Turn */}
+            {hasBaixado && (
+              <EndTurnButton
+                size="sm"
+                onClick={onEndTurn}
+                className="shadow-lg"
+              >
+                {t('game.hand.actions.endTurn')}
+              </EndTurnButton>
+            )}
           </motion.div>
         )}
       </div>
