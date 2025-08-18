@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
-import { ActionButton, DiscardButton, BaterButton, EndTurnButton } from '../atoms/ActionButton';
+import { ActionButton, DiscardButton, BaterButton } from '../atoms/ActionButton';
 import { Card as CardComponent } from '../Card';
 import { useUIStore } from '../../stores/uiStore';
 import { cn, touchFeedback } from '../../lib/utils';
@@ -363,10 +363,10 @@ export const HandManager: React.FC<HandManagerProps> = ({
         ) : (
           <div className={cn(
             'card-grid',
-            // Responsive grid for better horizontal space usage
+            // Responsive grid optimized for vertical space - more columns = more rows
             'grid gap-1',
             isMobile 
-              ? 'grid-cols-6 sm:grid-cols-8' // Mobile: 6 columns, larger mobile: 8
+              ? 'grid-cols-10 sm:grid-cols-12 md:grid-cols-14' // Mobile: 10-14 columns for maximum vertical space efficiency
               : 'grid-cols-10 lg:grid-cols-12' // Desktop: 10-12 columns
           )}>
             <AnimatePresence mode="popLayout">
@@ -416,8 +416,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
                       onClick={() => onCardSelect(mapSortedToOriginal(index))}
                       className={cn(
                         'w-full',
-                        // Ultra-compact card size for better horizontal layout
-                        isMobile ? 'min-h-[60px] max-h-[70px]' : 'min-h-[90px]'
+                        // Card size: ultra-compact mobile for better grid density, full desktop
+                        isMobile ? 'min-h-[50px] max-h-[60px]' : 'min-h-[110px]'
                       )}
                     />
                     

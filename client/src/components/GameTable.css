@@ -1109,11 +1109,7 @@
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Optimize card grid for mobile */
-  .card-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
+  /* Let Tailwind handle card grid columns for optimal mobile layout */
 }
 
 /* Small mobile devices */
@@ -1143,10 +1139,7 @@
     max-height: 35vh;
   }
   
-  .card-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
+  /* Let Tailwind grid-cols classes handle the layout dynamically */
   
   .action-button {
     padding: 8px 12px;
@@ -2267,5 +2260,22 @@
   
   .discard-close-button:hover {
     transform: none;
+  }
+}
+
+/* Chat Sidebar Support - Desktop only */
+.game-table.chat-sidebar-open {
+  margin-right: 320px; /* Push content left by sidebar width */
+  transition: margin-right 0.3s ease-in-out;
+}
+
+.game-table {
+  transition: margin-right 0.3s ease-in-out;
+}
+
+/* Ensure mobile layout is not affected by sidebar */
+@media (max-width: 1024px) {
+  .game-table.chat-sidebar-open {
+    margin-right: 0; /* Reset margin for mobile/tablet */
   }
 }
