@@ -106,9 +106,9 @@
       },
       "mobileTips": {
         "title": "Touch Controls",
-        "longPress": "Long press cards to select them",
-        "swipeUp": "Swipe up for quick selection",
-        "swipeDown": "Swipe down to discard card",
+        "tapToSelect": "Tap cards to select them",
+        "multipleTaps": "Tap again to deselect",
+        "useButtons": "Use action buttons below to play cards",
         "dismiss": "Got it!"
       }
     },
@@ -125,7 +125,10 @@
       "canastraLimpa": "Canastra Limpa (+200)",
       "canastraSuja": "Canastra Suja (+100)",
       "canastra": "Canastra",
-      "sequence": "Sequence"
+      "sequence": "Sequence",
+      "noSequences": "No sequences yet",
+      "firstSequenceHint": "Play your first sequence to begin",
+      "addCardsToSequence": "Add cards to this sequence"
     },
     "players": {
       "team": "Team {{team}}",
@@ -148,7 +151,9 @@
     "deck": {
       "mainDeck": "Main Deck ({{count}})",
       "discardPile": "Discard Pile ({{count}})",
-      "empty": "Empty"
+      "empty": "Empty",
+      "draw": "Draw",
+      "view": "View"
     },
     "discardPile": {
       "viewerTitle": "🃏 Discard Pile",

@@ -103,6 +103,13 @@
         "suitOrder": "ordem dos naipes",
         "blackBlackRedRed": "preto/preto/vermelho/vermelho",
         "blackRedBlackRed": "preto/vermelho/preto/vermelho"
+      },
+      "mobileTips": {
+        "title": "Controles de Toque",
+        "tapToSelect": "Toque nas cartas para selecioná-las",
+        "multipleTaps": "Toque novamente para desselecionar",
+        "useButtons": "Use os botões de ação abaixo para jogar cartas",
+        "dismiss": "Entendi!"
       }
     },
     "baixar": {
@@ -118,7 +125,10 @@
       "canastraLimpa": "Canastra Limpa (+200)",
       "canastraSuja": "Canastra Suja (+100)",
       "canastra": "Canastra",
-      "sequence": "Sequência"
+      "sequence": "Sequência",
+      "noSequences": "Nenhuma sequência ainda",
+      "firstSequenceHint": "Jogue sua primeira sequência para começar",
+      "addCardsToSequence": "Adicionar cartas a esta sequência"
     },
     "players": {
       "team": "Equipe {{team}}",
@@ -141,7 +151,9 @@
     "deck": {
       "mainDeck": "Monte Principal ({{count}})",
       "discardPile": "Monte de Descarte ({{count}})",
-      "empty": "Vazio"
+      "empty": "Vazio",
+      "draw": "Comprar",
+      "view": "Ver"
     },
     "discardPile": {
       "viewerTitle": "🃏 Monte de Descarte",

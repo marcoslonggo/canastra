@@ -401,8 +401,9 @@ export const HandManager: React.FC<HandManagerProps> = ({
                     }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     whileTap={{ scale: 0.95 }}
-                    drag={!isMobile}
-                    dragSnapToOrigin
+                    drag="x"
+                    dragConstraints={{ left: -100, right: 100 }}
+                    dragElastic={0.3}
                     onPanEnd={(_, info) => handlePanEnd(index, info)}
                     onDragStart={() => handleDragStart(index)}
                     onDragEnd={handleDragEnd}
@@ -419,7 +420,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                     <CardComponent
                       card={card}
                       isSelected={isSelected}
-                      isDraggable={!isMobile}
+                      isDraggable={true}
                       isDrawnThisTurn={drawnCardIds.includes(card.id)}
                       onClick={() => onCardSelect(mapSortedToOriginal(index))}
                       className={cn(
@@ -468,9 +469,9 @@ export const HandManager: React.FC<HandManagerProps> = ({
                   </span>
                 </div>
                 <div className="text-xs text-blue-700 space-y-1">
-                  <p>• {t('game.hand.mobileTips.longPress', 'Long press cards to select')}</p>
-                  <p>• {t('game.hand.mobileTips.swipeUp', 'Swipe up to quick-select')}</p>
-                  <p>• {t('game.hand.mobileTips.swipeDown', 'Swipe down to discard')}</p>
+                  <p>• {t('game.hand.mobileTips.tapToSelect', 'Tap cards to select them')}</p>
+                  <p>• {t('game.hand.mobileTips.multipleTaps', 'Tap again to deselect')}</p>
+                  <p>• {t('game.hand.mobileTips.useButtons', 'Use action buttons below to play cards')}</p>
                 </div>
               </div>
               <button 
