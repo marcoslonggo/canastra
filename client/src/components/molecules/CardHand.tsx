@@ -46,18 +46,18 @@ const CardHand: React.FC<CardHandProps> = ({
   const deselectCard = useGameStore(state => state.deselectCard)
   const clearSelection = useGameStore(state => state.clearSelection)
   
-  const handleCardSelect = (card: Card) => {
-    if (!selectable) return
+  const handleCardSelect = (card: Card, index?: number) => {
+    if (!selectable || index === undefined) return
     
-    const isSelected = selectedCards.some(c => c.id === card.id)
+    const isSelected = selectedCards.includes(index)
     
     if (isSelected) {
-      deselectCard(card)
+      deselectCard(index)
     } else {
       if (!multiSelect) {
         clearSelection()
       }
-      selectCard(card)
+      selectCard(index)
     }
     
     onCardSelect?.(card)
@@ -159,7 +159,8 @@ const CardHand: React.FC<CardHandProps> = ({
       >
         <AnimatePresence mode="sync">
           {visibleCards.map((card, index) => {
-            const isSelected = selectedCards.some(c => c.id === card.id)
+            const cardIndex = cards.indexOf(card) // Get original index
+            const isSelected = selectedCards.includes(cardIndex)
             
             return (
               <motion.div
@@ -188,6 +189,7 @@ const CardHand: React.FC<CardHandProps> = ({
               >
                 <GameCard
                   card={card}
+                  cardIndex={cardIndex}
                   size={size}
                   isSelected={isSelected}
                   isPlayable={selectable}

@@ -12,12 +12,13 @@ interface Card {
 
 interface GameCardProps {
   card: Card
+  cardIndex?: number
   size?: 'sm' | 'md' | 'lg'
   isSelected?: boolean
   isPlayable?: boolean
   showBack?: boolean
-  onSelect?: (card: Card) => void
-  onLongPress?: (card: Card) => void
+  onSelect?: (card: Card, index?: number) => void
+  onLongPress?: (card: Card, index?: number) => void
   className?: string
   'data-testid'?: string
 }
@@ -26,6 +27,7 @@ const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
   (
     {
       card,
+      cardIndex,
       size = 'md',
       isSelected = false,
       isPlayable = true,
@@ -43,7 +45,7 @@ const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
     
     // Get selection state from store if not provided
     const isCardSelected = useGameStore(state => state.isCardSelected)
-    const actuallySelected = isSelected || isCardSelected(card)
+    const actuallySelected = isSelected || (cardIndex !== undefined && isCardSelected(cardIndex))
     
     const suitColor = gameUtils.getSuitColor(card.suit)
     const cardSize = gameUtils.getCardSize(size)
@@ -57,7 +59,7 @@ const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
       const timer = setTimeout(() => {
         if (onLongPress) {
           touchFeedback.vibrate([50, 50, 50]) // Triple vibration for long press
-          onLongPress(card)
+          onLongPress(card, cardIndex)
         }
       }, 500) // 500ms for long press
       
@@ -77,7 +79,7 @@ const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
       // Handle tap/click
       if (isPlayable && onSelect) {
         touchFeedback.vibrate(30) // Quick vibration for tap
-        onSelect(card)
+        onSelect(card, cardIndex)
       }
     }
     
@@ -92,7 +94,7 @@ const GameCard = React.forwardRef<HTMLDivElement, GameCardProps>(
     // Mouse event handlers for desktop
     const handleClick = () => {
       if (isPlayable && onSelect) {
-        onSelect(card)
+        onSelect(card, cardIndex)
       }
     }
     

@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameState, Player, Card as CardType, Sequence, User } from '../types';
-import { Card, CardBack, CardGroup } from './Card';
+import { Card } from './Card';
 import { gameService } from '../services/gameService';
 import { ChatSystem } from './organisms/ChatSystem';
 import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
 import { ActionButton } from './atoms/ActionButton';
 import { GameHeader } from './organisms/GameHeader';
 import { HandManager } from './molecules/HandManager';
+import { DeckDisplay } from './molecules/DeckDisplay';
+import { TeamSequences } from './organisms/TeamSequences';
+import { useGameStore, gameSelectors } from '../stores/gameStore';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -19,7 +22,11 @@ interface GameTableProps {
 export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProps) {
   const { t } = useTranslation();
   const [gameState, setGameState] = useState<GameState | null>(initialGameState || null);
-  const [selectedCards, setSelectedCards] = useState<number[]>([]);
+  
+  // Use gameStore for selectedCards state
+  const selectedCards = useGameStore(gameSelectors.selectedCardIndices);
+  const { toggleCardSelection, clearSelection, updateSelectedCards } = useGameStore();
+  
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
   
@@ -262,13 +269,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
 
   const handleCardSelect = (cardIndex: number) => {
-    setSelectedCards(prev => {
-      if (prev.includes(cardIndex)) {
-        return prev.filter(i => i !== cardIndex);
-      } else {
-        return [...prev, cardIndex];
-      }
-    });
+    toggleCardSelection(cardIndex);
   };
 
   const handleDrawFromDeck = () => {
@@ -337,7 +338,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     const sequences = [selectedCardData];
     
     gameService.baixar(sequences);
-    setSelectedCards([]);
+    clearSelection();
     setShowBaixarDialog(false);
     showInfo(t('game.messages.playingSequence'), 2000);
   };
@@ -349,7 +350,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     }
 
     gameService.discardCard(cardIndex, cheatsEnabled.allowMultipleDiscard);
-    setSelectedCards([]);
+    clearSelection();
     showInfo(t('game.messages.discardingCard'), 2000);
   };
 
@@ -393,7 +394,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     };
 
     // Clear selection and start processing
-    setSelectedCards([]);
+    clearSelection();
     
     // Start the discard process
     setTimeout(processNextDiscard, 100);
@@ -513,7 +514,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       newGameState.players[playerIndex].hand = sortedHand;
       setGameState(newGameState);
       // Clear selections since indices will change
-      setSelectedCards([]);
+      clearSelection();
     }
   };
 
@@ -571,7 +572,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     if (playerIndex >= 0) {
       newGameState.players[playerIndex].hand = newHand;
       setGameState(newGameState);
-      setSelectedCards(newSelectedCards);
+      updateSelectedCards(newSelectedCards);
     }
 
     setDraggedCardIndex(null);
@@ -590,7 +591,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     }
 
     gameService.addToSequence(sequenceId, selectedCards);
-    setSelectedCards([]);
+    clearSelection();
     showInfo(t('game.messages.addingToSequence'), 2000);
   };
 
@@ -628,7 +629,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     if (playerIndex >= 0) {
       newGameState.players[playerIndex].hand = newHand;
       setGameState(newGameState);
-      setSelectedCards(newSelectedCards);
+      updateSelectedCards(newSelectedCards);
     }
   };
 
@@ -703,165 +704,63 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       <ConnectedActionMessage />
 
       <div className="game-board">
-        {/* Team Sequences */}
-        <div className="team-sequences">
-          <div className="team-area">
-            <h3>{t('game.sequences.team1')}</h3>
-            <div className="sequences-container">
-              {getTeamSequences(1).map((sequence, index) => (
-                <div 
-                  key={sequence.id} 
-                  className={`sequence-item ${myTeam === 1 && isMyTurnOrCheat() ? 'sequence-droppable' : ''}`}
-                  onDrop={(e) => handleSequenceDrop(e, sequence.id)}
-                  onDragOver={handleSequenceDragOver}
-                >
-                  <div className="sequence-info">
-                    <span className="sequence-type">{getSequenceTypeDisplay(sequence)}</span>
-                    <span className="sequence-points">{sequence.points} pts</span>
-                    {myTeam === 1 && isMyTurnOrCheat() && selectedCards.length > 0 && (
-                      <button 
-                        onClick={() => handleAddToSequence(sequence.id)}
-                        className="add-to-sequence-button"
-                        title="Add selected cards to this sequence"
-                      >
-                        {t('game.hand.actions.addCards')}
-                      </button>
-                    )}
-                  </div>
-                  <CardGroup 
-                    cards={sequence.cards} 
-                    isSequence={true}
-                    className="table-sequence"
-                    drawnCardIds={gameState.turnState?.drawnCardIds || []}
-                  />
-                  {myTeam === 1 && isMyTurnOrCheat() && draggedCardIndex !== null && (
-                    <div className="drop-indicator">
-                      {t('game.hand.dropCardHere')}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="team-area">
-            <h3>{t('game.sequences.team2')}</h3>
-            <div className="sequences-container">
-              {getTeamSequences(2).map((sequence, index) => (
-                <div 
-                  key={sequence.id} 
-                  className={`sequence-item ${myTeam === 2 && isMyTurnOrCheat() ? 'sequence-droppable' : ''}`}
-                  onDrop={(e) => handleSequenceDrop(e, sequence.id)}
-                  onDragOver={handleSequenceDragOver}
-                >
-                  <div className="sequence-info">
-                    <span className="sequence-type">{getSequenceTypeDisplay(sequence)}</span>
-                    <span className="sequence-points">{sequence.points} pts</span>
-                    {myTeam === 2 && isMyTurnOrCheat() && selectedCards.length > 0 && (
-                      <button 
-                        onClick={() => handleAddToSequence(sequence.id)}
-                        className="add-to-sequence-button"
-                        title="Add selected cards to this sequence"
-                      >
-                        {t('game.hand.actions.addCards')}
-                      </button>
-                    )}
-                  </div>
-                  <CardGroup 
-                    cards={sequence.cards} 
-                    isSequence={true}
-                    className="table-sequence"
-                    drawnCardIds={gameState.turnState?.drawnCardIds || []}
-                  />
-                  {myTeam === 2 && isMyTurnOrCheat() && draggedCardIndex !== null && (
-                    <div className="drop-indicator">
-                      {t('game.hand.dropCardHere')}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Team Sequences - New Mobile-Responsive Components */}
+        <div className="team-sequences-container">
+          <TeamSequences
+            teamNumber={1}
+            sequences={getTeamSequences(1)}
+            myTeam={myTeam}
+            isMyTurn={isMyTurn}
+            selectedCards={selectedCards}
+            draggedCardIndex={draggedCardIndex}
+            drawnCardIds={gameState.turnState?.drawnCardIds}
+            allowedActions={{
+              allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
+              allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
+              allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
+            }}
+            onAddToSequence={handleAddToSequence}
+            onSequenceDrop={handleSequenceDrop}
+            onSequenceDragOver={handleSequenceDragOver}
+            className="team-1-sequences"
+          />
+          
+          <TeamSequences
+            teamNumber={2}
+            sequences={getTeamSequences(2)}
+            myTeam={myTeam}
+            isMyTurn={isMyTurn}
+            selectedCards={selectedCards}
+            draggedCardIndex={draggedCardIndex}
+            drawnCardIds={gameState.turnState?.drawnCardIds}
+            allowedActions={{
+              allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
+              allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
+              allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
+            }}
+            onAddToSequence={handleAddToSequence}
+            onSequenceDrop={handleSequenceDrop}
+            onSequenceDragOver={handleSequenceDragOver}
+            className="team-2-sequences"
+          />
         </div>
 
-        {/* Center Area */}
-        <div className="center-area">
-          <div className="deck-area">
-            <div className="deck-section">
-              <div className="deck-label">{t('game.deck.mainDeck', { count: gameState.mainDeck.length })}</div>
-              <div 
-                className="deck-pile"
-                onClick={handleDrawFromDeck}
-              >
-                {gameState.mainDeck.length > 0 ? (
-                  <CardBack className="deck-card" />
-                ) : (
-                  <div className="empty-deck">{t('game.deck.empty')}</div>
-                )}
-              </div>
-            </div>
-
-            <div className="deck-section">
-              <div className="deck-label">{t('game.deck.discardPile', { count: gameState.discardPile.length })}</div>
-              <div 
-                className="discard-pile-container"
-                onClick={handleDiscardPileClick}
-              >
-                {gameState.discardPile.length > 0 ? (
-                  <div className="discard-pile-cards">
-                    {getSortedDiscardPile().map((card, index) => (
-                      <Card 
-                        key={`discard-${index}-${card.id || `${card.rank}-${card.suit}`}`}
-                        card={card}
-                        isDrawnThisTurn={isCardDrawnThisTurn(card)}
-                        className="discard-card-small"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty-discard">{t('game.deck.empty')}</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="morto-area">
-            <div className="morto-status">
-              <div className={`morto-item ${gameState.mortosUsed[0] ? 'morto-used' : 'morto-available'}`}>
-                <div className="morto-icon">
-                  <div className="morto-deck">
-                    <div className="morto-card morto-card-1"></div>
-                    <div className="morto-card morto-card-2"></div>
-                    <div className="morto-card morto-card-3"></div>
-                  </div>
-                  <div className="morto-label">
-                    <span className="morto-title">{t('game.morto.title', { number: 1 })}</span>
-                    <span className="morto-count">{t('game.morto.cardCount', { count: gameState.mortos[0].length })}</span>
-                    <span className="morto-status-text">
-                      {gameState.mortosUsed[0] ? t('game.morto.used') : t('game.morto.available')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className={`morto-item ${gameState.mortosUsed[1] ? 'morto-used' : 'morto-available'}`}>
-                <div className="morto-icon">
-                  <div className="morto-deck">
-                    <div className="morto-card morto-card-1"></div>
-                    <div className="morto-card morto-card-2"></div>
-                    <div className="morto-card morto-card-3"></div>
-                  </div>
-                  <div className="morto-label">
-                    <span className="morto-title">{t('game.morto.title', { number: 2 })}</span>
-                    <span className="morto-count">{t('game.morto.cardCount', { count: gameState.mortos[1].length })}</span>
-                    <span className="morto-status-text">
-                      {gameState.mortosUsed[1] ? t('game.morto.used') : t('game.morto.available')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Center Area - New Mobile-Responsive DeckDisplay Component */}
+        <DeckDisplay
+          mainDeckCount={gameState.mainDeck.length}
+          onDrawFromMainDeck={handleDrawFromDeck}
+          discardPile={gameState.discardPile}
+          onDiscardPileClick={handleDiscardPileClick}
+          mortosUsed={gameState.mortosUsed}
+          mortos={gameState.mortos}
+          isMyTurn={isMyTurn}
+          allowedActions={{
+            allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
+            allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
+            allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
+          }}
+          className="center-area"
+        />
 
         {/* Player Area */}
         <div className="player-area">

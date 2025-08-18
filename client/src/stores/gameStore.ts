@@ -33,7 +33,7 @@ interface GameState {
   
   // Player's hand and cards
   hand: Card[]
-  selectedCards: Card[]
+  selectedCards: number[]
   drawnCard: Card | null
   
   // Game board state
@@ -59,9 +59,11 @@ interface GameState {
   setGameId: (id: string | null) => void
   setPlayers: (players: Player[]) => void
   setHand: (cards: Card[]) => void
-  selectCard: (card: Card) => void
-  deselectCard: (card: Card) => void
+  selectCard: (cardIndex: number) => void
+  deselectCard: (cardIndex: number) => void
+  toggleCardSelection: (cardIndex: number) => void
   clearSelection: () => void
+  updateSelectedCards: (newSelection: number[]) => void
   setDrawnCard: (card: Card | null) => void
   setDiscardPile: (cards: Card[]) => void
   setSequences: (sequences: Sequence[]) => void
@@ -81,12 +83,14 @@ interface GameState {
   resetCheats: () => void
   
   // Computed getters
-  getSelectedCardIds: () => string[]
+  getSelectedCardIndices: () => number[]
+  getSelectedCards: () => Card[]
   getMyTeam: () => number | null
   getTeamSequences: (team: number) => Sequence[]
   getOpponentSequences: () => Sequence[]
-  isCardSelected: (card: Card) => boolean
-  canPlayCard: (card: Card) => boolean
+  isCardSelected: (cardIndex: number) => boolean
+  isCardSelectedById: (cardId: string) => boolean
+  canPlayCard: (cardIndex: number) => boolean
   
   // Game state reset
   resetGameState: () => void
@@ -128,21 +132,37 @@ export const useGameStore = create<GameState>()(
     setSequences: (sequences) => set({ sequences }),
     setGamePhase: (phase) => set({ phase }),
     
-    // Card selection
-    selectCard: (card) => set((state) => {
-      const isAlreadySelected = state.selectedCards.some(c => c.id === card.id)
+    // Card selection (using indices)
+    selectCard: (cardIndex) => set((state) => {
+      const isAlreadySelected = state.selectedCards.includes(cardIndex)
       if (isAlreadySelected) return state
       
       return {
-        selectedCards: [...state.selectedCards, card]
+        selectedCards: [...state.selectedCards, cardIndex]
       }
     }),
     
-    deselectCard: (card) => set((state) => ({
-      selectedCards: state.selectedCards.filter(c => c.id !== card.id)
+    deselectCard: (cardIndex) => set((state) => ({
+      selectedCards: state.selectedCards.filter(index => index !== cardIndex)
     })),
     
+    toggleCardSelection: (cardIndex) => set((state) => {
+      const isAlreadySelected = state.selectedCards.includes(cardIndex)
+      
+      if (isAlreadySelected) {
+        return {
+          selectedCards: state.selectedCards.filter(index => index !== cardIndex)
+        }
+      } else {
+        return {
+          selectedCards: [...state.selectedCards, cardIndex]
+        }
+      }
+    }),
+    
     clearSelection: () => set({ selectedCards: [] }),
+    
+    updateSelectedCards: (newSelection) => set({ selectedCards: newSelection }),
     
     // Turn management
     setTurn: (playerId, isMyTurn) => set({
@@ -225,7 +245,11 @@ export const useGameStore = create<GameState>()(
     }),
     
     // Computed getters
-    getSelectedCardIds: () => get().selectedCards.map(card => card.id),
+    getSelectedCardIndices: () => get().selectedCards,
+    getSelectedCards: () => {
+      const state = get()
+      return state.selectedCards.map(index => state.hand[index]).filter(Boolean)
+    },
     
     getMyTeam: () => {
       const state = get()
@@ -243,11 +267,17 @@ export const useGameStore = create<GameState>()(
       return state.sequences.filter(seq => seq.teamNumber !== myTeam)
     },
     
-    isCardSelected: (card) => get().selectedCards.some(c => c.id === card.id),
+    isCardSelected: (cardIndex) => get().selectedCards.includes(cardIndex),
     
-    canPlayCard: (card) => {
+    isCardSelectedById: (cardId) => {
       const state = get()
-      return state.isMyTurn && (state.allowPlayAllCards || state.phase === 'playing')
+      const cardIndex = state.hand.findIndex(card => card.id === cardId)
+      return cardIndex !== -1 && state.selectedCards.includes(cardIndex)
+    },
+    
+    canPlayCard: (cardIndex) => {
+      const state = get()
+      return state.isMyTurn && (state.allowPlayAllCards || state.phase === 'playing') && cardIndex < state.hand.length
     },
     
     // Reset
@@ -258,7 +288,8 @@ export const useGameStore = create<GameState>()(
 // Selectors for optimized subscriptions
 export const gameSelectors = {
   hand: (state: GameState) => state.hand,
-  selectedCards: (state: GameState) => state.selectedCards,
+  selectedCardIndices: (state: GameState) => state.selectedCards,
+  selectedCards: (state: GameState) => state.getSelectedCards(),
   isMyTurn: (state: GameState) => state.isMyTurn,
   gamePhase: (state: GameState) => state.phase,
   players: (state: GameState) => state.players,
