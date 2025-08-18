@@ -9,6 +9,8 @@ import type { Sequence } from '../../types';
 
 interface TeamSequencesProps {
   teamNumber: 1 | 2;
+  teamLabel: string; // "Your Sequences" or "Opponent Sequences"
+  teamName: string;  // "Ma&Mi" or "Marcos" etc.
   sequences: Sequence[];
   
   // Player interaction
@@ -35,6 +37,8 @@ interface TeamSequencesProps {
 
 export const TeamSequences: React.FC<TeamSequencesProps> = ({
   teamNumber,
+  teamLabel,
+  teamName,
   sequences,
   myTeam,
   isMyTurn,
@@ -96,10 +100,19 @@ export const TeamSequences: React.FC<TeamSequencesProps> = ({
           animate={{ scale: 1 }}
           transition={{ duration: 0.2 }}
         >
-          {t('game.sequences.team' + teamNumber)}
+          <div className="flex flex-col items-center gap-1">
+            <span>{teamLabel}</span>
+            <span className={cn(
+              'team-name font-normal',
+              isMobile ? 'text-sm' : 'text-base',
+              'text-gray-600'
+            )}>
+              ({teamName})
+            </span>
+          </div>
           {sequences.length > 0 && (
-            <span className="ml-2 text-sm font-normal text-gray-600">
-              ({sequences.length} sequences)
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              {sequences.length} sequences
             </span>
           )}
         </motion.h3>

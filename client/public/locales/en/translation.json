@@ -120,6 +120,8 @@
     "sequences": {
       "team1": "Team 1 Sequences",
       "team2": "Team 2 Sequences",
+      "yourSequences": "Your Sequences",
+      "opponentSequences": "Opponent Sequences",
       "threeAces": "Three Aces",
       "canastraAsAAs": "Canastra Ás-à-Ás (+1000)",
       "canastraLimpa": "Canastra Limpa (+200)",

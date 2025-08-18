@@ -4,14 +4,16 @@ import { GameState, Player, Card as CardType, Sequence, User } from '../types';
 import { Card } from './Card';
 import { gameService } from '../services/gameService';
 import { ChatSystem } from './organisms/ChatSystem';
+import { useChatStore } from '../stores/chatStore';
 import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
-import { ActionButton, EndTurnButton } from './atoms/ActionButton';
+import { ActionButton } from './atoms/ActionButton';
 import { GameHeader } from './organisms/GameHeader';
 import { HandManager } from './molecules/HandManager';
 import { DeckDisplay } from './molecules/DeckDisplay';
 import { TeamSequences } from './organisms/TeamSequences';
 import { MobileTipsTooltip } from './atoms/MobileTipsTooltip';
 import { useGameStore, gameSelectors } from '../stores/gameStore';
+import { useUIStore } from '../stores/uiStore';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -27,6 +29,10 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   // Use gameStore for selectedCards state
   const selectedCards = useGameStore(gameSelectors.selectedCardIndices);
   const { toggleCardSelection, clearSelection, updateSelectedCards } = useGameStore();
+  
+  // Chat and UI stores
+  const { isSidebarOpen } = useChatStore();
+  const { isMobile } = useUIStore();
   
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
@@ -451,6 +457,38 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     return gameState.teamSequences[team - 1] || [];
   };
 
+  // Generate team display name based on players
+  const getTeamDisplayName = (team: number): string => {
+    if (!gameState) return `Team ${team}`;
+    
+    const teamPlayers = gameState.players.filter(player => player.team === team);
+    
+    if (teamPlayers.length === 0) {
+      return `Team ${team}`;
+    } else if (teamPlayers.length === 1) {
+      // Single player: use first name
+      return teamPlayers[0].username;
+    } else {
+      // Multiple players: use first 2 letters of each name with &
+      const teamName = teamPlayers
+        .map(player => player.username.substring(0, 2))
+        .join('&');
+      return teamName;
+    }
+  };
+
+  // Get team label for display (Your/Opponent based on current user's team)
+  const getTeamLabel = (team: number): string => {
+    const myPlayer = getCurrentPlayer();
+    if (!myPlayer) return getTeamDisplayName(team);
+    
+    if (myPlayer.team === team) {
+      return t('game.sequences.yourSequences');
+    } else {
+      return t('game.sequences.opponentSequences');
+    }
+  };
+
   const getSequenceTypeDisplay = (sequence: Sequence): string => {
     if (sequence.type === 'aces') return t('game.sequences.threeAces');
     if (sequence.isCanastra) {
@@ -696,7 +734,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const myTeam = myPlayer.team;
 
   return (
-    <div className="game-table">
+    <div className={`game-table ${!isMobile && isSidebarOpen ? 'chat-sidebar-open' : ''}`}>
       <GameHeader
         gameState={gameState}
         user={user}
@@ -755,13 +793,14 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         {/* End Turn Button - Mobile: Between Hand and Deck, Desktop: Bottom */}
         {isMyTurnOrCheat() && gameState.teamSequences[myTeam - 1]?.length > 0 && (
           <div className="end-turn-section order-2.5 lg:order-4 flex justify-center py-2">
-            <EndTurnButton
+            <ActionButton
               size="sm"
+              variant="warning"
               onClick={handleEndTurn}
-              className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-medium shadow-md"
+              className="font-medium shadow-md"
             >
               {t('game.hand.actions.endTurn')}
-            </EndTurnButton>
+            </ActionButton>
           </div>
         )}
 
@@ -788,6 +827,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         <div className="team-sequences-container order-1 lg:order-1">
           <TeamSequences
             teamNumber={1}
+            teamLabel={getTeamLabel(1)}
+            teamName={getTeamDisplayName(1)}
             sequences={getTeamSequences(1)}
             myTeam={myTeam}
             isMyTurn={isMyTurn}
@@ -807,6 +848,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           
           <TeamSequences
             teamNumber={2}
+            teamLabel={getTeamLabel(2)}
+            teamName={getTeamDisplayName(2)}
             sequences={getTeamSequences(2)}
             myTeam={myTeam}
             isMyTurn={isMyTurn}
