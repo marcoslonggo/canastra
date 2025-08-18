@@ -262,44 +262,6 @@ export const HandManager: React.FC<HandManagerProps> = ({
       'min-h-0 flex-shrink-0', 
       className
     )}>
-      {/* Mobile Header - Sort Button */}
-      {isMobile && (
-        <div className="hand-header flex items-center justify-between gap-2 px-3 py-2 bg-gray-50/80 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">Hand Cards</span>
-            {sortedCards.length > 0 && (
-              <span className="text-xs text-gray-500">({sortedCards.length})</span>
-            )}
-          </div>
-          
-          {/* Sort Button in Header */}
-          <ActionButton
-            size="sm"
-            variant="ghost"
-            onClick={toggleSort}
-            title={`Sort by ${sortType} (${sortOrder}ending)`}
-            className="text-xs hover:bg-white/90 bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm transition-colors"
-          >
-            <span className="flex items-center gap-1">
-              {/* Modern Sort Icon */}
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d={sortOrder === 'asc' 
-                    ? "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" 
-                    : "M3 4h13M3 8h9m-9 4h9m5 0l4 4m0 0l4-4m-4 4V8"
-                  }
-                />
-              </svg>
-              <span className="text-[9px] font-medium text-gray-600">
-                {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
-              </span>
-            </span>
-          </ActionButton>
-        </div>
-      )}
 
       {/* Desktop Header - Minimal styling */}
       {!isMobile && isMyTurn && (selectedCards.length > 0 || canBaixar || canBater) && (
@@ -367,6 +329,16 @@ export const HandManager: React.FC<HandManagerProps> = ({
           isMobile ? 'min-h-[120px] max-h-[30vh]' : 'min-h-[200px] max-h-[300px]'
         )}
       >
+        {/* Tiny Sort Icon - Positioned in small available space on mobile only */}
+        {isMobile && (
+          <button
+            onClick={toggleSort}
+            title={`Sort: ${sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}`}
+            className="absolute top-1 right-1 z-10 w-6 h-6 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 shadow-sm hover:bg-white active:scale-95 transition-all"
+          >
+            {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
+          </button>
+        )}
         {sortedCards.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400">
             <p className="text-sm">No cards in hand</p>
