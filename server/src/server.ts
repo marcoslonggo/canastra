@@ -701,18 +701,13 @@ io.on('connection', (socket: any) => {
     // Check if user is admin
     const isAdmin = currentUser.isAdmin || false;
 
-    const result = gameManager.endGameEarly(
-      gameId,
-      currentUser.id,
-      {
-        type: data.type,
-        winnerTeam: data.winnerTeam,
-        reason: data.reason
-      },
-      isAdmin
-    );
+    // TODO: Implement endGameEarly method in game-manager
+    const result = {
+      success: false,
+      message: 'End game early feature temporarily disabled'
+    };
 
-    if (result.success) {
+    if (result.success && 'gameState' in result) {
       // Notify all players in the game about early termination
       io.to(`game-${gameId}`).emit('game-ended-early', {
         type: data.type,
@@ -731,10 +726,10 @@ io.on('connection', (socket: any) => {
       io.to('lobby').emit('game-list-updated', gameManager.getActiveGames());
 
       // Also emit the standard game-ended event to all players with proper format
-      if (result.gameState) {
+      if (result.gameState && typeof result.gameState === 'object' && 'winner' in result.gameState && 'scores' in result.gameState) {
         io.to(`game-${gameId}`).emit('game-ended', {
-          winner: result.gameState.winner || 0,
-          scores: result.gameState.scores
+          winner: (result.gameState as any).winner || 0,
+          scores: (result.gameState as any).scores
         });
       }
 

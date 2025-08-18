@@ -189,6 +189,7 @@ export class GameManager {
         discardPile: [],
         mortos: [[], []],
         mortosUsed: [false, false],
+        mortosUsedByTeam: [null, null],
         teamSequences: [[], []],
         scores: [0, 0],
         phase: 'waiting',
