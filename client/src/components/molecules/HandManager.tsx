@@ -328,8 +328,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
           isMobile ? 'min-h-[120px] max-h-[30vh]' : 'min-h-[200px] max-h-[300px]'
         )}
       >
-        {/* Sort Button - Positioned in Cards Area */}
-        <div className="absolute top-2 right-2 z-10">
+        {/* Sort Button - Positioned on top-left to be visible and avoid card overlap */}
+        <div className="absolute top-2 left-2 z-10">
           <ActionButton
             size="sm"
             variant="ghost"
@@ -366,7 +366,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
             // Responsive grid optimized for vertical space - more columns = more rows
             'grid gap-1',
             isMobile 
-              ? 'grid-cols-10 sm:grid-cols-12 md:grid-cols-14' // Mobile: 10-14 columns for maximum vertical space efficiency
+              ? 'grid-cols-12 sm:grid-cols-15 md:grid-cols-18' // Mobile: 12-18 columns for ultra-dense layout and maximum vertical efficiency
               : 'grid-cols-10 lg:grid-cols-12' // Desktop: 10-12 columns
           )}>
             <AnimatePresence mode="popLayout">
@@ -416,8 +416,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
                       onClick={() => onCardSelect(mapSortedToOriginal(index))}
                       className={cn(
                         'w-full',
-                        // Card size: ultra-compact mobile for better grid density, full desktop
-                        isMobile ? 'min-h-[50px] max-h-[60px]' : 'min-h-[110px]'
+                        // Card size: ultra-dense mobile for maximum grid efficiency, full desktop
+                        isMobile ? 'min-h-[45px] max-h-[55px]' : 'min-h-[110px]'
                       )}
                     />
                     
