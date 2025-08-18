@@ -23,12 +23,15 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
     gameMessages,
     overlayMessages,
     isOverlayOpen,
+    isSidebarOpen,
     unreadCount,
     currentInput,
     showTimestamps,
     addGameMessage,
     openOverlay,
     closeOverlay,
+    openSidebar,
+    closeSidebar,
     setCurrentInput,
     clearInput,
     markAsRead,
@@ -39,10 +42,10 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (isOverlayOpen && chatEndRef.current) {
+    if ((isOverlayOpen || isSidebarOpen) && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [gameMessages, isOverlayOpen]);
+  }, [gameMessages, isOverlayOpen, isSidebarOpen]);
 
   // Set up chat event listeners
   useEffect(() => {
@@ -91,11 +94,22 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
   };
 
   const handleToggleChat = () => {
-    if (isOverlayOpen) {
-      closeOverlay();
+    if (isMobile) {
+      // Mobile: use overlay behavior
+      if (isOverlayOpen) {
+        closeOverlay();
+      } else {
+        openOverlay();
+        markAsRead();
+      }
     } else {
-      openOverlay();
-      markAsRead();
+      // Desktop: use sidebar behavior
+      if (isSidebarOpen) {
+        closeSidebar();
+      } else {
+        openSidebar();
+        markAsRead();
+      }
     }
   };
 
@@ -108,14 +122,14 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
         className={cn(
           'fixed right-4 z-40 transition-all duration-200',
           isMobile ? 'bottom-20' : 'bottom-4',
-          isOverlayOpen && 'bg-primary-500 text-white',
-          unreadCount > 0 && !isOverlayOpen && 'ring-2 ring-red-500 animate-pulse'
+          (isOverlayOpen || isSidebarOpen) && 'bg-primary-500 text-white',
+          unreadCount > 0 && !isOverlayOpen && !isSidebarOpen && 'ring-2 ring-red-500 animate-pulse'
         )}
         aria-label={isOverlayOpen ? t('game.chat.hideChat') : t('game.chat.showChat')}
       >
         <span className="flex items-center gap-2">
           💬
-          {unreadCount > 0 && !isOverlayOpen && (
+          {unreadCount > 0 && !isOverlayOpen && !isSidebarOpen && (
             <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
               {unreadCount}
             </span>
@@ -123,9 +137,9 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
         </span>
       </Button>
 
-      {/* Overlay Messages (Auto-fade when chat is closed) */}
+      {/* Overlay Messages (Auto-fade when chat is closed) - Mobile only */}
       <AnimatePresence>
-        {!isOverlayOpen && overlayMessages.length > 0 && (
+        {isMobile && !isOverlayOpen && overlayMessages.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -162,19 +176,14 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
+      {/* Mobile Chat Panel (Overlay) */}
       <AnimatePresence>
-        {isOverlayOpen && (
+        {isMobile && isOverlayOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={cn(
-              'fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col',
-              isMobile 
-                ? 'inset-x-4 bottom-4 top-20' 
-                : 'right-4 bottom-4 w-80 h-96'
-            )}
+            className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col inset-x-4 bottom-4 top-20"
           >
             {/* Chat Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -193,10 +202,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
             </div>
 
             {/* Messages Area */}
-            <div className={cn(
-              'flex-1 overflow-y-auto p-4 space-y-3',
-              isMobile ? 'min-h-0' : 'max-h-64'
-            )}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
               {gameMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
                   {t('game.chat.noMessages')}
@@ -230,6 +236,89 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
 
             {/* Input Form - Fixed at bottom */}
             <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 flex-shrink-0">
+              <div className="flex gap-2">
+                <Input
+                  value={currentInput}
+                  onChange={(e) => setCurrentInput(e.target.value)}
+                  placeholder={t('game.chat.placeholder')}
+                  maxLength={200}
+                  className="flex-1 text-gray-900 placeholder-gray-500"
+                  autoComplete="off"
+                />
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={!currentInput.trim()}
+                  className="px-4 flex-shrink-0"
+                >
+                  {t('game.chat.send')}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Chat Sidebar */}
+      <AnimatePresence>
+        {!isMobile && isSidebarOpen && (
+          <motion.div
+            initial={{ x: 320, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 320, opacity: 0 }}
+            className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-gray-200 shadow-2xl flex flex-col z-40"
+          >
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t('game.chat.title')}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={closeSidebar}
+                className="p-1 h-auto"
+                aria-label={t('common.close')}
+              >
+                ✕
+              </Button>
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {gameMessages.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  {t('game.chat.noMessages')}
+                </div>
+              ) : (
+                gameMessages.map((message, index) => (
+                  <motion.div
+                    key={`${message.id}-${index}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col gap-1"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-primary-600">
+                        {message.username}:
+                      </span>
+                      {showTimestamps && (
+                        <span className="text-xs text-gray-500">
+                          {new Date(message.timestamp).toLocaleTimeString()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-900 ml-2 break-words">
+                      {message.text}
+                    </p>
+                  </motion.div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input Form - Fixed at bottom */}
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
               <div className="flex gap-2">
                 <Input
                   value={currentInput}

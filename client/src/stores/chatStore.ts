@@ -16,6 +16,7 @@ interface ChatState {
   
   // UI state
   isOverlayOpen: boolean
+  isSidebarOpen: boolean  // New state for desktop sidebar
   overlayMessages: ChatMessage[]
   unreadCount: number
   
@@ -42,6 +43,11 @@ interface ChatState {
   openOverlay: () => void
   closeOverlay: () => void
   toggleOverlay: () => void
+  
+  // Sidebar management (desktop only)
+  openSidebar: () => void
+  closeSidebar: () => void
+  toggleSidebar: () => void
   
   // Auto-fade management
   updateOverlayMessages: () => void
@@ -90,6 +96,7 @@ export const useChatStore = create<ChatState>()(
     
     // UI state
     isOverlayOpen: false,
+    isSidebarOpen: false,
     overlayMessages: [],
     unreadCount: 0,
     
@@ -173,6 +180,29 @@ export const useChatStore = create<ChatState>()(
         state.closeOverlay()
       } else {
         state.openOverlay()
+      }
+    },
+    
+    // Sidebar management (desktop only)
+    openSidebar: () => {
+      set({ 
+        isSidebarOpen: true,
+        overlayMessages: [], // Clear overlay messages when opening sidebar
+        unreadCount: 0 // Mark as read when opening
+      })
+      get().clearAutoFadeTimeout()
+    },
+    
+    closeSidebar: () => {
+      set({ isSidebarOpen: false })
+    },
+    
+    toggleSidebar: () => {
+      const state = get()
+      if (state.isSidebarOpen) {
+        state.closeSidebar()
+      } else {
+        state.openSidebar()
       }
     },
     
@@ -263,6 +293,7 @@ export const chatSelectors = {
   
   ui: (state: ChatState) => ({
     isOverlayOpen: state.isOverlayOpen,
+    isSidebarOpen: state.isSidebarOpen,
     unreadCount: state.unreadCount,
     hasUnreadMessages: state.hasUnreadMessages(),
   }),

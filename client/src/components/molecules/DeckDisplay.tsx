@@ -2,7 +2,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardBack } from '../Card';
-import { ActionButton } from '../atoms/ActionButton';
 import { useUIStore } from '../../stores/uiStore';
 import { cn } from '../../lib/utils';
 import type { Card as CardType } from '../../types';
@@ -125,23 +124,44 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
         >
           {discardPile.length > 0 ? (
             <div className="discard-pile-cards relative">
-              {getSortedDiscardPile().slice(-2).map((card, index) => (
-                <Card 
-                  key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
-                  card={card}
-                  className={cn(
-                    'discard-card-small absolute shadow-sm',
-                    isMobile ? 'w-6 h-9' : 'w-16 h-24',
-                    index === 1 && 'translate-x-0.5 translate-y-0.5 z-10'
+              {isMobile ? (
+                // Mobile: Show only last 2 cards with counter for space efficiency
+                <>
+                  {getSortedDiscardPile().slice(-2).map((card, index) => (
+                    <Card 
+                      key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                      card={card}
+                      className={cn(
+                        'discard-card-small absolute shadow-sm w-6 h-9',
+                        index === 1 && 'translate-x-0.5 translate-y-0.5 z-10'
+                      )}
+                    />
+                  ))}
+                  {discardPile.length > 2 && (
+                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-[10px] font-bold shadow-sm flex items-center justify-center w-4 h-4">
+                      +{discardPile.length - 2}
+                    </div>
                   )}
-                />
-              ))}
-              {discardPile.length > 2 && (
-                <div className={cn(
-                  'absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center',
-                  isMobile ? 'w-4 h-4 text-[10px]' : 'w-5 h-5 text-xs'
-                )}>
-                  +{discardPile.length - 2}
+                </>
+              ) : (
+                // Desktop: Show all cards in a fan layout with reduced size
+                <div className="flex items-center relative">
+                  {getSortedDiscardPile().map((card, index) => (
+                    <Card 
+                      key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                      card={card}
+                      className={cn(
+                        'discard-card-reduced shadow-sm w-12 h-16',
+                        index > 0 && '-ml-8', // Overlap cards to save space
+                        index === discardPile.length - 1 && 'z-10' // Top card on top
+                      )}
+                    />
+                  ))}
+                  {discardPile.length > 1 && (
+                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
+                      {discardPile.length}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -161,34 +181,67 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
         )}
       </div>
 
-      {/* Compact Morto Icon System */}
+      {/* Morto Display - Compact Icon (Mobile) vs Individual Piles (Desktop) */}
       {mortos.length > 0 && (
-        <motion.div 
-          className={cn(
-            'morto-compact-icon relative cursor-pointer flex-shrink-0',
-            isMobile ? 'w-6 h-6' : 'w-16 h-16'
+        <>
+          {/* Mobile: Compact Icon System */}
+          {isMobile ? (
+            <motion.div 
+              className="morto-compact-icon relative cursor-pointer flex-shrink-0 w-6 h-6"
+              onClick={() => setShowMortoDetails(!showMortoDetails)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {/* Morto Icon */}
+              <div className="morto-stack-icon bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg shadow-md flex items-center justify-center text-white font-bold w-6 h-6 text-xs">
+                📦
+              </div>
+              
+              {/* Availability Indicator */}
+              <div className={cn(
+                'absolute -top-1 -right-1 flex items-center justify-center rounded-full text-white font-bold shadow-lg w-4 h-4 text-[10px]',
+                availableCount > 0 ? 'bg-green-500' : 'bg-red-500'
+              )}>
+                {availableCount}
+              </div>
+            </motion.div>
+          ) : (
+            /* Desktop: Individual Morto Piles */
+            <div className="morto-individual-piles flex gap-3 flex-shrink-0">
+              {mortos.map((morto, index) => (
+                <motion.div 
+                  key={`morto-pile-${index}`}
+                  className="morto-pile relative cursor-pointer"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                  title={`${t('game.morto.title', { number: index + 1 })} - ${morto.length} ${t('game.morto.cards')} (${mortosUsed[index] ? t('game.morto.used') : t('game.morto.available')})`}
+                >
+                  {/* Morto Pile Icon */}
+                  <div className={cn(
+                    'morto-pile-icon rounded-lg shadow-md flex flex-col items-center justify-center text-white font-bold w-16 h-20 text-sm transition-colors',
+                    mortosUsed[index] 
+                      ? 'bg-gradient-to-br from-red-500 to-red-700' 
+                      : 'bg-gradient-to-br from-purple-500 to-purple-700'
+                  )}>
+                    <div className="text-xl">📦</div>
+                    <div className="text-xs mt-1">{index + 1}</div>
+                  </div>
+                  
+                  {/* Card Count Indicator */}
+                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-lg w-5 h-5 flex items-center justify-center">
+                    {morto.length}
+                  </div>
+                  
+                  {/* Status Indicator */}
+                  <div className={cn(
+                    'absolute -bottom-1 -left-1 rounded-full w-3 h-3 shadow-sm',
+                    mortosUsed[index] ? 'bg-red-500' : 'bg-green-500'
+                  )} />
+                </motion.div>
+              ))}
+            </div>
           )}
-          onClick={() => setShowMortoDetails(!showMortoDetails)}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {/* Morto Icon */}
-          <div className={cn(
-            'morto-stack-icon bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg shadow-md flex items-center justify-center text-white font-bold',
-            isMobile ? 'w-6 h-6 text-xs' : 'w-16 h-16 text-xl'
-          )}>
-            📦
-          </div>
-          
-          {/* Availability Indicator */}
-          <div className={cn(
-            'absolute -top-1 -right-1 flex items-center justify-center rounded-full text-white font-bold shadow-lg',
-            availableCount > 0 ? 'bg-green-500' : 'bg-red-500',
-            isMobile ? 'w-4 h-4 text-[10px]' : 'w-6 h-6 text-sm'
-          )}>
-            {availableCount}
-          </div>
-        </motion.div>
+        </>
       )}
 
       {/* Morto Details Modal/Overlay */}

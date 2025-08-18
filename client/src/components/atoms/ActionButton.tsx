@@ -177,7 +177,7 @@ export const DrawButton = React.forwardRef<HTMLButtonElement, Omit<ActionButtonP
 );
 
 export const DiscardButton = React.forwardRef<HTMLButtonElement, Omit<ActionButtonProps, 'variant'>>(
-  (props, ref) => <ActionButton ref={ref} variant="outline" className="!bg-blue-500 !text-white hover:!bg-blue-600 active:!bg-blue-700 !border-blue-500" {...props} />
+  (props, ref) => <ActionButton ref={ref} variant="primary" className="bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 border-blue-500 shadow-md hover:shadow-lg" {...props} />
 );
 
 export const BaterButton = React.forwardRef<HTMLButtonElement, Omit<ActionButtonProps, 'variant'>>(
