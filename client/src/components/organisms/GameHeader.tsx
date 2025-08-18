@@ -30,7 +30,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
-  const { isMobile, isTablet } = useUIStore();
   
   const currentPlayer = gameState.players[gameState.currentTurn];
   const myTeam = myPlayer.team;
@@ -41,7 +40,8 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       className
     )}>
       {/* Mobile/Tablet Compact Layout */}
-      {(isMobile || isTablet) && (
+      <div className="block lg:hidden">
+        {/* Mobile Layout */}
         <div className="flex flex-col gap-3 p-4">
           {/* Top Row: Title + Leave Button */}
           <div className="flex items-center justify-between">
@@ -58,7 +58,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 size="sm"
                 className="text-red-600 hover:text-red-700"
               >
-                {isMobile ? '✕' : t('game.leaveGame')}
+✕
               </ActionButton>
             </div>
           </div>
@@ -112,15 +112,15 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                 className="ml-2"
                 title="Cheat Menu"
               >
-                {isMobile ? '⚡' : t('game.cheat.title')}
+⚡
               </ActionButton>
             )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Desktop Layout */}
-      {!isMobile && !isTablet && (
+      <div className="hidden lg:block">
         <div className="flex items-center justify-between px-6 py-4">
           {/* Left: Game Info */}
           <div className="game-info flex flex-col gap-2">
@@ -193,7 +193,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
             </ActionButton>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
