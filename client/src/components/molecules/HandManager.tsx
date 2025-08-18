@@ -263,7 +263,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
       className
     )}>
       {/* Desktop Header - Minimal styling */}
-      {!isMobile && isMyTurn && (selectedCards.length > 0 || canBaixar || canBater || hasBaixado) && (
+      {!isMobile && isMyTurn && (selectedCards.length > 0 || canBaixar || canBater) && (
         <div className="hand-header flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-100">
           {/* Selection indicator */}
           {selectedCards.length > 0 && (
@@ -311,15 +311,6 @@ export const HandManager: React.FC<HandManagerProps> = ({
               </BaterButton>
             )}
             
-            {/* End Turn */}
-            {hasBaixado && (
-              <EndTurnButton
-                size="sm"
-                onClick={onEndTurn}
-              >
-                {t('game.hand.actions.endTurn')}
-              </EndTurnButton>
-            )}
           </div>
         </div>
       )}
@@ -397,19 +388,23 @@ export const HandManager: React.FC<HandManagerProps> = ({
                     }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     whileTap={{ scale: 0.95 }}
-                    drag="x"
-                    dragConstraints={{ left: -100, right: 100 }}
-                    dragElastic={0.3}
+                    {...(!isMobile && {
+                      drag: "x",
+                      dragConstraints: { left: -100, right: 100 },
+                      dragElastic: 0.3,
+                      onDragStart: () => handleDragStart(index),
+                      onDragEnd: handleDragEnd
+                    })}
                     onPanEnd={(_, info) => handlePanEnd(index, info)}
-                    onDragStart={() => handleDragStart(index)}
-                    onDragEnd={handleDragEnd}
                     className={cn(
                       'relative cursor-pointer',
                       isDragTarget && 'ring-2 ring-blue-400',
                       isDrawn && 'ring-2 ring-green-400'
                     )}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDrop={(e) => handleDrop(e, index)}
+                    {...(!isMobile && {
+                      onDragOver: (e) => handleDragOver(e, index),
+                      onDrop: (e) => handleDrop(e, index)
+                    })}
                     onTouchStart={(e) => handleTouchStart(index, e)}
                     onTouchEnd={handleTouchEnd}
                   >
@@ -450,7 +445,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
         
 
         {/* Floating Action Buttons - Mobile Only */}
-        {isMobile && isMyTurn && (selectedCards.length > 0 || canBater || hasBaixado) && (
+        {isMobile && isMyTurn && (selectedCards.length > 0 || canBater) && (
           <motion.div 
             className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-2 justify-center z-20"
             initial={{ opacity: 0, y: 20 }}
@@ -502,16 +497,6 @@ export const HandManager: React.FC<HandManagerProps> = ({
               </BaterButton>
             )}
             
-            {/* End Turn */}
-            {hasBaixado && (
-              <EndTurnButton
-                size="sm"
-                onClick={onEndTurn}
-                className="shadow-lg"
-              >
-                {t('game.hand.actions.endTurn')}
-              </EndTurnButton>
-            )}
           </motion.div>
         )}
       </div>

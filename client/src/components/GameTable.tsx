@@ -5,7 +5,7 @@ import { Card } from './Card';
 import { gameService } from '../services/gameService';
 import { ChatSystem } from './organisms/ChatSystem';
 import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
-import { ActionButton } from './atoms/ActionButton';
+import { ActionButton, EndTurnButton } from './atoms/ActionButton';
 import { GameHeader } from './organisms/GameHeader';
 import { HandManager } from './molecules/HandManager';
 import { DeckDisplay } from './molecules/DeckDisplay';
@@ -752,8 +752,21 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           />
         </div>
 
+        {/* End Turn Button - Mobile: Between Hand and Deck, Desktop: Bottom */}
+        {isMyTurnOrCheat() && gameState.teamSequences[myTeam - 1]?.length > 0 && (
+          <div className="end-turn-section order-2.5 lg:order-4 flex justify-center py-2">
+            <EndTurnButton
+              size="sm"
+              onClick={handleEndTurn}
+              className="bg-yellow-500 hover:bg-yellow-600 text-yellow-900 font-medium shadow-md"
+            >
+              {t('game.hand.actions.endTurn')}
+            </EndTurnButton>
+          </div>
+        )}
+
         {/* Center Area - Deck Area (3rd Priority) */}
-        <div className="center-deck-area order-3 lg:order-3 bg-green-800/20 rounded-lg p-2 overflow-hidden flex-shrink-0 min-h-[80px]">
+        <div className="center-deck-area order-3 lg:order-3 bg-green-800/20 rounded-lg p-2 flex-shrink-0 min-h-[80px] relative z-10">
           <DeckDisplay
             mainDeckCount={gameState.mainDeck.length}
             onDrawFromMainDeck={handleDrawFromDeck}

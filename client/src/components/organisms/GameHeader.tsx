@@ -116,13 +116,13 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
       {/* Desktop Layout */}
       <div className="hidden lg:block">
-        <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center justify-between px-8 py-6">
           {/* Left: Game Info */}
-          <div className="game-info flex flex-col gap-2">
-            <h2 className="text-xl font-bold text-gray-900">
-              {t('game.title', { roomCode: gameState.id })}
+          <div className="game-info flex flex-col gap-3">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Room #{gameState.id.slice(-4)}
             </h2>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-8">
               <div className={cn(
                 'px-4 py-2 rounded-lg font-medium',
                 myTeam === 1 
@@ -144,22 +144,22 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           </div>
 
           {/* Right: Controls */}
-          <div className="game-controls flex items-center gap-4">
+          <div className="game-controls flex items-center gap-6">
             <LanguageSwitcher />
             
             {/* Turn Indicator */}
             <div className="turn-indicator">
               {isMyTurn ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="font-medium text-green-800">
+                <div className="flex items-center gap-3 px-4 py-2 bg-green-100 rounded-lg">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                  <span className="font-medium text-green-800 text-lg">
                     {t('game.yourTurn')}
                   </span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-100 rounded-lg">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                  <span className="text-orange-800">
+                <div className="flex items-center gap-3 px-4 py-2 bg-orange-100 rounded-lg">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
+                  <span className="text-orange-800 text-lg">
                     {t('game.opponentTurn', { player: currentPlayer.username })}
                   </span>
                 </div>
