@@ -115,7 +115,6 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
       >
         <span className="flex items-center gap-2">
           💬
-          {t('game.chat.title')}
           {unreadCount > 0 && !isOverlayOpen && (
             <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
               {unreadCount}
@@ -171,7 +170,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             className={cn(
-              'fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl',
+              'fixed z-50 bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col',
               isMobile 
                 ? 'inset-x-4 bottom-4 top-20' 
                 : 'right-4 bottom-4 w-80 h-96'
@@ -194,7 +193,10 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-64">
+            <div className={cn(
+              'flex-1 overflow-y-auto p-4 space-y-3',
+              isMobile ? 'min-h-0' : 'max-h-64'
+            )}>
               {gameMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
                   {t('game.chat.noMessages')}
@@ -226,22 +228,22 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ gameId, className }) => 
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input Form */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
+            {/* Input Form - Fixed at bottom */}
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200 flex-shrink-0">
               <div className="flex gap-2">
                 <Input
                   value={currentInput}
                   onChange={(e) => setCurrentInput(e.target.value)}
                   placeholder={t('game.chat.placeholder')}
                   maxLength={200}
-                  className="flex-1"
+                  className="flex-1 text-gray-900 placeholder-gray-500"
                   autoComplete="off"
                 />
                 <Button
                   type="submit"
                   variant="primary"
                   disabled={!currentInput.trim()}
-                  className="px-4"
+                  className="px-4 flex-shrink-0"
                 >
                   {t('game.chat.send')}
                 </Button>
