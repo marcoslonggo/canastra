@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GameState, Player, Card as CardType, Sequence, User, ChatMessage } from '../types';
+import { GameState, Player, Card as CardType, Sequence, User } from '../types';
 import { Card, CardBack, CardGroup } from './Card';
 import { gameService } from '../services/gameService';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ChatSystem } from './organisms/ChatSystem';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -37,24 +38,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [showDiscardViewer, setShowDiscardViewer] = useState(false);
   const [selectedDiscardCards, setSelectedDiscardCards] = useState<Set<string>>(new Set());
   const [keySequence, setKeySequence] = useState('');
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [showChat, setShowChat] = useState(false);
-  const [overlayMessages, setOverlayMessages] = useState<ChatMessage[]>([]);
-  const [fadeTimeouts, setFadeTimeouts] = useState<Map<string, NodeJS.Timeout>>(new Map());
-  const [hasNewMessages, setHasNewMessages] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const maxOverlayMessages = 3;
-  const overlayFadeDelay = 4000; // 4 seconds
-  const maxChatHistory = 100; // Limit chat history to prevent performance issues
   
   // Store listener references for cleanup
   const listenersRef = useRef<{
     gameStateUpdate?: Function;
     gameEnded?: Function;
     actionError?: Function;
-    chatMessage?: Function;
     error?: Function;
     playerAction?: Function;
   }>({});
@@ -88,10 +77,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     }
   }, [gameState, user.id]);
 
-  useEffect(() => {
-    // Auto scroll chat to bottom
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -152,59 +137,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [keySequence]);
 
-  // Add message to overlay with auto-fade
-  const addOverlayMessage = (message: ChatMessage) => {
-    setOverlayMessages(prev => {
-      const updated = [...prev, message].slice(-maxOverlayMessages);
-      
-      // Increment unread count and trigger notification animation
-      setUnreadCount(prev => prev + 1);
-      setHasNewMessages(true);
-      setTimeout(() => setHasNewMessages(false), 600);
-      
-      // Set up fade timeout for this message
-      const timeoutId = setTimeout(() => {
-        removeOverlayMessage(message.id);
-      }, overlayFadeDelay);
-      
-      setFadeTimeouts(prev => {
-        const newMap = new Map(prev);
-        newMap.set(message.id, timeoutId);
-        return newMap;
-      });
-      
-      return updated;
-    });
-  };
 
-  // Remove message from overlay
-  const removeOverlayMessage = (messageId: string) => {
-    setOverlayMessages(prev => prev.filter(msg => msg.id !== messageId));
-    setFadeTimeouts(prev => {
-      const newMap = new Map(prev);
-      const timeoutId = newMap.get(messageId);
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        newMap.delete(messageId);
-      }
-      return newMap;
-    });
-  };
 
-  // Clear overlay messages when chat is opened
-  const handleChatToggle = () => {
-    const newShowChat = !showChat;
-    setShowChat(newShowChat);
-    
-    if (newShowChat) {
-      // Clear overlay messages, timeouts, and unread count when opening chat
-      fadeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-      setFadeTimeouts(new Map());
-      setOverlayMessages([]);
-      setHasNewMessages(false);
-      setUnreadCount(0); // Reset unread count when chat is opened
-    }
-  };
 
   const cleanupEventListeners = () => {
     // Remove existing listeners
@@ -216,9 +150,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     }
     if (listenersRef.current.actionError) {
       gameService.off('action-error', listenersRef.current.actionError);
-    }
-    if (listenersRef.current.chatMessage) {
-      gameService.off('chat-message', listenersRef.current.chatMessage);
     }
     if (listenersRef.current.error) {
       gameService.off('error', listenersRef.current.error);
@@ -299,43 +230,16 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       }
     };
 
-    listenersRef.current.chatMessage = (message: ChatMessage) => {
-      // Only show messages for this game
-      if (message.room === 'game' && message.gameId === gameState?.id) {
-        setChatMessages(prev => [...prev, message].slice(-maxChatHistory));
-        
-        // Add to overlay messages if chat is closed
-        if (!showChat) {
-          addOverlayMessage(message);
-        }
-      }
-    };
 
-    const chatHistoryHandler = (data: { room: string; gameId?: string; messages: ChatMessage[] }) => {
-      console.log('🕹️ GameTable received chat history:', data);
-      console.log('🕹️ Current gameState?.id:', gameState?.id);
-      console.log('🕹️ Condition check - room:', data.room === 'game', 'gameId match:', data.gameId === gameState?.id);
-      if (data.room === 'game' && data.gameId === gameState?.id) {
-        console.log('🕹️ Setting game table chat messages:', data.messages.length, 'messages');
-        setChatMessages(data.messages.slice(-maxChatHistory));
-      } else {
-        console.log('🕹️ Not setting messages - condition failed');
-      }
-    };
     
     // Add the listeners
     gameService.on('game-state-update', listenersRef.current.gameStateUpdate);
     gameService.on('game-ended', listenersRef.current.gameEnded);
     gameService.on('action-error', listenersRef.current.actionError);
-    gameService.on('chat-message', listenersRef.current.chatMessage);
-    gameService.on('chat-history', chatHistoryHandler);
     gameService.on('error', listenersRef.current.error);
     gameService.on('player-action', listenersRef.current.playerAction);
     
-    console.log('🕹️ GameTable event listeners added, including chat-history');
-    
-    // Note: Chat history will be requested when gameState is available
-    // We don't automatically rejoin here to avoid connection loops
+    console.log('🕹️ GameTable event listeners added');
 
     // Handle connection issues
     if (!gameService.isConnected()) {
@@ -358,20 +262,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     return player ? player.hand : [];
   };
 
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (chatInput.trim() && gameState) {
-      gameService.sendChatMessage(chatInput.trim(), 'game', gameState.id);
-      setChatInput('');
-    }
-  };
 
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      fadeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
-    };
-  }, [fadeTimeouts]);
 
   const handleCardSelect = (cardIndex: number) => {
     setSelectedCards(prev => {
@@ -586,35 +477,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     return gameState.turnState?.drawnCardIds?.includes(card.id) || false;
   };
 
-  const sortHand = () => {
-    if (!myPlayer) return;
-    
-    const sortedHand = [...myPlayer.hand].sort((a, b) => {
-      const suitOrder = ['hearts', 'diamonds', 'clubs', 'spades', 'joker'];
-      
-      // Sort by suit first
-      if (a.suit !== b.suit) {
-        const suitComparison = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
-        return sortOrder === 'asc' ? suitComparison : -suitComparison;
-      }
-      
-      // Then by value
-      const valueComparison = a.value - b.value;
-      return sortOrder === 'asc' ? valueComparison : -valueComparison;
-    });
-
-    // Update the player's hand through game service
-    // Note: This would need server-side support to persist the order
-    // For now, we'll handle it locally by updating the game state
-    if (gameState) {
-      const newGameState = { ...gameState };
-      const playerIndex = newGameState.players.findIndex(p => p.id === myPlayer.id);
-      if (playerIndex >= 0) {
-        newGameState.players[playerIndex].hand = sortedHand;
-        setGameState(newGameState);
-      }
-    }
-  };
 
   const getSortedHand = (hand: CardType[], type: string, order: string) => {
     return [...hand].sort((a, b) => {
@@ -800,7 +662,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const currentPlayer = gameState.players[gameState.currentTurn];
   const myTeam = myPlayer.team;
-  const opponentTeam = myTeam === 1 ? 2 : 1;
 
   return (
     <div className="game-table">
@@ -1279,74 +1140,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         </div>
       )}
 
-      {/* Modern Chat Toggle Button */}
-      <button 
-        onClick={handleChatToggle}
-        className={`chat-toggle-button ${showChat ? 'chat-open' : ''} ${hasNewMessages ? 'new-message' : ''}`}
-        title={showChat ? t('game.chat.hideChat') : t('game.chat.showChat')}
-      >
-{t('game.chat.title')}{unreadCount > 0 && !showChat ? ` (${unreadCount})` : ''}
-      </button>
-
-      {/* Chat Panel */}
-      {showChat && (
-        <div className="game-chat-panel">
-          <div className="chat-header">
-            <h4>{t('game.chat.title')}</h4>
-            <button 
-              onClick={() => setShowChat(false)}
-              className="chat-close-button"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="chat-messages">
-            {chatMessages.length === 0 ? (
-              <div className="no-messages">{t('game.chat.noMessages')}</div>
-            ) : (
-              chatMessages.map((message, index) => (
-                <div key={`${message.id}-${index}`} className="chat-message">
-                  <span className="message-author">{message.username}:</span>
-                  <span className="message-text">{message.message}</span>
-                  <span className="message-time">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          
-          <form onSubmit={handleSendChat} className="chat-input-form">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder={t('game.chat.placeholder')}
-              maxLength={200}
-              className="chat-input"
-            />
-            <button 
-              type="submit"
-              disabled={!chatInput.trim()}
-              className="chat-send-button"
-            >
-              {t('game.chat.send')}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Floating Overlay Messages (Auto-fade) */}
-      {!showChat && overlayMessages.length > 0 && (
-        <div className="chat-overlay-messages">
-          {overlayMessages.map((message) => (
-            <div key={message.id} className="overlay-message">
-              <span className="message-author">{message.username}:</span>
-              <span className="message-text">{message.message}</span>
-            </div>
-          ))}
-        </div>
+      {/* ChatSystem - Mobile-optimized with Zustand integration */}
+      {gameState && (
+        <ChatSystem gameId={gameState.id} />
       )}
 
       {/* Morto Selection Dialog */}
