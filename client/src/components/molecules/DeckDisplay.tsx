@@ -70,8 +70,9 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
   return (
     <div className={cn(
       'deck-display flex items-center w-full',
-      // Ensure enough space for overlapping cards - remove max-w constraint
-      isMobile ? 'justify-center gap-2 px-4 py-2' : 'justify-center gap-6 p-4',
+      // Ensure enough space for overlapping cards and allow overflow
+      'overflow-visible min-w-0',
+      isMobile ? 'justify-center gap-2 px-1 py-2' : 'justify-center gap-4 px-2 py-4',
       className
     )}>
       {/* Main Deck Section - Ultra Compact */}
@@ -112,10 +113,10 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
       </div>
 
       {/* Discard Pile Section - Ensure space for overlapping cards */}
-      <div className="deck-section flex flex-col items-center gap-1 flex-shrink-0 min-w-0">
+      <div className="deck-section flex flex-col items-center gap-1 flex-grow-0 flex-shrink-0 overflow-visible">
         <motion.div 
           className={cn(
-            'discard-pile-container relative cursor-pointer',
+            'discard-pile-container relative cursor-pointer overflow-visible',
             'hover:scale-105 transition-transform'
           )}
           onClick={onDiscardPileClick}
@@ -123,64 +124,71 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
           whileTap={{ scale: 0.98 }}
         >
           {discardPile.length > 0 ? (
-            <div className="discard-pile-cards relative">
+            <div className="discard-pile-cards relative overflow-visible">
               {isMobile ? (
-                // Mobile: Show only last 2 cards with counter for space efficiency
-                <>
-                  {getSortedDiscardPile().slice(-2).map((card, index) => (
-                    <Card 
-                      key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
-                      card={card}
-                      className={cn(
-                        'discard-card-small absolute shadow-sm w-6 h-9',
-                        index === 1 && 'translate-x-0.5 translate-y-0.5 z-10'
+                // Mobile: Show more cards with optimized overlap (show only left portion with number + suit)
+                (() => {
+                  const sortedCards = getSortedDiscardPile();
+                  const maxMobileCards = Math.min(sortedCards.length, 6); // Show up to 6 cards on mobile
+                  const cardsToShow = sortedCards.slice(-maxMobileCards);
+                  
+                  return (
+                    <div className="flex items-center relative" style={{ minWidth: `${12 + maxMobileCards * 8}px` }}>
+                      {cardsToShow.map((card, index) => (
+                        <Card 
+                          key={`discard-mobile-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                          card={card}
+                          className={cn(
+                            'discard-card-mobile shadow-sm w-6 h-9',
+                            index > 0 && '-ml-4', // Heavy overlap showing only left portion
+                            index === cardsToShow.length - 1 && 'z-10'
+                          )}
+                        />
+                      ))}
+                      {sortedCards.length > maxMobileCards && (
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-[10px] font-bold shadow-sm flex items-center justify-center w-3 h-3">
+                          +{sortedCards.length - maxMobileCards}
+                        </div>
                       )}
-                    />
-                  ))}
-                  {discardPile.length > 2 && (
-                    <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-[10px] font-bold shadow-sm flex items-center justify-center w-4 h-4">
-                      +{discardPile.length - 2}
                     </div>
-                  )}
-                </>
+                  );
+                })()
               ) : (
                 // Desktop: Adaptive layout based on card count
                 (() => {
                   const sortedCards = getSortedDiscardPile();
                   const cardCount = sortedCards.length;
                   
-                  if (cardCount <= 6) {
-                    // Small number: Single row with safe overlap - ensure container width accommodates all cards
-                    const containerWidth = cardCount === 1 ? 48 : (48 + (cardCount - 1) * 24); // 48px first card + 24px per additional card
+                  if (cardCount <= 8) {
+                    // Single row with heavy overlap showing only left portion (number + suit)
+                    const containerWidth = cardCount === 1 ? 48 : (48 + (cardCount - 1) * 16); // 48px first card + 16px per additional card
                     return (
-                      <div className="flex items-center relative" style={{ minWidth: `${containerWidth}px` }}>
+                      <div className="flex items-center relative overflow-visible" style={{ minWidth: `${containerWidth}px`, paddingLeft: '8px', paddingRight: '8px' }}>
                         {sortedCards.map((card, index) => (
                           <Card 
                             key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
                             card={card}
                             className={cn(
                               'discard-card-reduced shadow-sm w-12 h-16',
-                              index > 0 && '-ml-6', // Controlled overlap
+                              index > 0 && '-ml-8', // Heavy overlap - show only left portion with number + suit
                               index === cardCount - 1 && 'z-10'
                             )}
                           />
                         ))}
-                        {cardCount > 1 && (
-                          <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
-                            {cardCount}
-                          </div>
-                        )}
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
+                          {cardCount}
+                        </div>
                       </div>
                     );
-                  } else if (cardCount <= 12) {
-                    // Medium number: Two rows with proper container sizing
-                    const firstRow = sortedCards.slice(0, 6);
-                    const secondRow = sortedCards.slice(6);
+                  } else if (cardCount <= 16) {
+                    // Two rows with heavy overlap showing only left portion
+                    const firstRow = sortedCards.slice(0, 8);
+                    const secondRow = sortedCards.slice(8);
                     const maxRowLength = Math.max(firstRow.length, secondRow.length);
-                    const containerWidth = maxRowLength === 1 ? 40 : (40 + (maxRowLength - 1) * 20); // 40px first card + 20px per additional
+                    const containerWidth = maxRowLength === 1 ? 40 : (40 + (maxRowLength - 1) * 12); // 40px first card + 12px per additional
                     
                     return (
-                      <div className="relative" style={{ minWidth: `${containerWidth}px` }}>
+                      <div className="relative overflow-visible" style={{ minWidth: `${containerWidth}px`, paddingLeft: '6px', paddingRight: '6px' }}>
                         {/* First row */}
                         <div className="flex items-center relative justify-center mb-1">
                           {firstRow.map((card, index) => (
@@ -189,7 +197,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                               card={card}
                               className={cn(
                                 'discard-card-small shadow-sm w-10 h-14',
-                                index > 0 && '-ml-4' // Reduced overlap for better visibility
+                                index > 0 && '-ml-6' // Heavy overlap showing only left portion
                               )}
                             />
                           ))}
@@ -202,7 +210,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                               card={card}
                               className={cn(
                                 'discard-card-small shadow-sm w-10 h-14',
-                                index > 0 && '-ml-4', // Reduced overlap for better visibility
+                                index > 0 && '-ml-6', // Heavy overlap showing only left portion
                                 index === secondRow.length - 1 && 'z-10'
                               )}
                             />
@@ -215,28 +223,63 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                       </div>
                     );
                   } else {
-                    // Large number: Show sample + overflow indicator with proper container sizing
-                    const displayCards = sortedCards.slice(0, 8); // Show first 8 cards
-                    const overflowCount = cardCount - 8;
+                    // Very large number: Compact grid with heavy overlap
+                    const displayCards = sortedCards.slice(0, 12); // Show first 12 cards in overlapped rows
+                    const overflowCount = cardCount - 12;
                     
                     return (
-                      <div className="relative" style={{ minWidth: '140px' }}>
-                        {/* Two rows of 4 cards each - Fixed grid size */}
-                        <div className="grid grid-cols-4 gap-1 relative w-fit mx-auto">
-                          {displayCards.map((card, index) => (
-                            <Card 
-                              key={`discard-grid-${index}-${card.id || `${card.value}-${card.suit}`}`}
-                              card={card}
-                              className="discard-card-tiny shadow-sm w-8 h-11"
-                            />
-                          ))}
-                        </div>
-                        {/* Overflow indicator */}
-                        <div className="absolute inset-0 bg-black bg-opacity-40 rounded-lg flex items-center justify-center">
-                          <div className="bg-white rounded-full px-2 py-1 text-xs font-bold text-gray-800 shadow-lg">
-                            +{overflowCount} more
+                      <div className="relative overflow-visible" style={{ minWidth: '120px', paddingLeft: '6px', paddingRight: '6px' }}>
+                        {/* Three rows of overlapped cards */}
+                        <div className="flex flex-col gap-0.5">
+                          {/* Row 1: 4 cards */}
+                          <div className="flex items-center relative justify-center">
+                            {displayCards.slice(0, 4).map((card, index) => (
+                              <Card 
+                                key={`discard-grid-r1-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                                card={card}
+                                className={cn(
+                                  'discard-card-tiny shadow-sm w-8 h-11',
+                                  index > 0 && '-ml-5' // Heavy overlap
+                                )}
+                              />
+                            ))}
+                          </div>
+                          {/* Row 2: 4 cards */}
+                          <div className="flex items-center relative justify-center">
+                            {displayCards.slice(4, 8).map((card, index) => (
+                              <Card 
+                                key={`discard-grid-r2-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                                card={card}
+                                className={cn(
+                                  'discard-card-tiny shadow-sm w-8 h-11',
+                                  index > 0 && '-ml-5' // Heavy overlap
+                                )}
+                              />
+                            ))}
+                          </div>
+                          {/* Row 3: 4 cards */}
+                          <div className="flex items-center relative justify-center">
+                            {displayCards.slice(8, 12).map((card, index) => (
+                              <Card 
+                                key={`discard-grid-r3-${index}-${card.id || `${card.value}-${card.suit}`}`}
+                                card={card}
+                                className={cn(
+                                  'discard-card-tiny shadow-sm w-8 h-11',
+                                  index > 0 && '-ml-5', // Heavy overlap
+                                  index === displayCards.slice(8, 12).length - 1 && 'z-10'
+                                )}
+                              />
+                            ))}
                           </div>
                         </div>
+                        {/* Overflow indicator */}
+                        {overflowCount > 0 && (
+                          <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg flex items-center justify-center">
+                            <div className="bg-white rounded-full px-2 py-1 text-xs font-bold text-gray-800 shadow-lg">
+                              +{overflowCount} more
+                            </div>
+                          </div>
+                        )}
                         {/* Card count badge */}
                         <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center justify-center w-5 h-5 z-20">
                           {cardCount}

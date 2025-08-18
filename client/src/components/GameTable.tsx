@@ -13,7 +13,7 @@ import { DeckDisplay } from './molecules/DeckDisplay';
 import { TeamSequences } from './organisms/TeamSequences';
 import { MobileTipsTooltip } from './atoms/MobileTipsTooltip';
 import { useGameStore, gameSelectors } from '../stores/gameStore';
-import { useUIStore } from '../stores/uiStore';
+import { useUIStore, useResponsiveUpdates } from '../stores/uiStore';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -33,6 +33,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   // Chat and UI stores
   const { isSidebarOpen } = useChatStore();
   const { isMobile } = useUIStore();
+  
+  // Enable responsive updates for proper mobile/desktop detection
+  useResponsiveUpdates();
   
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
