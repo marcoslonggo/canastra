@@ -140,8 +140,8 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
 
     listenersRef.current.chatMessage = (message: ChatMessage) => {
       setChatMessages(prev => [...prev, message]);
-      // Increment unread count if chat is closed
-      if (!chatOpen) {
+      // Increment unread count if chat is closed and message is not from current user
+      if (!chatOpen && message.username !== user.username) {
         setUnreadCount(prev => prev + 1);
       }
     };
@@ -355,25 +355,6 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
 
   return (
     <div className="game-lobby">
-      {/* Debug Panel Toggle Button */}
-      <button 
-        onClick={() => setShowDebugPanel(!showDebugPanel)}
-        style={{
-          position: 'fixed',
-          top: '10px',
-          right: '10px',
-          zIndex: 10000,
-          padding: '5px 10px',
-          fontSize: '12px',
-          backgroundColor: showDebugPanel ? '#f44336' : '#2196F3',
-          color: 'white',
-          border: 'none',
-          borderRadius: '3px',
-          cursor: 'pointer'
-        }}
-      >
-        🔧 Debug
-      </button>
 
       {/* Debug Panel - Show only when toggled */}
       {showDebugPanel && (
@@ -419,6 +400,22 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
               {showAdminPanel ? t('admin.hidePanel') : t('admin.showPanel')}
             </button>
           )}
+          <button 
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            className="debug-toggle-button"
+            style={{
+              padding: '4px 8px',
+              fontSize: '11px',
+              backgroundColor: showDebugPanel ? '#f44336' : '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              marginLeft: '8px'
+            }}
+          >
+            🔧 Debug
+          </button>
           <div className="connection-status">
             <div 
               className="status-indicator"
@@ -739,9 +736,9 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
 
         {/* Mobile Chat Overlay */}
         {chatOpen && (
-          <div className="fixed inset-x-4 bottom-16 top-20 z-50 bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col md:hidden">
+          <div className="fixed inset-x-4 bottom-20 top-20 z-50 bg-white border border-gray-200 rounded-lg shadow-2xl flex flex-col md:hidden">
             {/* Chat Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
               <h3 className="text-lg font-semibold text-gray-900">
                 {t('lobby.chat.title')}
               </h3>
@@ -754,14 +751,14 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
               {chatMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
                   {t('lobby.chat.noMessages')}
                 </div>
               ) : (
                 chatMessages.map((message, index) => (
-                  <div key={`${message.id}-${index}`} className="flex flex-col gap-1">
+                  <div key={`${message.id}-${index}`} className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-blue-600">
                         {message.username}:
@@ -820,14 +817,14 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
               {chatMessages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
                   {t('lobby.chat.noMessages')}
                 </div>
               ) : (
                 chatMessages.map((message, index) => (
-                  <div key={`${message.id}-${index}`} className="flex flex-col gap-1">
+                  <div key={`${message.id}-${index}`} className="flex flex-col gap-0.5">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-blue-600">
                         {message.username}:
@@ -846,7 +843,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
             </div>
 
             {/* Input Form - Fixed at bottom */}
-            <form onSubmit={handleSendChat} className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+            <form onSubmit={handleSendChat} className="p-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
               <div className="flex gap-2">
                 <input
                   type="text"
