@@ -72,7 +72,6 @@ export const HandManager: React.FC<HandManagerProps> = ({
   
   // Touch interaction state
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [showMobileTips, setShowMobileTips] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -449,40 +448,6 @@ export const HandManager: React.FC<HandManagerProps> = ({
           </div>
         )}
         
-        {/* Dismissible Mobile Tips */}
-        {isMobile && sortedCards.length > 0 && showMobileTips && !hasInteracted && (
-          <motion.div 
-            className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-blue-600">💡</span>
-                  <span className="text-xs font-medium text-blue-800">
-                    {t('game.hand.mobileTips.title', 'Touch Controls')}
-                  </span>
-                </div>
-                <div className="text-xs text-blue-700 space-y-1">
-                  <p>• {t('game.hand.mobileTips.tapToSelect', 'Tap cards to select them')}</p>
-                  <p>• {t('game.hand.mobileTips.multipleTaps', 'Tap again to deselect')}</p>
-                  <p>• {t('game.hand.mobileTips.useButtons', 'Use action buttons below to play cards')}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowMobileTips(false)}
-                className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-blue-600 hover:bg-blue-200 rounded-full transition-colors"
-                aria-label="Dismiss tips"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </motion.div>
-        )}
 
         {/* Floating Action Buttons - Mobile Only */}
         {isMobile && isMyTurn && (selectedCards.length > 0 || canBater || hasBaixado) && (

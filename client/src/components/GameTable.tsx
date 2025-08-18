@@ -10,6 +10,7 @@ import { GameHeader } from './organisms/GameHeader';
 import { HandManager } from './molecules/HandManager';
 import { DeckDisplay } from './molecules/DeckDisplay';
 import { TeamSequences } from './organisms/TeamSequences';
+import { MobileTipsTooltip } from './atoms/MobileTipsTooltip';
 import { useGameStore, gameSelectors } from '../stores/gameStore';
 import './GameTable.css';
 
@@ -50,6 +51,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [showDiscardViewer, setShowDiscardViewer] = useState(false);
   const [selectedDiscardCards, setSelectedDiscardCards] = useState<Set<string>>(new Set());
   const [keySequence, setKeySequence] = useState('');
+  const [showMobileTips, setShowMobileTips] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
   
   // Store listener references for cleanup
   const listenersRef = useRef<{
@@ -269,6 +272,10 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
 
   const handleCardSelect = (cardIndex: number) => {
+    // Mark as interacted on first card selection
+    if (!hasInteracted) {
+      setHasInteracted(true);
+    }
     toggleCardSelection(cardIndex);
   };
 
@@ -1088,6 +1095,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           </div>
         </div>
       )}
+
+      {/* Mobile Tips Tooltip */}
+      <MobileTipsTooltip
+        show={showMobileTips && !hasInteracted && gameState && myPlayer && myPlayer.hand.length > 0}
+        onDismiss={() => setShowMobileTips(false)}
+      />
     </div>
   );
 }
