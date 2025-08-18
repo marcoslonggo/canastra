@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Auth } from './components/Auth';
 import { GameLobby } from './components/GameLobby';
 import { WaitingRoom } from './components/WaitingRoom';
 import { GameTable } from './components/GameTable';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { User, GameState } from './types';
 import { gameService } from './services/gameService';
 import './App.css';
@@ -10,12 +12,19 @@ import './App.css';
 type AppScreen = 'auth' | 'lobby' | 'waiting' | 'game';
 
 function App() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('auth');
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  
+  // Controls state (moved from GameLobby)
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   const handleGameReconnected = useCallback((data: { gameId: string; gameState: GameState }) => {
     console.log('Reconnected to game:', data.gameId);
@@ -138,6 +147,26 @@ function App() {
     localStorage.removeItem('user');
   };
 
+  // Control handlers (moved from GameLobby)
+  const getConnectionStatusColor = () => {
+    switch (connectionStatus) {
+      case 'connected': return '#4caf50';
+      case 'connecting': return '#ff9800';
+      case 'disconnected': return '#f44336';
+      default: return '#666';
+    }
+  };
+
+  const handleManualReconnect = async () => {
+    try {
+      await gameService.manualReconnect();
+      gameService.joinLobby();
+      gameService.getActiveGames();
+    } catch (error) {
+      console.error('Manual reconnection failed:', error);
+    }
+  };
+
   const handleGameStart = (gameId: string) => {
     console.log('Joining game with ID:', gameId);
     setCurrentGameId(gameId);
@@ -206,12 +235,56 @@ function App() {
   // Show lobby (default)
   return (
     <>
-      <div className="app-header-simple">
-        <div className="user-info">
-          <span>Welcome, {user.username}!</span>
-          <span className="stats">
-            Games: {user.gamesPlayed} | Wins: {user.gamesWon}
-          </span>
+      <div className="app-header-consolidated">
+        <div className="header-left">
+          <span className="welcome-text">Welcome, {user.username}!</span>
+          <span className="stats">Games: {user.gamesPlayed} | Wins: {user.gamesWon}</span>
+        </div>
+        
+        <div className="header-right">
+          <LanguageSwitcher compact={true} />
+          
+          {user.isAdmin && (
+            <button 
+              onClick={() => setShowAdminPanel(!showAdminPanel)}
+              className="control-button admin-button"
+              title={showAdminPanel ? t('admin.hidePanel') : t('admin.showPanel')}
+            >
+              👑
+            </button>
+          )}
+          
+          <button 
+            onClick={() => setShowDebugPanel(!showDebugPanel)}
+            className="control-button debug-button"
+            style={{
+              backgroundColor: showDebugPanel ? '#f44336' : '#2196F3'
+            }}
+            title="Toggle Debug Panel"
+          >
+            🔧
+          </button>
+          
+          <div className="connection-status">
+            <div 
+              className="status-indicator"
+              style={{ backgroundColor: getConnectionStatusColor() }}
+            />
+            <span className="status-text">
+              {connectionStatus === 'connected' ? t('lobby.connected') : 
+               connectionStatus === 'connecting' ? t('lobby.connecting') : 
+               t('lobby.disconnected')}
+            </span>
+            {connectionStatus === 'disconnected' && (
+              <button 
+                onClick={handleManualReconnect}
+                className="reconnect-button"
+              >
+                {t('lobby.reconnect')} {reconnectAttempts > 0 && `(${reconnectAttempts}/5)`}
+              </button>
+            )}
+          </div>
+          
           <button onClick={handleLogout} className="logout-button">
             Logout
           </button>
@@ -221,6 +294,13 @@ function App() {
       <GameLobby 
         user={user}
         onGameStart={handleGameStart}
+        showAdminPanel={showAdminPanel}
+        setShowAdminPanel={setShowAdminPanel}
+        showDebugPanel={showDebugPanel}
+        connectionStatus={connectionStatus}
+        setConnectionStatus={setConnectionStatus}
+        reconnectAttempts={reconnectAttempts}
+        setReconnectAttempts={setReconnectAttempts}
       />
     </>
   );

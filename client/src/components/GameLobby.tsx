@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { gameService } from '../services/gameService';
 import { User, ChatMessage, GameState } from '../types';
 import { fetchAllUsers, promoteUser, demoteUser, resetUserPassword, fetchAllGames, terminateGame, restartServer } from '../api';
-import { LanguageSwitcher } from './LanguageSwitcher';
-import config from '../config';
 import './GameLobby.css';
 
 interface GameInfo {
@@ -25,9 +23,27 @@ interface AdminGameInfo {
 interface GameLobbyProps {
   user: User;
   onGameStart: (gameId: string) => void;
+  // Control props (passed from App.tsx)
+  showAdminPanel: boolean;
+  setShowAdminPanel: (show: boolean) => void;
+  showDebugPanel: boolean;
+  connectionStatus: 'disconnected' | 'connecting' | 'connected';
+  setConnectionStatus: (status: 'disconnected' | 'connecting' | 'connected') => void;
+  reconnectAttempts: number;
+  setReconnectAttempts: (attempts: number) => void;
 }
 
-export function GameLobby({ user, onGameStart }: GameLobbyProps) {
+export function GameLobby({ 
+  user, 
+  onGameStart,
+  showAdminPanel,
+  setShowAdminPanel,
+  showDebugPanel,
+  connectionStatus,
+  setConnectionStatus,
+  reconnectAttempts,
+  setReconnectAttempts 
+}: GameLobbyProps) {
   const { t } = useTranslation();
   const [availableGames, setAvailableGames] = useState<GameInfo[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -35,13 +51,9 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [joinGameId, setJoinGameId] = useState('');
-  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   // Admin state
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allGames, setAllGames] = useState<AdminGameInfo[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -89,15 +101,6 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     }
   };
 
-  const handleManualReconnect = async () => {
-    try {
-      await gameService.manualReconnect();
-      gameService.joinLobby();
-      gameService.getActiveGames();
-    } catch (error) {
-      console.error('Manual reconnection failed:', error);
-    }
-  };
 
   const cleanupEventListeners = () => {
     // Remove existing listeners
@@ -224,17 +227,9 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     }
   };
 
-  const getConnectionStatusColor = () => {
-    switch (connectionStatus) {
-      case 'connected': return '#4caf50';
-      case 'connecting': return '#ff9800';
-      case 'disconnected': return '#f44336';
-      default: return '#666';
-    }
-  };
 
   // Admin functions
-  const loadAllUsers = async () => {
+  const loadAllUsers = useCallback(async () => {
     if (!user.isAdmin) return;
     
     setAdminLoading(true);
@@ -249,9 +244,9 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     } finally {
       setAdminLoading(false);
     }
-  };
+  }, [user.isAdmin]);
 
-  const loadAllGames = async () => {
+  const loadAllGames = useCallback(async () => {
     if (!user.isAdmin) return;
     
     setGamesLoading(true);
@@ -266,7 +261,7 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     } finally {
       setGamesLoading(false);
     }
-  };
+  }, [user.isAdmin]);
 
   const handlePromoteUser = async (userId: number) => {
     if (!user.isAdmin) return;
@@ -345,13 +340,13 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
     }
   };
 
-  const toggleAdminPanel = () => {
-    if (!showAdminPanel && user.isAdmin) {
+  // Load admin data when panel opens
+  useEffect(() => {
+    if (showAdminPanel && user.isAdmin) {
       loadAllUsers();
       loadAllGames();
     }
-    setShowAdminPanel(!showAdminPanel);
-  };
+  }, [showAdminPanel, user.isAdmin, loadAllUsers, loadAllGames]);
 
   return (
     <div className="game-lobby">
@@ -385,57 +380,9 @@ export function GameLobby({ user, onGameStart }: GameLobbyProps) {
         </div>
       )}
 
-      <div className="lobby-header">
-        <div className="header-left">
-          <h2>{t('lobby.title')}</h2>
-          <span className="user-info">{t('lobby.welcome', { username: user.username })} {user.isAdmin && '👑 Admin'}</span>
-        </div>
-        <div className="header-right">
-          <LanguageSwitcher />
-          {user.isAdmin && (
-            <button 
-              onClick={toggleAdminPanel}
-              className="admin-toggle-button"
-            >
-              {showAdminPanel ? t('admin.hidePanel') : t('admin.showPanel')}
-            </button>
-          )}
-          <button 
-            onClick={() => setShowDebugPanel(!showDebugPanel)}
-            className="debug-toggle-button"
-            style={{
-              padding: '4px 8px',
-              fontSize: '11px',
-              backgroundColor: showDebugPanel ? '#f44336' : '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              marginLeft: '8px'
-            }}
-          >
-            🔧 Debug
-          </button>
-          <div className="connection-status">
-            <div 
-              className="status-indicator"
-              style={{ backgroundColor: getConnectionStatusColor() }}
-            />
-            <span className="status-text">
-              {connectionStatus === 'connected' ? t('lobby.connected') : 
-               connectionStatus === 'connecting' ? t('lobby.connecting') : 
-               t('lobby.disconnected')}
-            </span>
-            {connectionStatus === 'disconnected' && (
-              <button 
-                onClick={handleManualReconnect}
-                className="reconnect-button"
-              >
-                {t('lobby.reconnect')} {reconnectAttempts > 0 && `(${reconnectAttempts}/5)`}
-              </button>
-            )}
-          </div>
-        </div>
+      {/* Lobby content header - simplified */}
+      <div className="lobby-content-header">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">{t('lobby.title')}</h2>
       </div>
 
 
