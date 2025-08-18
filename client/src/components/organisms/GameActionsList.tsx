@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore, selectRecentActions } from '../../stores/gameStore';
+import { useGameStore } from '../../stores/gameStore';
 import { cn } from '../../lib/utils';
 
 interface GameActionsListProps {
@@ -32,7 +32,8 @@ export const GameActionsList: React.FC<GameActionsListProps> = ({
   compact = false,
 }) => {
   const { t } = useTranslation();
-  const recentActions = useGameStore(selectRecentActions);
+  // Placeholder for now - will be implemented when gameStore is migrated
+  const recentActions: any[] = [];
   const listRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to top when new action is added
