@@ -74,40 +74,58 @@ export const HandManager: React.FC<HandManagerProps> = ({
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Sort cards based on current settings
-  const getSortedCards = (): Card[] => {
-    const sorted = [...cards].sort((a, b) => {
+  // Sort cards and create mapping between sorted and original indices
+  const getSortedCardsWithMapping = (): { sortedCards: Card[], sortedToOriginalMap: number[] } => {
+    // Create array with original indices
+    const cardsWithIndices = cards.map((card, originalIndex) => ({ card, originalIndex }));
+    
+    // Sort the cards with their original indices
+    const sorted = cardsWithIndices.sort((a, b) => {
       let comparison = 0;
       
       if (sortType === 'suit') {
         const suitOrder = ['hearts', 'diamonds', 'clubs', 'spades'];
-        comparison = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
+        comparison = suitOrder.indexOf(a.card.suit) - suitOrder.indexOf(b.card.suit);
         if (comparison === 0) {
-          comparison = a.value - b.value;
+          comparison = a.card.value - b.card.value;
         }
       } else if (sortType === 'blackred1') {
-        const isBlackA = a.suit === 'clubs' || a.suit === 'spades';
-        const isBlackB = b.suit === 'clubs' || b.suit === 'spades';
+        const isBlackA = a.card.suit === 'clubs' || a.card.suit === 'spades';
+        const isBlackB = b.card.suit === 'clubs' || b.card.suit === 'spades';
         comparison = Number(isBlackA) - Number(isBlackB);
         if (comparison === 0) {
-          comparison = a.value - b.value;
+          comparison = a.card.value - b.card.value;
         }
       } else if (sortType === 'blackred2') {
-        const isRedA = a.suit === 'hearts' || a.suit === 'diamonds';
-        const isRedB = b.suit === 'hearts' || b.suit === 'diamonds';
+        const isRedA = a.card.suit === 'hearts' || a.card.suit === 'diamonds';
+        const isRedB = b.card.suit === 'hearts' || b.card.suit === 'diamonds';
         comparison = Number(isRedA) - Number(isRedB);
         if (comparison === 0) {
-          comparison = a.value - b.value;
+          comparison = a.card.value - b.card.value;
         }
       }
       
       return sortOrder === 'desc' ? -comparison : comparison;
     });
     
-    return sorted;
+    return {
+      sortedCards: sorted.map(item => item.card),
+      sortedToOriginalMap: sorted.map(item => item.originalIndex)
+    };
   };
   
-  const sortedCards = getSortedCards();
+  const { sortedCards, sortedToOriginalMap } = getSortedCardsWithMapping();
+  
+  // Helper function to map sorted index to original index
+  const mapSortedToOriginal = (sortedIndex: number): number => {
+    return sortedToOriginalMap[sortedIndex];
+  };
+  
+  // Helper function to check if a sorted card is selected (by converting to original index)
+  const isSortedCardSelected = (sortedIndex: number): boolean => {
+    const originalIndex = mapSortedToOriginal(sortedIndex);
+    return selectedCards.includes(originalIndex);
+  };
   
   // Handle touch interactions
   const handleTouchStart = (cardIndex: number, event: React.TouchEvent) => {
@@ -121,7 +139,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
     // Start long press detection for card selection
     const timer = setTimeout(() => {
       touchFeedback.vibrate(50);
-      onCardSelect(cardIndex);
+      onCardSelect(mapSortedToOriginal(cardIndex));
     }, 500); // 500ms long press
     
     setLongPressTimer(timer);
@@ -140,7 +158,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
     
     // Swipe up to select/deselect
     if (offset.y < -50 && Math.abs(velocity.y) > 300) {
-      onCardSelect(cardIndex);
+      onCardSelect(mapSortedToOriginal(cardIndex));
       touchFeedback.vibrate(25);
     }
     
@@ -150,7 +168,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                            !drawnCardIds.includes(sortedCards[cardIndex].id);
       
       if (canDiscardCard) {
-        onDiscard(cardIndex);
+        onDiscard(mapSortedToOriginal(cardIndex));
         touchFeedback.vibrate(50);
       }
     }
@@ -170,7 +188,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
     e.preventDefault();
     
     if (draggedIndex !== null && draggedIndex !== targetIndex) {
-      onCardReorder(draggedIndex, targetIndex);
+      onCardReorder(mapSortedToOriginal(draggedIndex), mapSortedToOriginal(targetIndex));
     }
     
     setDraggedIndex(null);
@@ -191,6 +209,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
   
   const handleDiscardClick = () => {
     if (selectedCards.length === 1 && onDiscard) {
+      // selectedCards contains original indices, so we can use them directly
       onDiscard(selectedCards[0]);
     } else if (allowedActions.allowMultipleDiscard && selectedCards.length > 1 && onMultipleDiscard) {
       onMultipleDiscard();
@@ -315,7 +334,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
           )}>
             <AnimatePresence mode="popLayout">
               {sortedCards.map((card, index) => {
-                const isSelected = selectedCards.includes(index);
+                const isSelected = isSortedCardSelected(index);
                 const isDragged = draggedIndex === index;
                 const isDrawn = drawnCardIds.includes(card.id);
                 const isDragTarget = dragOverIndex === index;
@@ -352,7 +371,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                       isSelected={isSelected}
                       isDraggable={!isMobile}
                       isDrawnThisTurn={drawnCardIds.includes(card.id)}
-                      onClick={() => onCardSelect(index)}
+                      onClick={() => onCardSelect(mapSortedToOriginal(index))}
                       className={cn(
                         'w-full',
                         // Mobile-optimized card size
@@ -367,7 +386,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                         animate={{ scale: 1 }}
                         className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg"
                       >
-                        {selectedCards.indexOf(index) + 1}
+                        {selectedCards.indexOf(mapSortedToOriginal(index)) + 1}
                       </motion.div>
                     )}
                     
