@@ -172,7 +172,7 @@ export const TeamSequences: React.FC<TeamSequencesProps> = ({
                         {getSequenceTypeDisplay(sequence)}
                       </span>
                       <span className={cn(
-                        'sequence-points ml-2 px-2 py-1 bg-gray-100 rounded text-gray-700 font-medium',
+                        'sequence-points ml-2 px-2 py-1 bg-amber-100 rounded text-amber-900 font-semibold border border-amber-200',
                         isMobile ? 'text-xs' : 'text-sm'
                       )}>
                         {sequence.points} pts

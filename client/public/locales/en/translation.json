@@ -177,10 +177,6 @@
         "cancel": "Cancel"
       }
     },
-    "sequences": {
-      "team1": "Team 1 Sequences",
-      "team2": "Team 2 Sequences"
-    },
     "players": {
       "team": "Team {{team}}",
       "cards": "{{count}} cards",
