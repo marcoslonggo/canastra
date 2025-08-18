@@ -367,11 +367,17 @@
   border: 2px solid #e1e1e1;
   border-radius: 6px;
   font-size: 0.9rem;
+  background: white;
+  color: #333;
 }
 
 .chat-input:focus {
   outline: none;
   border-color: #667eea;
+}
+
+.chat-input::placeholder {
+  color: #999;
 }
 
 .chat-input:disabled {
