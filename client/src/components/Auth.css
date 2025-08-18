@@ -142,3 +142,82 @@
     font-size: 1.5rem;
   }
 }
+
+/* Quick Login Testing Buttons */
+.quick-login-section {
+  margin: 1.5rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid #e1e8ed;
+}
+
+.quick-login-divider {
+  text-align: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.quick-login-divider span {
+  background: white;
+  padding: 0 1rem;
+  color: #666;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quick-login-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-direction: column;
+}
+
+.quick-login-button {
+  padding: 10px 16px;
+  border: 2px solid;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.quick-login-button.marcos {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.quick-login-button.marcos:hover:not(:disabled) {
+  background: #2196f3;
+  color: white;
+}
+
+.quick-login-button.michele {
+  background: #f3e5f5;
+  border-color: #9c27b0;
+  color: #7b1fa2;
+}
+
+.quick-login-button.michele:hover:not(:disabled) {
+  background: #9c27b0;
+  color: white;
+}
+
+.quick-login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (min-width: 480px) {
+  .quick-login-buttons {
+    flex-direction: row;
+  }
+  
+  .quick-login-button {
+    flex: 1;
+  }
+}

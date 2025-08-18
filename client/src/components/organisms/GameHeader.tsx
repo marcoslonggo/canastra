@@ -1,6 +1,5 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUIStore } from '../../stores/uiStore';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { ActionButton } from '../atoms/ActionButton';
 import { cn } from '../../lib/utils';

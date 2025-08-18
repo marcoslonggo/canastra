@@ -53,6 +53,25 @@ export function Auth({ onLogin }: AuthProps) {
     }));
   };
 
+  const handleQuickLogin = async (username: string, password: string) => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await loginUser({ username, password });
+      
+      if (response.success && response.user && response.token) {
+        onLogin(response.user, response.token);
+      } else {
+        setError(response.message || 'Quick login failed');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-container">
       <LanguageSwitcher />
@@ -128,6 +147,33 @@ export function Auth({ onLogin }: AuthProps) {
             {loading ? t('common.loading') : (isLogin ? t('auth.loginButton') : t('auth.registerButton'))}
           </button>
         </form>
+
+        {/* Quick Login Buttons for Testing */}
+        {isLogin && (
+          <div className="quick-login-section">
+            <div className="quick-login-divider">
+              <span>Quick Login (Testing)</span>
+            </div>
+            <div className="quick-login-buttons">
+              <button 
+                type="button"
+                className="quick-login-button marcos"
+                onClick={() => handleQuickLogin('marcos', 'marcos123')}
+                disabled={loading}
+              >
+                👤 Login as Marcos
+              </button>
+              <button 
+                type="button"
+                className="quick-login-button michele"
+                onClick={() => handleQuickLogin('michele', 'michele123')}
+                disabled={loading}
+              >
+                👤 Login as Michele
+              </button>
+            </div>
+          </div>
+        )}
 
         <p className="auth-footer">
           {isLogin ? t('auth.noAccount') + ' ' : t('auth.haveAccount') + ' '}
