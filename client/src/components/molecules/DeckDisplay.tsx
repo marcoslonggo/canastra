@@ -70,8 +70,8 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
   return (
     <div className={cn(
       'deck-display flex items-center w-full',
-      // Prevent overflow by using safe spacing
-      isMobile ? 'justify-evenly gap-1 px-2 py-2 max-w-full' : 'justify-center gap-4 p-3',
+      // Ensure enough space for overlapping cards - remove max-w constraint
+      isMobile ? 'justify-center gap-2 px-4 py-2' : 'justify-center gap-6 p-4',
       className
     )}>
       {/* Main Deck Section - Ultra Compact */}
@@ -111,8 +111,8 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
         )}
       </div>
 
-      {/* Discard Pile Section - Ultra Compact */}
-      <div className="deck-section flex flex-col items-center gap-1 flex-shrink-0">
+      {/* Discard Pile Section - Ensure space for overlapping cards */}
+      <div className="deck-section flex flex-col items-center gap-1 flex-shrink-0 min-w-0">
         <motion.div 
           className={cn(
             'discard-pile-container relative cursor-pointer',
@@ -150,16 +150,17 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                   const cardCount = sortedCards.length;
                   
                   if (cardCount <= 6) {
-                    // Small number: Single row with slight overlap
+                    // Small number: Single row with safe overlap - ensure container width accommodates all cards
+                    const containerWidth = cardCount === 1 ? 48 : (48 + (cardCount - 1) * 24); // 48px first card + 24px per additional card
                     return (
-                      <div className="flex items-center relative">
+                      <div className="flex items-center relative" style={{ minWidth: `${containerWidth}px` }}>
                         {sortedCards.map((card, index) => (
                           <Card 
                             key={`discard-${index}-${card.id || `${card.value}-${card.suit}`}`}
                             card={card}
                             className={cn(
                               'discard-card-reduced shadow-sm w-12 h-16',
-                              index > 0 && '-ml-6', // Less overlap for better visibility
+                              index > 0 && '-ml-6', // Controlled overlap
                               index === cardCount - 1 && 'z-10'
                             )}
                           />
@@ -172,34 +173,36 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                       </div>
                     );
                   } else if (cardCount <= 12) {
-                    // Medium number: Two rows
+                    // Medium number: Two rows with proper container sizing
                     const firstRow = sortedCards.slice(0, 6);
                     const secondRow = sortedCards.slice(6);
+                    const maxRowLength = Math.max(firstRow.length, secondRow.length);
+                    const containerWidth = maxRowLength === 1 ? 40 : (40 + (maxRowLength - 1) * 20); // 40px first card + 20px per additional
                     
                     return (
-                      <div className="relative">
+                      <div className="relative" style={{ minWidth: `${containerWidth}px` }}>
                         {/* First row */}
-                        <div className="flex items-center relative mb-2">
+                        <div className="flex items-center relative justify-center mb-1">
                           {firstRow.map((card, index) => (
                             <Card 
                               key={`discard-r1-${index}-${card.id || `${card.value}-${card.suit}`}`}
                               card={card}
                               className={cn(
                                 'discard-card-small shadow-sm w-10 h-14',
-                                index > 0 && '-ml-5'
+                                index > 0 && '-ml-4' // Reduced overlap for better visibility
                               )}
                             />
                           ))}
                         </div>
                         {/* Second row */}
-                        <div className="flex items-center relative">
+                        <div className="flex items-center relative justify-center">
                           {secondRow.map((card, index) => (
                             <Card 
                               key={`discard-r2-${index}-${card.id || `${card.value}-${card.suit}`}`}
                               card={card}
                               className={cn(
                                 'discard-card-small shadow-sm w-10 h-14',
-                                index > 0 && '-ml-5',
+                                index > 0 && '-ml-4', // Reduced overlap for better visibility
                                 index === secondRow.length - 1 && 'z-10'
                               )}
                             />
@@ -212,14 +215,14 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                       </div>
                     );
                   } else {
-                    // Large number: Show sample + overflow indicator
+                    // Large number: Show sample + overflow indicator with proper container sizing
                     const displayCards = sortedCards.slice(0, 8); // Show first 8 cards
                     const overflowCount = cardCount - 8;
                     
                     return (
-                      <div className="relative">
-                        {/* Two rows of 4 cards each */}
-                        <div className="grid grid-cols-4 gap-1 relative">
+                      <div className="relative" style={{ minWidth: '140px' }}>
+                        {/* Two rows of 4 cards each - Fixed grid size */}
+                        <div className="grid grid-cols-4 gap-1 relative w-fit mx-auto">
                           {displayCards.map((card, index) => (
                             <Card 
                               key={`discard-grid-${index}-${card.id || `${card.value}-${card.suit}`}`}
