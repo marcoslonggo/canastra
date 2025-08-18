@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { GameState, Player, Card as CardType, Sequence, User } from '../types';
 import { Card, CardBack, CardGroup } from './Card';
 import { gameService } from '../services/gameService';
-import { LanguageSwitcher } from './LanguageSwitcher';
 import { ChatSystem } from './organisms/ChatSystem';
 import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
 import { ActionButton, DiscardButton, BaterButton, EndTurnButton } from './atoms/ActionButton';
+import { GameHeader } from './organisms/GameHeader';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -655,47 +655,20 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     );
   }
 
-  const currentPlayer = gameState.players[gameState.currentTurn];
   const myTeam = myPlayer.team;
 
   return (
     <div className="game-table">
-      <div className="game-header">
-        <div className="game-info">
-          <h2>{t('game.title', { roomCode: gameState.id })}</h2>
-          <div className="game-scores">
-            <div className={`team-score ${myTeam === 1 ? 'my-team' : ''}`}>
-              {t('game.teamScore', { team: 1, score: gameState.scores[0] })}
-            </div>
-            <div className={`team-score ${myTeam === 2 ? 'my-team' : ''}`}>
-              {t('game.teamScore', { team: 2, score: gameState.scores[1] })}
-            </div>
-          </div>
-        </div>
-        
-        <div className="game-controls">
-          <LanguageSwitcher />
-          <div className="turn-indicator">
-            {isMyTurn ? (
-              <span className="my-turn">{t('game.yourTurn')}</span>
-            ) : (
-              <span className="other-turn">{t('game.opponentTurn', { player: currentPlayer.username })}</span>
-            )}
-          </div>
-          {cheatMode && (
-            <button 
-              onClick={() => setShowCheatMenu(!showCheatMenu)}
-              className="cheat-button"
-              title="Cheat Menu"
-            >
-              {t('game.cheat.title')}
-            </button>
-          )}
-          <button onClick={onLeaveGame} className="leave-button">
-            {t('game.leaveGame')}
-          </button>
-        </div>
-      </div>
+      <GameHeader
+        gameState={gameState}
+        user={user}
+        myPlayer={myPlayer}
+        isMyTurn={isMyTurn}
+        cheatMode={cheatMode}
+        onLeaveGame={onLeaveGame}
+        onToggleCheatMenu={() => setShowCheatMenu(!showCheatMenu)}
+        showCheatMenu={showCheatMenu}
+      />
 
       <ConnectedActionMessage />
 
