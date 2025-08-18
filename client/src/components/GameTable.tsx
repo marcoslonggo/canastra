@@ -5,8 +5,9 @@ import { Card, CardBack, CardGroup } from './Card';
 import { gameService } from '../services/gameService';
 import { ChatSystem } from './organisms/ChatSystem';
 import { ConnectedActionMessage, useActionMessage } from './atoms/ActionMessage';
-import { ActionButton, DiscardButton, BaterButton, EndTurnButton } from './atoms/ActionButton';
+import { ActionButton } from './atoms/ActionButton';
 import { GameHeader } from './organisms/GameHeader';
+import { HandManager } from './molecules/HandManager';
 import './GameTable.css';
 
 interface GameTableProps {
@@ -602,6 +603,35 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     setDragOverIndex(null);
   };
 
+  const handleCardReorder = (fromIndex: number, toIndex: number) => {
+    if (!myPlayer || !gameState || fromIndex === toIndex) return;
+
+    // Reorder cards in hand (same logic as handleCardDropInHand)
+    const newHand = [...myPlayer.hand];
+    const draggedCard = newHand.splice(fromIndex, 1)[0];
+    
+    // Adjust target index if necessary
+    const actualTargetIndex = toIndex >= newHand.length ? newHand.length : toIndex;
+    newHand.splice(actualTargetIndex, 0, draggedCard);
+
+    // Update selected cards indices
+    const newSelectedCards = selectedCards.map(index => {
+      if (index === fromIndex) return actualTargetIndex;
+      if (index < fromIndex && index >= actualTargetIndex) return index + 1;
+      if (index > fromIndex && index <= actualTargetIndex) return index - 1;
+      return index;
+    });
+
+    // Update game state locally
+    const newGameState = { ...gameState };
+    const playerIndex = newGameState.players.findIndex(p => p.id === myPlayer.id);
+    if (playerIndex >= 0) {
+      newGameState.players[playerIndex].hand = newHand;
+      setGameState(newGameState);
+      setSelectedCards(newSelectedCards);
+    }
+  };
+
   const handleSequenceDrop = (e: React.DragEvent, sequenceId: string) => {
     e.preventDefault();
     
@@ -849,159 +879,27 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
             ))}
           </div>
 
-          <div className="my-hand">
-            <div className="hand-header">
-              <h3>{t('game.hand.title', { count: myPlayer.hand.length })}</h3>
-              <div className="hand-actions">
-                {selectedCards.length > 0 && (
-                  <>
-                    <button 
-                      onClick={() => setShowBaixarDialog(true)}
-                      className="action-button baixar-button"
-                      disabled={!isMyTurnOrCheat() || selectedCards.length < 3}
-                    >
-                      {t('game.hand.actions.baixar')} ({selectedCards.length})
-                    </button>
-                    <button 
-                      onClick={() => setSelectedCards([])}
-                      className="action-button clear-button"
-                    >
-                      {t('game.hand.actions.clearSelection')}
-                    </button>
-                  </>
-                )}
-                
-                {canPlayerBater() && (
-                  <BaterButton 
-                    onClick={() => handleBater()}
-                    disabled={!isMyTurnOrCheat()}
-                  >
-                    {t('game.hand.actions.bater')}
-                  </BaterButton>
-                )}
-                
-                {isMyTurnOrCheat() && (
-                  <EndTurnButton 
-                    onClick={handleEndTurn}
-                  >
-                    {t('game.hand.actions.endTurn')}
-                  </EndTurnButton>
-                )}
-                
-                <div className="sort-button-group">
-                  <button 
-                    onClick={toggleSortOrder}
-                    className="action-button sort-direction-button"
-                    title={t('game.hand.sort.direction', { direction: sortOrder === 'asc' ? t('game.hand.sort.ascending') : t('game.hand.sort.descending') })}
-                  >
-                    {sortOrder === 'asc' ? '↑' : '↓'}
-                  </button>
-                  
-                  <button 
-                    onClick={cycleSortType}
-                    className="action-button sort-pattern-button"
-                    title={t('game.hand.sort.pattern', { pattern: sortType === 'suit' ? t('game.hand.sort.suitOrder') : sortType === 'blackred1' ? t('game.hand.sort.blackBlackRedRed') : t('game.hand.sort.blackRedBlackRed') })}
-                  >
-                    {sortType === 'suit' ? (
-                      <span>
-                        <span className="suit-black">♠</span>
-                        <span className="suit-red">♥</span>
-                        <span className="suit-black">♣</span>
-                        <span className="suit-red">♦</span>
-                      </span>
-                    ) : sortType === 'blackred1' ? (
-                      <span>
-                        <span className="suit-black">♠</span>
-                        <span className="suit-black">♣</span>
-                        <span className="suit-red">♥</span>
-                        <span className="suit-red">♦</span>
-                      </span>
-                    ) : (
-                      <span>
-                        <span className="suit-black">♠</span>
-                        <span className="suit-red">♥</span>
-                        <span className="suit-black">♣</span>
-                        <span className="suit-red">♦</span>
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="hand-cards">
-              {myPlayer.hand.map((card, index) => (
-                <div
-                  key={`${card.id || `${card.rank}-${card.suit}-${index}`}`}
-                  onDragOver={(e) => handleCardDragOver(e, index)}
-                  onDrop={(e) => handleCardDropInHand(e, index)}
-                  className={`card-drop-zone ${dragOverIndex === index ? 'drag-over' : ''}`}
-                >
-                  {dragOverIndex === index && draggedCardIndex !== null && draggedCardIndex !== index && (
-                    <div className="card-drop-preview">
-                      <Card
-                        card={myPlayer.hand[draggedCardIndex]}
-                        className="ghost-card"
-                      />
-                    </div>
-                  )}
-                  <Card
-                    card={card}
-                    isSelected={selectedCards.includes(index)}
-                    isDraggable={true}
-                    isDrawnThisTurn={isCardDrawnThisTurn(card)}
-                    onClick={() => handleCardSelect(index)}
-                    onDragStart={() => handleCardDragStart(index)}
-                    onDragEnd={handleCardDragEnd}
-                    className="hand-card"
-                  />
-                </div>
-              ))}
-              {/* End-of-hand drop zone */}
-              <div
-                onDragOver={(e) => handleCardDragOver(e, myPlayer.hand.length)}
-                onDrop={(e) => handleCardDropInHand(e, myPlayer.hand.length)}
-                className={`card-drop-zone-end ${dragOverIndex === myPlayer.hand.length ? 'drag-over' : ''}`}
-              >
-                {dragOverIndex === myPlayer.hand.length && draggedCardIndex !== null && (
-                  <div className="card-drop-preview">
-                    <Card
-                      card={myPlayer.hand[draggedCardIndex]}
-                      className="ghost-card"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {isMyTurnOrCheat() && selectedCards.length >= 1 && (
-            <div className="discard-action">
-              {selectedCards.length === 1 || !cheatsEnabled.allowMultipleDiscard ? (
-                <DiscardButton 
-                  onClick={() => handleDiscard(selectedCards[0])}
-                >
-                  {t('game.hand.actions.discard')}
-                </DiscardButton>
-              ) : (
-                <>
-                  <DiscardButton 
-                    onClick={() => handleDiscard(selectedCards[0])}
-                  >
-                    {t('game.hand.actions.discardOne')}
-                  </DiscardButton>
-                  {cheatsEnabled.allowMultipleDiscard && selectedCards.length > 1 && (
-                    <DiscardButton 
-                      onClick={handleMultipleDiscard}
-                      className="cheat-multi-discard"
-                    >
-                      {t('game.hand.actions.discardMultiple', { count: selectedCards.length })}
-                    </DiscardButton>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          <HandManager
+            cards={myPlayer.hand}
+            selectedCards={selectedCards}
+            onCardSelect={handleCardSelect}
+            onCardReorder={handleCardReorder}
+            isMyTurn={isMyTurnOrCheat()}
+            drawnCardIds={gameState.turnState?.drawnCardIds || []}
+            onBaixar={() => setShowBaixarDialog(true)}
+            onDiscard={handleDiscard}
+            onMultipleDiscard={handleMultipleDiscard}
+            onEndTurn={handleEndTurn}
+            canBaixar={true}
+            canBater={canPlayerBater()}
+            hasBaixado={gameState.teamSequences[myTeam - 1]?.length > 0}
+            allowedActions={{
+              allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
+              allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
+              allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
+            }}
+            className="my-hand"
+          />
         </div>
       </div>
 
