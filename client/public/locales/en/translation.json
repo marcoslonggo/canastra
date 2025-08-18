@@ -103,6 +103,13 @@
         "suitOrder": "suit order",
         "blackBlackRedRed": "black/black/red/red",
         "blackRedBlackRed": "black/red/black/red"
+      },
+      "mobileTips": {
+        "title": "Touch Controls",
+        "longPress": "Long press cards to select them",
+        "swipeUp": "Swipe up for quick selection",
+        "swipeDown": "Swipe down to discard card",
+        "dismiss": "Got it!"
       }
     },
     "baixar": {
@@ -203,7 +210,9 @@
       "turnEnded": "Turn ended",
       "baixouSequences": "Baixou {{count}} sequences for {{points}} points",
       "addedToSequence": "Added {{count}} cards to sequence",
-      "bateuTookMorto": "Bateu! Took Morto {{number}}. Continue playing."
+      "bateuTookMorto": "Bateu! Took Morto {{number}}. Continue playing.",
+      "invalidDiscard": "Cannot discard this card right now",
+      "gestureDetected": "Gesture detected"
     },
     "playerActions": {
       "drewFromDeck": "{{playerName}} drew from deck",
@@ -238,6 +247,14 @@
           "description": "End turn even if you discard the same card you drew"
         }
       }
+    },
+    "ui": {
+      "compactView": "Compact View",
+      "expandView": "Expand View",
+      "showDetails": "Show Details",
+      "hideDetails": "Hide Details",
+      "mobileOptimized": "Mobile Optimized Interface",
+      "touchFriendly": "Touch-Friendly Controls"
     }
   },
   "admin": {

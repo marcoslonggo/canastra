@@ -48,6 +48,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
 }) => {
   const { t } = useTranslation();
   const { isMobile } = useUIStore();
+  const [showMortoDetails, setShowMortoDetails] = React.useState(false);
   
   const isMyTurnOrCheat = () => {
     return isMyTurn || allowedActions.allowPlayAllCards;
@@ -70,16 +71,18 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
       isMobile ? 'p-3' : 'p-4',
       className
     )}>
-      {/* Deck Area */}
+      {/* Deck Area - Compact Mobile Layout */}
       <div className={cn(
-        'deck-area flex items-center gap-6',
-        isMobile ? 'flex-col gap-4' : 'flex-row gap-6'
+        'deck-area flex items-center',
+        isMobile ? 'justify-center gap-3' : 'gap-6 justify-center'
       )}>
-        {/* Main Deck Section */}
-        <div className="deck-section flex flex-col items-center gap-2">
-          <div className="deck-label text-sm font-medium text-gray-600">
-            {t('game.deck.mainDeck', { count: mainDeckCount })}
-          </div>
+        {/* Main Deck Section - Compact */}
+        <div className="deck-section flex flex-col items-center gap-1">
+          {!isMobile && (
+            <div className="deck-label text-xs font-medium text-gray-600">
+              {t('game.deck.mainDeck', { count: mainDeckCount })}
+            </div>
+          )}
           <motion.div 
             className={cn(
               'deck-pile relative cursor-pointer',
@@ -95,14 +98,21 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
             whileTap={isMyTurnOrCheat() ? { scale: 0.98 } : {}}
           >
             {mainDeckCount > 0 ? (
+              <div className="relative">
               <CardBack className={cn(
                 'deck-card shadow-lg',
-                isMobile ? 'w-16 h-24' : 'w-20 h-30'
+                isMobile ? 'w-12 h-16' : 'w-20 h-30'
               )} />
+              {isMobile && (
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-1 rounded font-bold">
+                  {mainDeckCount}
+                </div>
+              )}
+            </div>
             ) : (
               <div className={cn(
                 'empty-deck border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400',
-                isMobile ? 'w-16 h-24 text-xs' : 'w-20 h-30 text-sm'
+                isMobile ? 'w-12 h-16 text-xs' : 'w-20 h-30 text-sm'
               )}>
                 {t('game.deck.empty')}
               </div>
@@ -120,11 +130,13 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
           )}
         </div>
 
-        {/* Discard Pile Section */}
-        <div className="deck-section flex flex-col items-center gap-2">
-          <div className="deck-label text-sm font-medium text-gray-600">
-            {t('game.deck.discardPile', { count: discardPile.length })}
-          </div>
+        {/* Discard Pile Section - Compact */}
+        <div className="deck-section flex flex-col items-center gap-1">
+          {!isMobile && (
+            <div className="deck-label text-xs font-medium text-gray-600">
+              {t('game.deck.discardPile', { count: discardPile.length })}
+            </div>
+          )}
           <motion.div 
             className={cn(
               'discard-pile-container relative cursor-pointer',
@@ -142,7 +154,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                     card={card}
                     className={cn(
                       'discard-card-small absolute shadow-md',
-                      isMobile ? 'w-14 h-20' : 'w-16 h-24',
+                      isMobile ? 'w-10 h-14' : 'w-16 h-24',
                       // Manual positioning without style prop
                       index === 0 && 'z-10',
                       index === 1 && 'z-20 translate-x-0.5 translate-y-0.5',
@@ -152,93 +164,106 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                 ))}
                 {discardPile.length > 3 && (
                   <div className={cn(
-                    'absolute -top-2 -right-2 bg-blue-500 text-white rounded-full text-xs font-bold shadow-lg flex items-center justify-center',
-                    isMobile ? 'w-5 h-5 text-[10px]' : 'w-6 h-6 text-xs'
+                    'absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs font-bold shadow-lg flex items-center justify-center',
+                    isMobile ? 'w-4 h-4 text-[8px]' : 'w-6 h-6 text-xs'
                   )}>
                     +{discardPile.length - 3}
+                  </div>
+                )}
+                {isMobile && discardPile.length > 0 && (
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-600 text-white text-xs px-1 rounded font-bold">
+                    {discardPile.length}
                   </div>
                 )}
               </div>
             ) : (
               <div className={cn(
                 'empty-discard border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400',
-                isMobile ? 'w-16 h-24 text-xs' : 'w-20 h-30 text-sm'
+                isMobile ? 'w-12 h-16 text-xs' : 'w-20 h-30 text-sm'
               )}>
                 {t('game.deck.empty')}
               </div>
             )}
           </motion.div>
-          <ActionButton
-            size="sm"
-            variant="ghost"
-            onClick={onDiscardPileClick}
-            className="text-xs"
-          >
-            {t('game.deck.view')}
-          </ActionButton>
+          {!isMobile && (
+            <ActionButton
+              size="sm"
+              variant="ghost"
+              onClick={onDiscardPileClick}
+              className="text-xs"
+            >
+              {t('game.deck.view')}
+            </ActionButton>
+          )}
         </div>
       </div>
 
-      {/* Morto Status Area */}
+      {/* Compact Morto Indicators */}
       {mortos.length > 0 && (
         <div className={cn(
-          'morto-area flex items-center gap-4',
-          isMobile && 'flex-col gap-3'
+          'morto-indicators flex items-center justify-center',
+          isMobile ? 'gap-2 py-2' : 'gap-4 py-3'
         )}>
-          {mortos.map((morto, index) => (
-            <div 
-              key={`morto-${index}`}
-              className={cn(
-                'morto-item flex items-center gap-2 p-2 rounded-lg',
-                mortosUsed[index] 
-                  ? 'bg-gray-100 opacity-50' 
-                  : 'bg-green-50 border border-green-200',
-                isMobile && 'flex-col text-center gap-1'
-              )}
-            >
-              <div className="morto-icon relative">
-                <div className="morto-deck flex">
-                  {[0, 1, 2].map((cardIndex) => (
+          {mortos.map((morto, index) => {
+            const availableCount = mortos.filter((_, i) => !mortosUsed[i]).length;
+            const totalCount = mortos.length;
+            
+            return (
+              <div 
+                key={`morto-indicator-${index}`}
+                className={cn(
+                  'morto-indicator relative flex items-center justify-center rounded-full transition-all duration-200',
+                  isMobile ? 'w-6 h-6' : 'w-8 h-8',
+                  mortosUsed[index] 
+                    ? 'bg-red-100 border-2 border-red-300 opacity-60' 
+                    : 'bg-green-100 border-2 border-green-400 shadow-sm hover:shadow-md'
+                )}
+                title={mortosUsed[index] 
+                  ? t('game.morto.used') 
+                  : `${t('game.morto.title', { number: index + 1 })} - ${t('game.morto.cardCount', { count: morto.length })}`
+                }
+              >
+                {/* Morto Icon */}
+                <div className={cn(
+                  'morto-mini-stack relative',
+                  isMobile ? 'w-3 h-3' : 'w-4 h-4'
+                )}>
+                  {[0, 1].map((stackIndex) => (
                     <div 
-                      key={cardIndex}
+                      key={stackIndex}
                       className={cn(
-                        'morto-card bg-blue-600 rounded shadow-sm border border-blue-700',
-                        isMobile ? 'w-3 h-4' : 'w-4 h-5',
-                        cardIndex > 0 && '-ml-1'
+                        'absolute rounded-sm',
+                        isMobile ? 'w-2 h-3' : 'w-3 h-4',
+                        mortosUsed[index] 
+                          ? 'bg-gray-400 border border-gray-500' 
+                          : 'bg-blue-600 border border-blue-700',
+                        stackIndex === 1 && (isMobile ? 'translate-x-1' : 'translate-x-1')
                       )}
                       style={{
-                        zIndex: cardIndex,
+                        zIndex: stackIndex,
                       }}
                     />
                   ))}
                 </div>
+                
+                {/* Status dot */}
+                <div className={cn(
+                  'absolute -top-1 -right-1 w-2 h-2 rounded-full',
+                  mortosUsed[index] ? 'bg-red-500' : 'bg-green-500'
+                )} />
               </div>
-              <div className={cn(
-                'morto-label flex flex-col',
-                isMobile ? 'items-center text-center' : 'items-start'
-              )}>
-                <span className={cn(
-                  'morto-title font-medium',
-                  isMobile ? 'text-xs' : 'text-sm'
-                )}>
-                  {t('game.morto.title', { number: index + 1 })}
-                </span>
-                <span className={cn(
-                  'morto-count text-gray-600',
-                  isMobile ? 'text-xs' : 'text-sm'
-                )}>
-                  {t('game.morto.cardCount', { count: morto.length })}
-                </span>
-                <span className={cn(
-                  'morto-status-text font-medium',
-                  isMobile ? 'text-xs' : 'text-sm',
-                  mortosUsed[index] ? 'text-red-600' : 'text-green-600'
-                )}>
-                  {mortosUsed[index] ? t('game.morto.used') : t('game.morto.available')}
-                </span>
-              </div>
+            );
+          })}
+          
+          {/* Summary indicator */}
+          {isMobile && (
+            <div className="morto-summary ml-2 flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full">
+              <span className="text-xs font-medium text-gray-700">
+                {mortos.filter((_, i) => !mortosUsed[i]).length}/{mortos.length}
+              </span>
+              <span className="text-xs text-gray-500">{t('game.morto.available')}</span>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>

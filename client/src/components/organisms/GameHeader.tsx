@@ -38,82 +38,78 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
       'game-header bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm',
       className
     )}>
-      {/* Mobile/Tablet Compact Layout */}
+      {/* Mobile-First Streamlined Layout */}
       <div className="block lg:hidden">
-        {/* Mobile Layout */}
-        <div className="flex flex-col gap-3 p-4">
-          {/* Top Row: Title + Leave Button */}
+        {/* Compact Mobile Header */}
+        <div className="flex flex-col gap-2 p-3">
+          {/* Single Row: Essential Info Only */}
           <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-gray-900 truncate">
-                {t('game.title', { roomCode: gameState.id })}
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <LanguageSwitcher />
-              <ActionButton
-                onClick={onLeaveGame}
-                variant="ghost"
-                size="sm"
-                className="text-red-600 hover:text-red-700"
-              >
-✕
-              </ActionButton>
-            </div>
-          </div>
+            {/* Left: Quick Room Code */}
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-gray-100 rounded text-xs font-mono text-gray-600">
+                #{gameState.id.slice(-4)}
+              </div>
 
-          {/* Middle Row: Scores */}
-          <div className="flex items-center justify-center gap-4">
-            <div className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium',
-              myTeam === 1 
-                ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-500/20' 
-                : 'bg-gray-100 text-gray-700'
-            )}>
-              {t('game.teamScore', { team: 1, score: gameState.scores[0] })}
+              {/* Turn indicator */}
+              <div className="flex items-center gap-1">
+                <div className={cn(
+                  'w-2 h-2 rounded-full',
+                  isMyTurn ? 'bg-green-500 animate-pulse' : 'bg-orange-500'
+                )} />
+                <span className={cn(
+                  'text-xs font-medium',
+                  isMyTurn ? 'text-green-700' : 'text-gray-600'
+                )}>
+                  {isMyTurn ? t('game.yourTurn') : currentPlayer.username}
+                </span>
+              </div>
             </div>
-            <div className="text-gray-400 font-bold">VS</div>
-            <div className={cn(
-              'px-3 py-1.5 rounded-lg text-sm font-medium',
-              myTeam === 2 
-                ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-500/20' 
-                : 'bg-gray-100 text-gray-700'
-            )}>
-              {t('game.teamScore', { team: 2, score: gameState.scores[1] })}
-            </div>
-          </div>
 
-          {/* Bottom Row: Turn Indicator + Cheat Menu */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              {isMyTurn ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-sm font-medium text-green-700">
-                    {t('game.yourTurn')}
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                  <span className="text-sm text-gray-600 truncate">
-                    {t('game.opponentTurn', { player: currentPlayer.username })}
-                  </span>
-                </div>
-              )}
-            </div>
             
-            {cheatMode && onToggleCheatMenu && (
-              <ActionButton
-                onClick={onToggleCheatMenu}
-                variant="warning"
-                size="sm"
-                className="ml-2"
-                title="Cheat Menu"
-              >
-⚡
-              </ActionButton>
-            )}
+            {/* Right: Scores + Controls */}
+            <div className="flex items-center gap-2">
+              {/* Compact Scores */}
+              <div className="flex items-center gap-1 text-xs">
+                <span className={cn(
+                  'px-1.5 py-0.5 rounded font-medium',
+                  myTeam === 1 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                )}>
+                  {gameState.scores[0]}
+                </span>
+                <span className="text-gray-400 text-xs">:</span>
+                <span className={cn(
+                  'px-1.5 py-0.5 rounded font-medium',
+                  myTeam === 2 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                )}>
+                  {gameState.scores[1]}
+                </span>
+              </div>
+              
+              {/* Menu toggle (language + leave combined) */}
+              <div className="flex items-center gap-1">
+                <LanguageSwitcher compact />
+                {cheatMode && onToggleCheatMenu && (
+                  <ActionButton
+                    onClick={onToggleCheatMenu}
+                    variant="ghost"
+                    size="sm"
+                    className="w-8 h-8 p-0 text-yellow-600"
+                    title="Cheat Menu"
+                  >
+                    ⚡
+                  </ActionButton>
+                )}
+                <ActionButton
+                  onClick={onLeaveGame}
+                  variant="ghost"
+                  size="sm"
+                  className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
+                  title="Leave Game"
+                >
+                  ✕
+                </ActionButton>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -72,6 +72,8 @@ export const HandManager: React.FC<HandManagerProps> = ({
   
   // Touch interaction state
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showMobileTips, setShowMobileTips] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Sort cards and create mapping between sorted and original indices
@@ -131,6 +133,11 @@ export const HandManager: React.FC<HandManagerProps> = ({
   const handleTouchStart = (cardIndex: number, event: React.TouchEvent) => {
     if (!isMobile) return;
     
+    // Mark as interacted to hide tips
+    if (!hasInteracted) {
+      setHasInteracted(true);
+    }
+    
     // Clear any existing timer
     if (longPressTimer) {
       clearTimeout(longPressTimer);
@@ -140,7 +147,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
     const timer = setTimeout(() => {
       touchFeedback.vibrate(50);
       onCardSelect(mapSortedToOriginal(cardIndex));
-    }, 500); // 500ms long press
+    }, 400); // Reduced to 400ms for better responsiveness
     
     setLongPressTimer(timer);
   };
@@ -156,21 +163,41 @@ export const HandManager: React.FC<HandManagerProps> = ({
   const handlePanEnd = (cardIndex: number, info: PanInfo) => {
     const { offset, velocity } = info;
     
+    // Mark as interacted
+    if (!hasInteracted) {
+      setHasInteracted(true);
+    }
+    
+    // Improved swipe detection with better thresholds
+    const swipeThreshold = 40;
+    const velocityThreshold = 200;
+    
     // Swipe up to select/deselect
-    if (offset.y < -50 && Math.abs(velocity.y) > 300) {
+    if (offset.y < -swipeThreshold && Math.abs(velocity.y) > velocityThreshold) {
       onCardSelect(mapSortedToOriginal(cardIndex));
       touchFeedback.vibrate(25);
+      return; // Prevent other actions
     }
     
     // Swipe down to discard (if allowed)
-    if (offset.y > 50 && Math.abs(velocity.y) > 300 && isMyTurn && onDiscard) {
+    if (offset.y > swipeThreshold && Math.abs(velocity.y) > velocityThreshold && isMyTurn && onDiscard) {
       const canDiscardCard = allowedActions.allowDiscardDrawnCards || 
                            !drawnCardIds.includes(sortedCards[cardIndex].id);
       
       if (canDiscardCard) {
         onDiscard(mapSortedToOriginal(cardIndex));
         touchFeedback.vibrate(50);
+      } else {
+        // Provide feedback for invalid discard
+        touchFeedback.vibrate([50, 50, 50]); // Triple vibration for error
       }
+      return;
+    }
+    
+    // Horizontal swipe for reordering (if enabled in future)
+    if (Math.abs(offset.x) > swipeThreshold * 2 && Math.abs(velocity.x) > velocityThreshold) {
+      // Future: implement card reordering via swipe
+      touchFeedback.vibrate(10);
     }
   };
   
@@ -238,27 +265,43 @@ export const HandManager: React.FC<HandManagerProps> = ({
     )}>
       {/* Hand Header - Actions and Controls */}
       <div className="hand-header flex flex-wrap items-center justify-between gap-2 p-3 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-        {/* Sort Controls */}
+        {/* Sort Controls - Modern Icon */}
         <div className="flex items-center gap-2">
           <ActionButton
             size="sm"
             variant="ghost"
             onClick={toggleSort}
-            title="Sort cards"
-            className="text-xs"
+            title={`Sort by ${sortType} (${sortOrder}ending)`}
+            className="text-xs hover:bg-gray-100 transition-colors"
           >
             <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
+              {/* Modern Sort Icon */}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d={sortOrder === 'asc' 
+                    ? "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" 
+                    : "M3 4h13M3 8h9m-9 4h9m5 0l4 4m0 0l4-4m-4 4V8"
+                  }
+                />
               </svg>
-              <span className="text-[10px] font-medium">
-                {sortType.replace('blackred', 'br')} {sortOrder === 'asc' ? '↑' : '↓'}
+              <span className="text-[10px] font-medium text-gray-600">
+                {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
               </span>
             </span>
           </ActionButton>
-          <span className="text-xs text-gray-500">
-            {selectedCards.length > 0 && `${selectedCards.length} selected`}
-          </span>
+          
+          {/* Selection indicator */}
+          {selectedCards.length > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-xs font-medium text-blue-700">
+                {selectedCards.length}
+              </span>
+            </div>
+          )}
         </div>
         
         {/* Action Buttons */}
@@ -408,11 +451,39 @@ export const HandManager: React.FC<HandManagerProps> = ({
           </div>
         )}
         
-        {/* Mobile Usage Hint */}
-        {isMobile && sortedCards.length > 0 && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
-            <p>💡 Long press to select • Swipe up to select • Swipe down to discard</p>
-          </div>
+        {/* Dismissible Mobile Tips */}
+        {isMobile && sortedCards.length > 0 && showMobileTips && !hasInteracted && (
+          <motion.div 
+            className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 shadow-sm"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-600">💡</span>
+                  <span className="text-xs font-medium text-blue-800">
+                    {t('game.hand.mobileTips.title', 'Touch Controls')}
+                  </span>
+                </div>
+                <div className="text-xs text-blue-700 space-y-1">
+                  <p>• {t('game.hand.mobileTips.longPress', 'Long press cards to select')}</p>
+                  <p>• {t('game.hand.mobileTips.swipeUp', 'Swipe up to quick-select')}</p>
+                  <p>• {t('game.hand.mobileTips.swipeDown', 'Swipe down to discard')}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowMobileTips(false)}
+                className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-blue-600 hover:bg-blue-200 rounded-full transition-colors"
+                aria-label="Dismiss tips"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>

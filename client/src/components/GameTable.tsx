@@ -703,9 +703,69 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
       <ConnectedActionMessage />
 
-      <div className="game-board">
-        {/* Team Sequences - New Mobile-Responsive Components */}
-        <div className="team-sequences-container">
+      <div className="game-board flex flex-col gap-4">
+        {/* Mobile-First Layout: Cards First, then Deck, then Sequences */}
+        
+        {/* Player Area - Priority Position on Mobile */}
+        <div className="player-area order-1 lg:order-3">
+          <div className="players-info hidden sm:flex">
+            {gameState.players.map((player, index) => (
+              <div 
+                key={player.id} 
+                className={`player-info ${player.id === user.id.toString() ? 'current-user' : ''} ${index === gameState.currentTurn ? 'active-player' : ''}`}
+              >
+                <span className="player-name">{player.username}</span>
+                <span className="player-team">{t('game.players.team', { team: player.team })}</span>
+                <span className="player-cards">{t('game.players.cards', { count: player.hand.length })}</span>
+                {!player.isConnected && <span className="disconnected">{t('game.players.disconnected')}</span>}
+              </div>
+            ))}
+          </div>
+
+          <HandManager
+            cards={myPlayer.hand}
+            selectedCards={selectedCards}
+            onCardSelect={handleCardSelect}
+            onCardReorder={handleCardReorder}
+            isMyTurn={isMyTurnOrCheat()}
+            drawnCardIds={gameState.turnState?.drawnCardIds || []}
+            onBaixar={() => setShowBaixarDialog(true)}
+            onDiscard={handleDiscard}
+            onMultipleDiscard={handleMultipleDiscard}
+            onEndTurn={handleEndTurn}
+            canBaixar={isMyTurnOrCheat() && selectedCards.length >= 3}
+            canBater={canPlayerBater()}
+            hasBaixado={gameState.teamSequences[myTeam - 1]?.length > 0}
+            allowedActions={{
+              allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
+              allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
+              allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
+            }}
+            className="my-hand"
+          />
+        </div>
+
+        {/* Center Area - Compact Mobile Design */}
+        <div className="center-deck-area order-2 lg:order-2 bg-green-800/20 rounded-lg p-3">
+          <DeckDisplay
+            mainDeckCount={gameState.mainDeck.length}
+            onDrawFromMainDeck={handleDrawFromDeck}
+            discardPile={gameState.discardPile}
+            onDiscardPileClick={handleDiscardPileClick}
+            mortosUsed={gameState.mortosUsed}
+            mortos={gameState.mortos}
+            isMyTurn={isMyTurn}
+            allowedActions={{
+              allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
+              allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
+              allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
+            }}
+            className="center-area"
+          />
+        </div>
+
+        {/* Team Sequences - Collapsible on Mobile */}
+        <div className="team-sequences-container order-3 lg:order-1">
           <TeamSequences
             teamNumber={1}
             sequences={getTeamSequences(1)}
@@ -742,62 +802,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
             onSequenceDrop={handleSequenceDrop}
             onSequenceDragOver={handleSequenceDragOver}
             className="team-2-sequences"
-          />
-        </div>
-
-        {/* Center Area - New Mobile-Responsive DeckDisplay Component */}
-        <DeckDisplay
-          mainDeckCount={gameState.mainDeck.length}
-          onDrawFromMainDeck={handleDrawFromDeck}
-          discardPile={gameState.discardPile}
-          onDiscardPileClick={handleDiscardPileClick}
-          mortosUsed={gameState.mortosUsed}
-          mortos={gameState.mortos}
-          isMyTurn={isMyTurn}
-          allowedActions={{
-            allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
-            allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
-            allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
-          }}
-          className="center-area"
-        />
-
-        {/* Player Area */}
-        <div className="player-area">
-          <div className="players-info">
-            {gameState.players.map((player, index) => (
-              <div 
-                key={player.id} 
-                className={`player-info ${player.id === user.id.toString() ? 'current-user' : ''} ${index === gameState.currentTurn ? 'active-player' : ''}`}
-              >
-                <span className="player-name">{player.username}</span>
-                <span className="player-team">{t('game.players.team', { team: player.team })}</span>
-                <span className="player-cards">{t('game.players.cards', { count: player.hand.length })}</span>
-                {!player.isConnected && <span className="disconnected">{t('game.players.disconnected')}</span>}
-              </div>
-            ))}
-          </div>
-
-          <HandManager
-            cards={myPlayer.hand}
-            selectedCards={selectedCards}
-            onCardSelect={handleCardSelect}
-            onCardReorder={handleCardReorder}
-            isMyTurn={isMyTurnOrCheat()}
-            drawnCardIds={gameState.turnState?.drawnCardIds || []}
-            onBaixar={() => setShowBaixarDialog(true)}
-            onDiscard={handleDiscard}
-            onMultipleDiscard={handleMultipleDiscard}
-            onEndTurn={handleEndTurn}
-            canBaixar={isMyTurnOrCheat() && selectedCards.length >= 3}
-            canBater={canPlayerBater()}
-            hasBaixado={gameState.teamSequences[myTeam - 1]?.length > 0}
-            allowedActions={{
-              allowPlayAllCards: cheatsEnabled.allowPlayAllCards,
-              allowMultipleDiscard: cheatsEnabled.allowMultipleDiscard,
-              allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
-            }}
-            className="my-hand"
           />
         </div>
       </div>

@@ -2,7 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './LanguageSwitcher.css';
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  compact?: boolean;
+}
+
+export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
   const { i18n } = useTranslation();
 
   const languages = [
@@ -13,6 +17,25 @@ export function LanguageSwitcher() {
   const handleLanguageChange = (langCode: string) => {
     i18n.changeLanguage(langCode);
   };
+
+  const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
+
+  if (compact) {
+    return (
+      <div className="language-switcher compact">
+        <button
+          onClick={() => {
+            const nextLang = languages.find(lang => lang.code !== i18n.language) || languages[0];
+            handleLanguageChange(nextLang.code);
+          }}
+          className="lang-button compact active"
+          title={`Switch language (Current: ${currentLang.label})`}
+        >
+          <span className="flag text-sm">{currentLang.flag}</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="language-switcher">
