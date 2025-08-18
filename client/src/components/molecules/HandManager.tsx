@@ -225,7 +225,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
             size="sm"
             variant="ghost"
             onClick={toggleSort}
-            title={t('game.hand.sort')}
+            title="Sort cards"
             className="text-xs"
           >
             🔀 {sortType} {sortOrder === 'asc' ? '↑' : '↓'}
@@ -246,7 +246,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                 onClick={handleBaixarClick}
                 disabled={selectedCards.length < 3}
               >
-                {t('game.actions.baixar')} ({selectedCards.length}/3+)
+                {t('game.hand.actions.baixar')} ({selectedCards.length}/3+)
               </ActionButton>
             )}
             
@@ -256,7 +256,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
               onClick={handleDiscardClick}
               disabled={selectedCards.length === 0}
             >
-              {t('game.actions.discard')} 
+              {t('game.hand.actions.discard')} 
               {allowedActions.allowMultipleDiscard && selectedCards.length > 1 
                 ? ` (${selectedCards.length})`
                 : ''
@@ -269,7 +269,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                 size="sm"
                 onClick={() => {/* Handle bater */}}
               >
-                {t('game.actions.bater')}
+                {t('game.hand.actions.bater')}
               </BaterButton>
             )}
             
@@ -279,7 +279,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
                 size="sm"
                 onClick={onEndTurn}
               >
-                {t('game.actions.endTurn')}
+                {t('game.hand.actions.endTurn')}
               </EndTurnButton>
             )}
           </div>
@@ -302,7 +302,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
       >
         {sortedCards.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400">
-            <p className="text-sm">{t('game.hand.noCards')}</p>
+            <p className="text-sm">No cards in hand</p>
           </div>
         ) : (
           <div className={cn(
@@ -385,9 +385,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
         {/* Mobile Usage Hint */}
         {isMobile && sortedCards.length > 0 && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
-            <p>{t('game.hand.mobileHint', { 
-              defaultValue: '💡 Long press to select • Swipe up to select • Swipe down to discard'
-            })}</p>
+            <p>💡 Long press to select • Swipe up to select • Swipe down to discard</p>
           </div>
         )}
       </div>

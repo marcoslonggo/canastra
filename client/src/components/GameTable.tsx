@@ -890,7 +890,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
             onDiscard={handleDiscard}
             onMultipleDiscard={handleMultipleDiscard}
             onEndTurn={handleEndTurn}
-            canBaixar={true}
+            canBaixar={isMyTurnOrCheat() && selectedCards.length >= 3}
             canBater={canPlayerBater()}
             hasBaixado={gameState.teamSequences[myTeam - 1]?.length > 0}
             allowedActions={{
