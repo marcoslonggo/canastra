@@ -67,26 +67,24 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
 
             
             {/* Right: Scores + Controls */}
-            <div className="flex items-center gap-2">
-              {/* Compact Scores */}
-              <div className="flex items-center gap-1 text-xs">
-                <span className={cn(
-                  'px-1.5 py-0.5 rounded font-medium',
-                  myTeam === 1 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
-                )}>
-                  {gameState.scores[0]}
-                </span>
-                <span className="text-gray-400 text-xs">:</span>
-                <span className={cn(
-                  'px-1.5 py-0.5 rounded font-medium',
-                  myTeam === 2 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
-                )}>
-                  {gameState.scores[1]}
-                </span>
-              </div>
-              
-              {/* Menu toggle (language + leave combined) */}
-              <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between flex-1 ml-4">
+              {/* Compact Scores + Language */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-xs">
+                  <span className={cn(
+                    'px-1.5 py-0.5 rounded font-medium',
+                    myTeam === 1 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                  )}>
+                    {gameState.scores[0]}
+                  </span>
+                  <span className="text-gray-400 text-xs">:</span>
+                  <span className={cn(
+                    'px-1.5 py-0.5 rounded font-medium',
+                    myTeam === 2 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                  )}>
+                    {gameState.scores[1]}
+                  </span>
+                </div>
                 <LanguageSwitcher compact />
                 {cheatMode && onToggleCheatMenu && (
                   <ActionButton
@@ -99,16 +97,18 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                     ⚡
                   </ActionButton>
                 )}
-                <ActionButton
-                  onClick={onLeaveGame}
-                  variant="ghost"
-                  size="sm"
-                  className="w-8 h-8 p-0 text-red-600 hover:text-red-700"
-                  title="Leave Game"
-                >
-                  ✕
-                </ActionButton>
               </div>
+
+              {/* Disconnect Button - Anchored Far Right */}
+              <ActionButton
+                onClick={onLeaveGame}
+                variant="ghost"
+                size="sm"
+                className="w-8 h-8 p-0 text-red-600 hover:text-red-700 flex-shrink-0"
+                title="Leave Game"
+              >
+                ✕
+              </ActionButton>
             </div>
           </div>
         </div>

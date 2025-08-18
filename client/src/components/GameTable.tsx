@@ -704,10 +704,10 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
       <ConnectedActionMessage />
 
       <div className="game-board flex flex-col gap-4">
-        {/* Mobile-First Layout: Cards First, then Deck, then Sequences */}
+        {/* User-Requested Layout: Game Board First, then Hands, then Deck */}
         
-        {/* Player Area - Priority Position on Mobile */}
-        <div className="player-area order-1 lg:order-3">
+        {/* Player Area - Hands (2nd Priority) */}
+        <div className="player-area order-2 lg:order-2">
           <div className="players-info hidden sm:flex">
             {gameState.players.map((player, index) => (
               <div 
@@ -745,8 +745,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           />
         </div>
 
-        {/* Center Area - Compact Mobile Design */}
-        <div className="center-deck-area order-2 lg:order-2 bg-green-800/20 rounded-lg p-3">
+        {/* Center Area - Deck Area (3rd Priority) */}
+        <div className="center-deck-area order-3 lg:order-3 bg-green-800/20 rounded-lg p-3 overflow-hidden">
           <DeckDisplay
             mainDeckCount={gameState.mainDeck.length}
             onDrawFromMainDeck={handleDrawFromDeck}
@@ -764,8 +764,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           />
         </div>
 
-        {/* Team Sequences - Collapsible on Mobile */}
-        <div className="team-sequences-container order-3 lg:order-1">
+        {/* Team Sequences - Game Board (1st Priority) */}
+        <div className="team-sequences-container order-1 lg:order-1">
           <TeamSequences
             teamNumber={1}
             sequences={getTeamSequences(1)}

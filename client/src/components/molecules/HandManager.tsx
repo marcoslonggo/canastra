@@ -263,50 +263,21 @@ export const HandManager: React.FC<HandManagerProps> = ({
       'min-h-0 flex-shrink-0', 
       className
     )}>
-      {/* Hand Header - Actions and Controls */}
+      {/* Hand Header - Action Buttons Only */}
       <div className="hand-header flex flex-wrap items-center justify-between gap-2 p-3 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-        {/* Sort Controls - Modern Icon */}
-        <div className="flex items-center gap-2">
-          <ActionButton
-            size="sm"
-            variant="ghost"
-            onClick={toggleSort}
-            title={`Sort by ${sortType} (${sortOrder}ending)`}
-            className="text-xs hover:bg-gray-100 transition-colors"
-          >
-            <span className="flex items-center gap-1">
-              {/* Modern Sort Icon */}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d={sortOrder === 'asc' 
-                    ? "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" 
-                    : "M3 4h13M3 8h9m-9 4h9m5 0l4 4m0 0l4-4m-4 4V8"
-                  }
-                />
-              </svg>
-              <span className="text-[10px] font-medium text-gray-600">
-                {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
-              </span>
+        {/* Selection indicator */}
+        {selectedCards.length > 0 && (
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="text-xs font-medium text-blue-700">
+              {selectedCards.length} selected
             </span>
-          </ActionButton>
-          
-          {/* Selection indicator */}
-          {selectedCards.length > 0 && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              <span className="text-xs font-medium text-blue-700">
-                {selectedCards.length}
-              </span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
         
         {/* Action Buttons */}
         {isMyTurn && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 ml-auto">
             {/* Baixar Button */}
             {canBaixar && (
               <ActionButton
@@ -359,7 +330,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
       <div
         ref={containerRef}
         className={cn(
-          'hand-cards flex-1',
+          'hand-cards flex-1 relative',
           // CRITICAL: Enable natural scrolling on mobile
           'overflow-y-auto overflow-x-hidden',
           // Mobile-first responsive padding
@@ -369,6 +340,34 @@ export const HandManager: React.FC<HandManagerProps> = ({
           isMobile ? 'max-h-[40vh]' : 'max-h-[300px]'
         )}
       >
+        {/* Sort Button - Positioned in Cards Area */}
+        <div className="absolute top-2 right-2 z-10">
+          <ActionButton
+            size="sm"
+            variant="ghost"
+            onClick={toggleSort}
+            title={`Sort by ${sortType} (${sortOrder}ending)`}
+            className="text-xs hover:bg-white/90 bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm transition-colors"
+          >
+            <span className="flex items-center gap-1">
+              {/* Modern Sort Icon */}
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d={sortOrder === 'asc' 
+                    ? "M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" 
+                    : "M3 4h13M3 8h9m-9 4h9m5 0l4 4m0 0l4-4m-4 4V8"
+                  }
+                />
+              </svg>
+              <span className="text-[9px] font-medium text-gray-600">
+                {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
+              </span>
+            </span>
+          </ActionButton>
+        </div>
         {sortedCards.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400">
             <p className="text-sm">No cards in hand</p>

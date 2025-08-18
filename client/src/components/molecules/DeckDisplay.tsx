@@ -70,12 +70,13 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
 
   return (
     <div className={cn(
-      'deck-display flex items-center justify-center',
-      isMobile ? 'gap-2 p-2' : 'gap-4 p-3',
+      'deck-display flex items-center w-full',
+      // Prevent overflow by using safe spacing
+      isMobile ? 'justify-evenly gap-1 px-2 py-2 max-w-full' : 'justify-center gap-4 p-3',
       className
     )}>
       {/* Main Deck Section - Ultra Compact */}
-      <div className="deck-section flex flex-col items-center gap-1">
+      <div className="deck-section flex flex-col items-center gap-1 flex-shrink-0">
         <motion.div 
           className={cn(
             'deck-pile relative cursor-pointer',
@@ -109,21 +110,10 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
             {mainDeckCount}
           </span>
         )}
-        {!isMobile && (
-          <ActionButton
-            size="sm"
-            variant="ghost"
-            onClick={onDrawFromMainDeck}
-            className="text-xs"
-            disabled={!isMyTurnOrCheat() || mainDeckCount === 0}
-          >
-            {t('game.deck.draw')}
-          </ActionButton>
-        )}
       </div>
 
       {/* Discard Pile Section - Ultra Compact */}
-      <div className="deck-section flex flex-col items-center gap-1">
+      <div className="deck-section flex flex-col items-center gap-1 flex-shrink-0">
         <motion.div 
           className={cn(
             'discard-pile-container relative cursor-pointer',
@@ -169,23 +159,13 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
             {discardPile.length}
           </span>
         )}
-        {!isMobile && (
-          <ActionButton
-            size="sm"
-            variant="ghost"
-            onClick={onDiscardPileClick}
-            className="text-xs"
-          >
-            {t('game.deck.view')}
-          </ActionButton>
-        )}
       </div>
 
       {/* Compact Morto Icon System */}
       {mortos.length > 0 && (
         <motion.div 
           className={cn(
-            'morto-compact-icon relative cursor-pointer',
+            'morto-compact-icon relative cursor-pointer flex-shrink-0',
             isMobile ? 'w-8 h-8' : 'w-10 h-10'
           )}
           onClick={() => setShowMortoDetails(!showMortoDetails)}
