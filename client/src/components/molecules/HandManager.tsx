@@ -308,7 +308,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
             {canBater && (
               <BaterButton
                 size="sm"
-                onClick={onBater}
+                onClick={() => onBater && onBater()}
               >
                 {t('game.hand.actions.bater')}
               </BaterButton>
@@ -475,7 +475,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
             {canBater && (
               <BaterButton
                 size="sm"
-                onClick={onBater}
+                onClick={() => onBater && onBater()}
                 className="shadow-lg"
               >
                 {t('game.hand.actions.bater')}

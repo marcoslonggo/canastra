@@ -827,7 +827,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
             isMyTurn={isMyTurnOrCheat()}
             drawnCardIds={gameState.turnState?.drawnCardIds || []}
             onBaixar={() => setShowBaixarDialog(true)}
-            onBater={handleBater}
+            onBater={() => handleBater()}
             onDiscard={handleDiscard}
             onMultipleDiscard={handleMultipleDiscard}
             onEndTurn={handleEndTurn}
