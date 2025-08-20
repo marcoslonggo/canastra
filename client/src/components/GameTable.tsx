@@ -653,6 +653,23 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     showInfo(t('game.messages.addingToSequence'), 2000);
   };
 
+  const handleReplaceWildcard = (sequenceId: string, wildcardIndex: number) => {
+    if (!isMyTurnOrCheat()) {
+      showWarning(t('game.messages.notYourTurn'));
+      return;
+    }
+
+    if (selectedCards.length !== 1) {
+      showWarning('Select exactly one card to replace the wildcard');
+      return;
+    }
+
+    const replacementCardIndex = selectedCards[0];
+    gameService.replaceWildcard(sequenceId, wildcardIndex, replacementCardIndex);
+    clearSelection();
+    showInfo('Attempting to replace wildcard...', 2000);
+  };
+
   const handleCardDragStart = (cardIndex: number) => {
     setDraggedCardIndex(cardIndex);
   };
@@ -854,6 +871,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
             }}
             onAddToSequence={handleAddToSequence}
+            onReplaceWildcard={handleReplaceWildcard}
             onSequenceDrop={handleSequenceDrop}
             onSequenceDragOver={handleSequenceDragOver}
             className="team-1-sequences"
@@ -875,6 +893,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
               allowDiscardDrawnCards: cheatsEnabled.allowDiscardDrawnCards
             }}
             onAddToSequence={handleAddToSequence}
+            onReplaceWildcard={handleReplaceWildcard}
             onSequenceDrop={handleSequenceDrop}
             onSequenceDragOver={handleSequenceDragOver}
             className="team-2-sequences"

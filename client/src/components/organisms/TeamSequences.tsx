@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { CardGroup } from '../Card';
+import { Card } from '../Card';
 import { ActionButton } from '../atoms/ActionButton';
 import { useUIStore } from '../../stores/uiStore';
 import { cn } from '../../lib/utils';
@@ -29,6 +29,7 @@ interface TeamSequencesProps {
   
   // Event handlers
   onAddToSequence?: (sequenceId: string) => void;
+  onReplaceWildcard?: (sequenceId: string, wildcardIndex: number) => void;
   onSequenceDrop?: (e: React.DragEvent, sequenceId: string) => void;
   onSequenceDragOver?: (e: React.DragEvent) => void;
   
@@ -51,6 +52,7 @@ export const TeamSequences: React.FC<TeamSequencesProps> = ({
     allowDiscardDrawnCards: false,
   },
   onAddToSequence,
+  onReplaceWildcard,
   onSequenceDrop,
   onSequenceDragOver,
   className,
@@ -216,15 +218,53 @@ export const TeamSequences: React.FC<TeamSequencesProps> = ({
                   </div>
 
                   {/* Sequence Cards */}
-                  <CardGroup 
-                    cards={sequence.cards} 
-                    isSequence={true}
-                    className={cn(
-                      'table-sequence',
-                      isMobile ? 'gap-1' : 'gap-2'
-                    )}
-                    drawnCardIds={drawnCardIds}
-                  />
+                  <div className={cn(
+                    'sequence-cards-container flex flex-wrap items-center justify-center',
+                    'table-sequence',
+                    isMobile ? 'gap-1' : 'gap-2'
+                  )}>
+                    {sequence.cards.map((card, cardIndex) => (
+                      <div key={`${sequence.id}-card-${cardIndex}`} className="relative">
+                        <Card 
+                          card={card}
+                          className={cn(
+                            'sequence-card shadow-sm',
+                            isMobile ? 'w-8 h-12' : 'w-12 h-16',
+                            drawnCardIds.includes(card.id) && 'ring-2 ring-yellow-400',
+                            // Make wildcards clickable for replacement (only for my team)
+                            card.isWild && 
+                            myTeam === teamNumber && 
+                            canInteractWithSequence() && 
+                            sequence.canastraType === 'suja' &&
+                            onReplaceWildcard && 
+                            'cursor-pointer hover:ring-2 hover:ring-purple-400 transition-all'
+                          )}
+                          onClick={
+                            card.isWild && 
+                            myTeam === teamNumber && 
+                            canInteractWithSequence() && 
+                            sequence.canastraType === 'suja' &&
+                            onReplaceWildcard
+                              ? () => onReplaceWildcard(sequence.id, cardIndex)
+                              : undefined
+                          }
+                        />
+                        {/* Wildcard indicator */}
+                        {card.isWild && 
+                         myTeam === teamNumber && 
+                         sequence.canastraType === 'suja' && 
+                         canInteractWithSequence() && (
+                          <div className={cn(
+                            'absolute -top-1 -right-1 bg-purple-500 text-white rounded-full',
+                            'flex items-center justify-center font-bold shadow-sm',
+                            isMobile ? 'w-3 h-3 text-[8px]' : 'w-4 h-4 text-xs'
+                          )}>
+                            🔄
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                   
                   {/* Drop Indicator */}
                   {canInteractWithSequence() && draggedCardIndex !== null && (
