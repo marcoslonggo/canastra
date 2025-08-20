@@ -43,7 +43,10 @@ export class BuracoGame {
       mortosUsed: [false, false],
       mortosUsedByTeam: [null, null],
       teamSequences: [[], []],
-      scores: [0, 0],
+      roundScores: [0, 0],
+      matchScores: [0, 0],
+      currentRound: 1,
+      roundHistory: [],
       phase: 'playing',
       turnState: {
         hasDrawn: false,
@@ -59,36 +62,58 @@ export class BuracoGame {
   }
 
   public processAction(action: GameAction): GameActionResult {
+    console.log('🔍 PROCESS ACTION: Starting processAction with:', { 
+      type: action.type, 
+      playerId: action.playerId, 
+      data: action.data 
+    });
+    
     const player = this.getPlayerById(action.playerId);
     if (!player) {
+      console.log('🔍 PROCESS ACTION: Player not found for ID:', action.playerId);
       return { success: false, message: 'Player not found' };
     }
 
+    console.log('🔍 PROCESS ACTION: Player found:', player.id, player.username);
+
     // Skip turn check for cheat actions
     if (action.type !== 'cheat' && !this.isPlayerTurn(action.playerId)) {
+      console.log('🔍 PROCESS ACTION: Not player turn, rejecting');
       return { success: false, message: 'Not your turn' };
     }
 
+    console.log('🔍 PROCESS ACTION: About to enter switch statement for type:', action.type);
+
     switch (action.type) {
       case 'draw':
+        console.log('🔍 PROCESS ACTION: Routing to handleDraw');
         return this.handleDraw(player, action.data);
       case 'baixar':
+        console.log('🔍 PROCESS ACTION: Routing to handleBaixar');
         return this.handleBaixar(player, action.data);
       case 'discard':
+        console.log('🔍 PROCESS ACTION: Routing to handleDiscard');
         return this.handleDiscard(player, action.data);
       case 'bater':
+        console.log('🔍 PROCESS ACTION: Routing to handleBater');
         return this.handleBater(player, action.data);
       case 'add-to-sequence':
+        console.log('🔍 PROCESS ACTION: Routing to handleAddToSequence');
         return this.handleAddToSequence(player, action.data);
       case 'replace-wildcard':
+        console.log('🔍 PROCESS ACTION: Routing to handleReplaceWildcard');
         return this.handleReplaceWildcard(player, action.data);
       case 'end-turn':
+        console.log('🔍 PROCESS ACTION: Routing to handleEndTurn');
         return this.handleEndTurn(player, action.data);
       case 'cheat':
+        console.log('🔍 PROCESS ACTION: Routing to executeCheatCode with cheatCode:', action.data.cheatCode);
         return this.executeCheatCode(action.data.cheatCode, action.playerId);
       case 'pick-card':
+        console.log('🔍 PROCESS ACTION: Routing to cheat_addSelectedCard');
         return this.cheat_addSelectedCard(player, action.data.cardId);
       default:
+        console.log('🔍 PROCESS ACTION: Unknown action type:', action.type);
         return { success: false, message: 'Invalid action type' };
     }
   }
@@ -215,7 +240,7 @@ export class BuracoGame {
 
   private handleBaixar(player: Player, data: { sequences: Card[][] }): GameActionResult {
     const team = player.team;
-    const currentScore = this.gameState.scores[team - 1];
+    const currentScore = this.gameState.matchScores[team - 1];
 
     // Check minimum points requirement after 1500 points
     if (currentScore >= 1500 && !this.hasPlayerBaixado(player)) {
@@ -282,7 +307,7 @@ export class BuracoGame {
 
     // Update scores
     const points = validatedSequences.reduce((sum, seq) => sum + seq.points, 0);
-    this.gameState.scores[team - 1] += points;
+    this.gameState.roundScores[team - 1] += points;
 
     return {
       success: true,
@@ -464,7 +489,7 @@ export class BuracoGame {
       
       // Update team score (add points from new cards)
       const addedPoints = cardsToAdd.reduce((sum, card) => sum + card.points, 0);
-      this.gameState.scores[team - 1] += addedPoints;
+      this.gameState.roundScores[team - 1] += addedPoints;
       
       console.log(`🃏 Added ${cardsToAdd.length} cards to sequence. New sequence:`, newSequence);
       
@@ -795,32 +820,113 @@ export class BuracoGame {
   private finishGame(player: Player): GameActionResult {
     const team = player.team;
     
-    // Award winning bonus
-    this.gameState.scores[team - 1] += 100;
+    // Calculate round results
+    const baterBonus = 100; // Bonus for team that bateu
+    const finalHandPenalties: [number, number] = [0, 0];
+    const mortoBonus: [number, number] = [0, 0];
+    
+    // Award bater bonus to winning team
+    this.gameState.roundScores[team - 1] += baterBonus;
     
     // Penalize cards remaining in other players' hands
     for (const otherPlayer of this.gameState.players) {
       if (otherPlayer.team !== team) {
         const remainingPoints = otherPlayer.hand.reduce((sum, card) => sum + card.points, 0);
-        this.gameState.scores[team - 1] += remainingPoints;
+        this.gameState.roundScores[team - 1] += remainingPoints;
+        finalHandPenalties[otherPlayer.team - 1] += remainingPoints;
       }
     }
 
-    // Check for Morto penalty
+    // Check for Morto penalty/bonus
     if (!this.gameState.mortosUsed[0] || !this.gameState.mortosUsed[1]) {
       // Apply -100 penalty to team that didn't take Morto
       const penaltyTeam = this.gameState.mortosUsed[0] ? 2 : 1;
-      this.gameState.scores[penaltyTeam - 1] -= 100;
+      this.gameState.roundScores[penaltyTeam - 1] -= 100;
+      mortoBonus[penaltyTeam - 1] = -100;
     }
 
-    this.gameState.phase = 'finished';
-    this.gameState.winner = team;
+    // Create round result record
+    const roundResult = {
+      roundNumber: this.gameState.currentRound,
+      winnerTeam: team,
+      winnerPlayer: player.username,
+      scores: [...this.gameState.roundScores] as [number, number],
+      finalHandPenalties,
+      mortoBonus,
+      baterBonus,
+      timestamp: new Date()
+    };
 
-    return {
-      success: true,
-      message: `Game finished! Team ${team} wins!`,
-      newGameState: this.gameState,
-      gameEnded: true
+    // Add to round history
+    this.gameState.roundHistory.push(roundResult);
+    this.gameState.roundWinner = team;
+    
+    // Update match scores with round results
+    this.gameState.matchScores[0] += this.gameState.roundScores[0];
+    this.gameState.matchScores[1] += this.gameState.roundScores[1];
+    
+    // Check if match is won (3000+ points)
+    const maxScore = Math.max(this.gameState.matchScores[0], this.gameState.matchScores[1]);
+    if (maxScore >= this.gameState.gameRules.pointsToWin) {
+      // Match is finished
+      this.gameState.phase = 'match-finished';
+      this.gameState.matchWinner = this.gameState.matchScores[0] > this.gameState.matchScores[1] ? 1 : 2;
+      
+      return {
+        success: true,
+        message: `Match finished! Team ${this.gameState.matchWinner} wins the match with ${Math.max(...this.gameState.matchScores)} points!`,
+        newGameState: this.gameState,
+        gameEnded: true
+      };
+    } else {
+      // Round finished, but match continues
+      this.gameState.phase = 'round-finished';
+      
+      // Prepare for next round
+      this.startNewRound();
+      
+      return {
+        success: true,
+        message: `Round ${roundResult.roundNumber} finished! Team ${team} wins the round. Match score: Team 1: ${this.gameState.matchScores[0]}, Team 2: ${this.gameState.matchScores[1]}. Starting round ${this.gameState.currentRound}...`,
+        newGameState: this.gameState,
+        gameEnded: false
+      };
+    }
+  }
+
+  private startNewRound(): void {
+    // Increment round number
+    this.gameState.currentRound++;
+    
+    // Reset round-specific game state
+    this.gameState.roundScores = [0, 0];
+    this.gameState.teamSequences = [[], []];
+    this.gameState.mortosUsed = [false, false];
+    this.gameState.mortosUsedByTeam = [null, null];
+    this.gameState.discardPile = [];
+    this.gameState.currentTurn = 0;
+    this.gameState.phase = 'playing';
+    this.gameState.roundWinner = undefined;
+    
+    // Create new deck and deal cards
+    const deck = shuffleDeck(createDeck());
+    const { playerHands, remainingDeck, mortos } = dealCards(deck, this.gameState.players.length);
+    
+    // Reset each player's hand
+    this.gameState.players.forEach((player, index) => {
+      player.hand = playerHands[index];
+    });
+    
+    // Set up new deck and mortos
+    this.gameState.mainDeck = remainingDeck;
+    this.gameState.mortos = mortos;
+    
+    // Reset turn state
+    this.gameState.turnState = {
+      hasDrawn: false,
+      hasDiscarded: false,
+      drawnCardIds: [],
+      hasDiscardedNonDrawnCard: false
     };
   }
 
@@ -1098,11 +1204,11 @@ export class BuracoGame {
 
   private cheat_setTeamScore(team: number, score: number): GameActionResult {
     // Set team score for testing 1500+ requirements
-    this.gameState.scores[team - 1] = score;
+    this.gameState.matchScores[team - 1] = score;
     
     return {
       success: true,
-      message: `Team ${team} score set to ${score} points`,
+      message: `Team ${team} match score set to ${score} points`,
       newGameState: this.gameState
     };
   }
@@ -1180,7 +1286,13 @@ export class BuracoGame {
     this.gameState.discardPile = [];
     this.gameState.currentTurn = 0;
     this.gameState.teamSequences = [[], []];
-    this.gameState.scores = [0, 0];
+    this.gameState.roundScores = [0, 0];
+    this.gameState.matchScores = [0, 0];
+    this.gameState.currentRound = 1;
+    this.gameState.roundHistory = [];
+    this.gameState.phase = 'playing';
+    this.gameState.roundWinner = undefined;
+    this.gameState.matchWinner = undefined;
     this.gameState.mortosUsed = [false, false];
     this.gameState.mortosUsedByTeam = [null, null];
     

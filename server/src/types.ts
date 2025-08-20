@@ -38,6 +38,17 @@ export interface Player {
   isConnected: boolean;
 }
 
+export interface RoundResult {
+  roundNumber: number;
+  winnerTeam: number;
+  winnerPlayer: string;
+  scores: [number, number]; // Points scored this round by each team
+  finalHandPenalties: [number, number]; // Penalty points from cards left in hands
+  mortoBonus: [number, number]; // Bonus/penalty from Morto usage
+  baterBonus: number; // 100 points for bater team
+  timestamp: Date;
+}
+
 export interface GameState {
   id: string;
   players: Player[];
@@ -48,9 +59,13 @@ export interface GameState {
   mortosUsed: [boolean, boolean]; // Track which Mortos taken
   mortosUsedByTeam: [number | null, number | null]; // Track which team took each Morto (null = not taken)
   teamSequences: [Sequence[], Sequence[]]; // Team 1 and Team 2 sequences
-  scores: [number, number];
-  phase: 'waiting' | 'playing' | 'finished';
-  winner?: number;
+  roundScores: [number, number]; // Current round scores
+  matchScores: [number, number]; // Total match scores across all rounds
+  currentRound: number; // Current round number (starts at 1)
+  roundHistory: RoundResult[]; // History of completed rounds
+  phase: 'waiting' | 'playing' | 'round-finished' | 'match-finished';
+  roundWinner?: number; // Winner of current round
+  matchWinner?: number; // Winner of entire match
   turnState: {
     hasDrawn: boolean; // Track if current player has drawn this turn
     hasDiscarded: boolean; // Track if current player has discarded this turn
@@ -58,7 +73,7 @@ export interface GameState {
     hasDiscardedNonDrawnCard: boolean; // Track if player discarded a card NOT drawn this turn
   };
   gameRules: {
-    pointsToWin: number;
+    pointsToWin: number; // Points needed to win the match (usually 3000)
     minBaixarAfter1500: number;
   };
 }

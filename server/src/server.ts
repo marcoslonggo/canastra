@@ -680,8 +680,11 @@ io.on('connection', (socket: any) => {
       
       if (result.gameEnded && result.newGameState) {
         io.to(`game:${currentGameId}`).emit('game-ended', {
-          winner: result.newGameState.winner,
-          scores: result.newGameState.scores
+          matchWinner: result.newGameState.matchWinner,
+          roundWinner: result.newGameState.roundWinner,
+          matchScores: result.newGameState.matchScores,
+          roundScores: result.newGameState.roundScores,
+          phase: result.newGameState.phase
         });
       }
     } else {

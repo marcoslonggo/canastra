@@ -91,10 +91,11 @@ export class GameManager {
       return { success: false, message: 'Game already started' };
     }
 
+    // Temporary: Allow any player to start the game for testing
     // Check if requesting player is the host (first player)
-    if (gameRoom.players.length === 0 || gameRoom.players[0].id !== requestingPlayerId) {
-      return { success: false, message: 'Only the host can start the game' };
-    }
+    // if (gameRoom.players.length === 0 || gameRoom.players[0].id !== requestingPlayerId) {
+    //   return { success: false, message: 'Only the host can start the game' };
+    // }
 
     if (gameRoom.players.length < 2) {
       return { success: false, message: 'Need at least 2 players to start' };
@@ -211,7 +212,10 @@ export class GameManager {
         mortosUsed: [false, false],
         mortosUsedByTeam: [null, null],
         teamSequences: [[], []],
-        scores: [0, 0],
+        roundScores: [0, 0],
+        matchScores: [0, 0],
+        currentRound: 1,
+        roundHistory: [],
         phase: 'waiting',
         turnState: {
           hasDrawn: false,
