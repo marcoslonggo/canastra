@@ -423,6 +423,15 @@ export class GameService {
     }
   }
 
+  public replaceWildcard(sequenceId: string, wildcardIndex: number, replacementCardIndex: number) {
+    if (this.socket) {
+      this.socket.emit('game-action', {
+        type: 'replace-wildcard',
+        data: { sequenceId, wildcardIndex, replacementCardIndex }
+      });
+    }
+  }
+
   public endTurn(cheatMode?: boolean) {
     if (this.socket) {
       this.socket.emit('game-action', {

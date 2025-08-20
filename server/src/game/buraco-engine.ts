@@ -3,7 +3,7 @@ import { createDeck, shuffleDeck, dealCards, isWildCard } from './deck';
 import { validateSequence, createSequence } from './sequences';
 
 export interface GameAction {
-  type: 'draw' | 'baixar' | 'discard' | 'bater' | 'add-to-sequence' | 'end-turn' | 'cheat';
+  type: 'draw' | 'baixar' | 'discard' | 'bater' | 'add-to-sequence' | 'replace-wildcard' | 'end-turn' | 'cheat';
   playerId: string;
   data?: any;
 }
@@ -80,6 +80,8 @@ export class BuracoGame {
         return this.handleBater(player, action.data);
       case 'add-to-sequence':
         return this.handleAddToSequence(player, action.data);
+      case 'replace-wildcard':
+        return this.handleReplaceWildcard(player, action.data);
       case 'end-turn':
         return this.handleEndTurn(player, action.data);
       case 'cheat':
@@ -473,6 +475,87 @@ export class BuracoGame {
       return {
         success: false,
         message: `Cannot add cards to sequence: ${error}`
+      };
+    }
+  }
+
+  private handleReplaceWildcard(player: Player, data: { sequenceId: string; wildcardIndex: number; replacementCardIndex: number }): GameActionResult {
+    const team = player.team;
+    const teamSequences = this.gameState.teamSequences[team - 1];
+    
+    // Find the target sequence
+    const sequenceIndex = teamSequences.findIndex(seq => seq.id === data.sequenceId);
+    if (sequenceIndex === -1) {
+      return { success: false, message: 'Sequence not found' };
+    }
+    
+    const targetSequence = teamSequences[sequenceIndex];
+    
+    // Check if the specified position contains a wildcard
+    if (data.wildcardIndex < 0 || data.wildcardIndex >= targetSequence.cards.length) {
+      return { success: false, message: 'Invalid wildcard position' };
+    }
+    
+    const wildcardToReplace = targetSequence.cards[data.wildcardIndex];
+    if (!wildcardToReplace.isWild) {
+      return { success: false, message: 'Card at specified position is not a wildcard' };
+    }
+    
+    // Get replacement card from player's hand
+    if (data.replacementCardIndex < 0 || data.replacementCardIndex >= player.hand.length) {
+      return { success: false, message: 'Invalid card index' };
+    }
+    
+    const replacementCard = player.hand[data.replacementCardIndex];
+    
+    // Check if replacement card would fit naturally in the sequence
+    const newSequenceCards = [...targetSequence.cards];
+    newSequenceCards[data.wildcardIndex] = replacementCard;
+    
+    try {
+      // Validate the new sequence is still valid
+      const newSequence = createSequence(newSequenceCards, targetSequence.id);
+      
+      // Check if this actually makes a transformation (Suja → Limpa)
+      const oldWasClean = targetSequence.canastraType === 'limpa' || targetSequence.canastraType === 'as-a-as';
+      const newIsClean = newSequence.canastraType === 'limpa' || newSequence.canastraType === 'as-a-as';
+      
+      if (oldWasClean) {
+        return { success: false, message: 'Sequence is already clean (Limpa)' };
+      }
+      
+      if (!newIsClean) {
+        return { success: false, message: 'This replacement would not make the sequence clean (Limpa)' };
+      }
+      
+      // DEADLOCK PREVENTION: Check if action would cause unplayable state
+      if (this.wouldCauseDeadlock(player, 'replace-wildcard', 1)) {
+        const deadlockReason = this.getDeadlockExplanation(player.team);
+        return {
+          success: false,
+          message: `Cannot replace wildcard - this would empty your hand without ability to bater. ${deadlockReason}`
+        };
+      }
+      
+      // Perform the replacement
+      player.hand.splice(data.replacementCardIndex, 1); // Remove replacement card from hand
+      player.hand.push(wildcardToReplace); // Add the wildcard back to hand
+      
+      // Replace the sequence in team's area
+      teamSequences[sequenceIndex] = newSequence;
+      
+      console.log(`🔄 Replaced wildcard ${wildcardToReplace.rank}${wildcardToReplace.suit} with natural ${replacementCard.rank}${replacementCard.suit}`);
+      console.log(`🔄 Sequence transformed: ${targetSequence.canastraType} → ${newSequence.canastraType}`);
+      
+      return {
+        success: true,
+        message: `Wildcard replaced successfully! Sequence transformed from ${targetSequence.canastraType} to ${newSequence.canastraType}`,
+        newGameState: this.gameState
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Cannot replace wildcard: ${error}`
       };
     }
   }
