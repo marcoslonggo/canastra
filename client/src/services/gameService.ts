@@ -432,6 +432,15 @@ export class GameService {
     }
   }
 
+  public pickCard(cardId: string) {
+    if (this.socket) {
+      this.socket.emit('game-action', {
+        type: 'pick-card',
+        data: { cardId }
+      });
+    }
+  }
+
   public endTurn(cheatMode?: boolean) {
     if (this.socket) {
       this.socket.emit('game-action', {

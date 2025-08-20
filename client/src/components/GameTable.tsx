@@ -50,7 +50,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [cheatMode, setCheatMode] = useState(false);
   const [showCheatMenu, setShowCheatMenu] = useState(false);
   const [showCardPicker, setShowCardPicker] = useState(false);
-  const [availableCardsForPicking, setAvailableCardsForPicking] = useState<Card[]>([]);
+  const [availableCardsForPicking, setAvailableCardsForPicking] = useState<CardType[]>([]);
   const [cheatsEnabled, setCheatsEnabled] = useState({
     allowPlayAllCards: false,
     allowMultipleDiscard: false,
@@ -687,12 +687,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   };
 
   const handlePickCard = (cardId: string) => {
-    if (gameService.socket) {
-      gameService.socket.emit('game-action', {
-        type: 'pick-card',
-        data: { cardId }
-      });
-    }
+    gameService.pickCard(cardId);
     setShowCardPicker(false);
     showInfo('Adding card to hand...', 2000);
   };
@@ -1086,13 +1081,12 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
             <h3 style={{ marginBottom: '20px' }}>Select a Card to Add to Your Hand</h3>
             <div className="card-picker-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: '10px' }}>
               {availableCardsForPicking.map((card) => (
-                <Card
-                  key={card.id}
-                  card={card}
-                  className="clickable-card"
-                  style={{ cursor: 'pointer', width: '60px', height: '84px' }}
-                  onClick={() => handlePickCard(card.id)}
-                />
+                <div key={card.id} style={{ cursor: 'pointer', width: '60px', height: '84px' }} onClick={() => handlePickCard(card.id)}>
+                  <Card
+                    card={card}
+                    className="clickable-card"
+                  />
+                </div>
               ))}
             </div>
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
