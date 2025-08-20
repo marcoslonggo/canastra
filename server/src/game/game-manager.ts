@@ -145,7 +145,21 @@ export class GameManager {
     }
 
     const gameRoom = this.games.get(gameId);
-    if (!gameRoom || gameRoom.status !== 'playing') {
+    if (!gameRoom) {
+      return { success: false, message: 'Game not found' };
+    }
+
+    // Allow cheat actions in any game state for testing
+    if (action.type === 'cheat') {
+      const fullAction: GameAction = {
+        ...action,
+        playerId
+      };
+      return gameRoom.game.processAction(fullAction);
+    }
+
+    // For non-cheat actions, require game to be playing
+    if (gameRoom.status !== 'playing') {
       return { success: false, message: 'Game not active' };
     }
 

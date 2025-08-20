@@ -821,10 +821,15 @@ export class BuracoGame {
 
   // CHEAT SYSTEM - FOR TESTING ONLY
   public executeCheatCode(cheatCode: string, playerId: string): GameActionResult {
+    console.log(`🧪 CHEAT: Executing cheat code "${cheatCode}" for player ${playerId}`);
+    
     const player = this.getPlayerById(playerId);
     if (!player) {
+      console.log(`🧪 CHEAT: Player not found: ${playerId}`);
       return { success: false, message: 'Player not found' };
     }
+
+    console.log(`🧪 CHEAT: Player found: ${player.username}, executing cheat "${cheatCode}"`);
 
     switch (cheatCode) {
       case 'deadlock':
@@ -848,11 +853,13 @@ export class BuracoGame {
       case '1500pts':
         return this.cheat_setTeamScore(player.team, 1600);
       default:
+        console.log(`🧪 CHEAT: Unknown cheat code "${cheatCode}" - available codes: deadlock, limpa, suja, transform, aces3, pique, discard5, morto0, morto1, 1500pts`);
         return { success: false, message: `Unknown cheat code: ${cheatCode}` };
     }
   }
 
   private cheat_createDeadlockScenario(player: Player): GameActionResult {
+    console.log(`🧪 CHEAT: Executing deadlock scenario for ${player.username}`);
     // Set player to 1 card
     player.hand = player.hand.slice(0, 1);
     
@@ -872,6 +879,7 @@ export class BuracoGame {
   }
 
   private cheat_giveCanastraLimpa(player: Player): GameActionResult {
+    console.log(`🧪 CHEAT: Giving Canastra Limpa to ${player.username}`);
     // Give player A♠-2♠-3♠-4♠-5♠-6♠-7♠ (Canastra Limpa)
     const limpaCards: Card[] = [
       { id: 'cheat_A♠', suit: 'spades', rank: 'A', value: 1, points: 15, isWild: false },
@@ -893,6 +901,7 @@ export class BuracoGame {
   }
 
   private cheat_giveCanastraSuja(player: Player): GameActionResult {
+    console.log(`🧪 CHEAT: Giving Canastra Suja to ${player.username}`);
     // Give player A♠-2♥-3♠-4♠-5♠-6♠-7♠ (Canastra Suja with different-suit 2)
     const sujaCards: Card[] = [
       { id: 'cheat_A♠_suja', suit: 'spades', rank: 'A', value: 1, points: 15, isWild: false },
@@ -936,6 +945,7 @@ export class BuracoGame {
   }
 
   private cheat_giveThreeAces(player: Player): GameActionResult {
+    console.log(`🧪 CHEAT: Giving Three Aces sequence to ${player.username}`);
     // Give player A♠-A♥-A♣-Joker (3 natural Aces + wildcard)
     const acesCards: Card[] = [
       { id: 'cheat_A♠_aces', suit: 'spades', rank: 'A', value: 1, points: 15, isWild: false },
@@ -954,6 +964,7 @@ export class BuracoGame {
   }
 
   private cheat_reduceToPique(player: Player): GameActionResult {
+    console.log(`🧪 CHEAT: Reducing ${player.username} to Pique (1 card)`);
     // Reduce player to only 1 card
     player.hand = player.hand.slice(0, 1);
     
