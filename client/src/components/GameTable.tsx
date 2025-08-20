@@ -44,6 +44,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const { showInfo, showError, showSuccess, showWarning } = useActionMessage();
   const [showBaixarDialog, setShowBaixarDialog] = useState(false);
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [sortType, setSortType] = useState<'suit' | 'blackred1' | 'blackred2'>('suit');
   const [cheatMode, setCheatMode] = useState(false);

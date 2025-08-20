@@ -72,7 +72,7 @@ export const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({
 
   const handleItemClick = (item: BottomSheetMenuItem) => {
     if (!item.disabled) {
-      touchFeedback();
+      touchFeedback.vibrate();
       item.onClick();
       onClose();
     }
@@ -92,7 +92,7 @@ export const BottomSheetMenu: React.FC<BottomSheetMenuProps> = ({
       y: 0,
       opacity: 1,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         damping: 30,
         stiffness: 300
       }
