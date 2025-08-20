@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { ActionButton } from '../atoms/ActionButton';
+import { DebugInfo } from '../atoms/DebugInfo';
 import { cn } from '../../lib/utils';
 import type { GameState, User, Player } from '../../types';
 
@@ -29,6 +30,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   
   const currentPlayer = gameState.players[gameState.currentTurn];
   const myTeam = myPlayer.team;
@@ -97,6 +99,15 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                     ⚡
                   </ActionButton>
                 )}
+                <ActionButton
+                  onClick={() => setShowDebugInfo(true)}
+                  variant="ghost"
+                  size="sm"
+                  className="w-8 h-8 p-0 text-blue-600"
+                  title="Debug Info"
+                >
+                  🔧
+                </ActionButton>
               </div>
 
               {/* Disconnect Button - Anchored Far Right */}
@@ -166,6 +177,17 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
               )}
             </div>
 
+            {/* Debug Button */}
+            <ActionButton
+              onClick={() => setShowDebugInfo(true)}
+              variant="ghost"
+              size="sm"
+              className="text-blue-600 hover:text-blue-700"
+              title="Debug Info"
+            >
+              🔧 Debug
+            </ActionButton>
+
             {/* Cheat Menu Button */}
             {cheatMode && onToggleCheatMenu && (
               <ActionButton
@@ -189,6 +211,12 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Debug Info Modal */}
+      <DebugInfo 
+        open={showDebugInfo} 
+        onClose={() => setShowDebugInfo(false)} 
+      />
     </div>
   );
 };
