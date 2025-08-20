@@ -38,12 +38,17 @@ function getApiBaseUrl(): string {
   return `${protocol}//${hostname}:3002`;
 }
 
+// Dynamic config that recalculates URLs on each access
 const config: Config = {
-  api: {
-    baseUrl: getApiBaseUrl(),
+  get api() {
+    return {
+      baseUrl: getApiBaseUrl(),
+    };
   },
-  websocket: {
-    url: getWebSocketUrl(),
+  get websocket() {
+    return {
+      url: getWebSocketUrl(),
+    };
   },
   app: {
     port: parseInt(process.env.PORT || '3004', 10),

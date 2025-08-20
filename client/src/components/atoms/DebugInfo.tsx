@@ -32,13 +32,19 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ open, onClose }) => {
       const clientURL = window.location.href;
       const clientIP = window.location.hostname;
       
+      // Get real-time server URLs (not cached config)
+      const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+      const hostname = window.location.hostname;
+      const realTimeServerURL = `${protocol}//${hostname}:3002`;
+      const realTimeWebSocketURL = `${protocol}//${hostname}:3002`;
+      
       // Test server connectivity
       let serverStatus = 'Unknown';
       let lastError: string | null = null;
       let corsErrors: string[] = [];
       
       try {
-        const response = await fetch(`${config.api.baseUrl}/health`, {
+        const response = await fetch(`${realTimeServerURL}/health`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -75,8 +81,8 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ open, onClose }) => {
       const info: ConnectionInfo = {
         clientURL,
         clientIP,
-        serverURL: config.api.baseUrl,
-        websocketURL: config.websocket.url,
+        serverURL: `${realTimeServerURL} (config: ${config.api.baseUrl})`,
+        websocketURL: `${realTimeWebSocketURL} (config: ${config.websocket.url})`,
         isConnected: wsConnected,
         lastError,
         corsErrors,
