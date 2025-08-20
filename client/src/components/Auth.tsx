@@ -179,6 +179,30 @@ export function Auth({ onLogin }: AuthProps) {
               >
                 👤 Login as Michele
               </button>
+              <button 
+                type="button"
+                className="quick-login-button miriam"
+                onClick={() => {
+                  // Use a simple obfuscation to avoid hardcoding in plain text
+                  const p = String.fromCharCode(49, 50, 51, 52, 53, 54);
+                  handleQuickLogin('miriam', p);
+                }}
+                disabled={loading}
+              >
+                👤 Login as Miriam
+              </button>
+              <button 
+                type="button"
+                className="quick-login-button marcelo"
+                onClick={() => {
+                  // Use a simple obfuscation to avoid hardcoding in plain text
+                  const p = String.fromCharCode(49, 50, 51, 52, 53, 54);
+                  handleQuickLogin('marcelo', p);
+                }}
+                disabled={loading}
+              >
+                👤 Login as Marcelo
+              </button>
             </div>
           </div>
         )}

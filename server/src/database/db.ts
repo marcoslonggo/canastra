@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import bcrypt from 'bcrypt';
 import config from '../config';
 
 const dbPath = path.isAbsolute(config.database.path) 
@@ -66,6 +67,54 @@ function initializeTables() {
   `);
 
   console.log('Database tables initialized');
+  
+  // Seed default test users
+  seedDefaultUsers();
+}
+
+async function seedDefaultUsers() {
+  const defaultUsers = [
+    { username: 'marcos', password: 'cro123' },
+    { username: 'michele', password: 'mibisa' },
+    { username: 'miriam', password: '123456' },
+    { username: 'marcelo', password: '123456' }
+  ];
+
+  for (const user of defaultUsers) {
+    try {
+      // Check if user already exists
+      const existingUser = await new Promise<any>((resolve, reject) => {
+        db.get('SELECT id FROM users WHERE username = ?', [user.username], (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        });
+      });
+
+      if (!existingUser) {
+        // Hash password and create user
+        const passwordHash = await bcrypt.hash(user.password, 10);
+        await new Promise<void>((resolve, reject) => {
+          const stmt = db.prepare(`
+            INSERT INTO users (username, password_hash, email, is_admin)
+            VALUES (?, ?, ?, ?)
+          `);
+          
+          stmt.run([user.username, passwordHash, null, 0], function(this: sqlite3.RunResult, err: Error | null) {
+            if (err) {
+              reject(err);
+            } else {
+              console.log(`✅ Created default user: ${user.username}`);
+              resolve();
+            }
+          });
+        });
+      } else {
+        console.log(`ℹ️  User ${user.username} already exists`);
+      }
+    } catch (err) {
+      console.error(`❌ Error creating user ${user.username}:`, err);
+    }
+  }
 }
 
 export default db;
