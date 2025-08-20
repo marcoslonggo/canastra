@@ -651,9 +651,19 @@ io.on('connection', (socket: any) => {
 
     const result = gameManager.processGameAction(currentUser.id, action);
     
-    if (result.success && result.newGameState) {
-      // Broadcast updated game state to all players
-      io.to(`game:${currentGameId}`).emit('game-state-update', result.newGameState);
+    if (result.success) {
+      // Broadcast updated game state to all players if available
+      if (result.newGameState) {
+        io.to(`game:${currentGameId}`).emit('game-state-update', result.newGameState);
+      }
+      
+      // Send special data back to the requesting player (e.g., card picker, morto selection)
+      if (result.data) {
+        socket.emit('action-error', { 
+          message: result.message,
+          data: result.data 
+        });
+      }
       
       // Broadcast action data to other players (not the acting player)
       const actionData = generateActionData(currentUser.username, action, result);
@@ -668,7 +678,7 @@ io.on('connection', (socket: any) => {
         });
       }
       
-      if (result.gameEnded) {
+      if (result.gameEnded && result.newGameState) {
         io.to(`game:${currentGameId}`).emit('game-ended', {
           winner: result.newGameState.winner,
           scores: result.newGameState.scores
