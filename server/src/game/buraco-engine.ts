@@ -425,6 +425,16 @@ export class BuracoGame {
 
     const team = player.team;
     
+    // BUG #2 FIX: Check if team has already taken a Morto
+    const teamHasMorto = this.gameState.mortosUsedByTeam.includes(team);
+    if (teamHasMorto) {
+      console.log(`🎮 Team ${team} already has a Morto - cannot take another`);
+      return { 
+        success: false, 
+        message: `Your team has already taken a Morto. Only one Morto per team is allowed.` 
+      };
+    }
+    
     // Check if team can finish the game
     if (this.canTeamFinishGame(team)) {
       return this.finishGame(player);
