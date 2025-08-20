@@ -3,9 +3,22 @@
 ## 🚀 Quick Start Deployment
 
 ### Prerequisites
-- **Node.js** (v18+ recommended)
+- **Node.js** (v16+ **REQUIRED**, v18+ recommended)
 - **npm** (comes with Node.js)
 - **Git**
+
+⚠️ **IMPORTANT**: Node.js v14 or older will cause TypeScript compilation errors. Please upgrade to Node.js v16+.
+
+### 🩹 Quick Fix for Node.js Version Error
+If you get `SyntaxError: Unexpected token '?'` during build:
+```bash
+# Install Node.js 18 using nvm (recommended)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 18
+nvm use 18
+node --version  # Should show v18.x.x
+```
 
 ### 1. Clone the Repository
 ```bash
@@ -181,6 +194,31 @@ services:
 ## 🔧 Troubleshooting
 
 ### Common Issues
+
+**Node.js Version Too Old (SyntaxError: Unexpected token '?'):**
+```bash
+# Check current Node.js version
+node --version
+
+# If version is < 16, update Node.js:
+
+# Option 1: Using Node Version Manager (nvm) - Recommended
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+source ~/.bashrc
+nvm install 18
+nvm use 18
+
+# Option 2: Using NodeSource repository (Ubuntu/Debian)
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Option 3: Using Homebrew (macOS)
+brew install node@18
+
+# Verify installation
+node --version  # Should show v18.x.x or v16.x.x+
+npm --version
+```
 
 **Port Already in Use:**
 ```bash
