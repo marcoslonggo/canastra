@@ -121,10 +121,15 @@ export class BuracoGame {
   }
 
   private handleDraw(player: Player, data: { source: 'deck' | 'discard', selectedCards?: string[] }): GameActionResult {
-    console.log('🎮 handleDraw called with:', { source: data.source, selectedCards: data.selectedCards });
+    console.log('🎮 handleDraw called with:', { 
+      source: data.source, 
+      selectedCards: data.selectedCards,
+      hasDrawn: this.gameState.turnState.hasDrawn 
+    });
     
     // Check if player has already drawn this turn
     if (this.gameState.turnState.hasDrawn) {
+      console.log('❌ Player already drew this turn');
       return { success: false, message: 'You can only draw one card per turn' };
     }
 
@@ -336,6 +341,15 @@ export class BuracoGame {
     if (data.cardIndex < 0 || data.cardIndex >= player.hand.length) {
       console.log(`❌ Invalid card index: ${data.cardIndex}, hand size: ${player.hand.length}`);
       return { success: false, message: `Invalid card index ${data.cardIndex}. You have ${player.hand.length} cards.` };
+    }
+
+    // BUG #4 FIX: Prevent multiple discards per turn (unless cheat mode)
+    if (this.gameState.turnState.hasDiscarded && !data.cheatMode) {
+      console.log('❌ Player already discarded this turn');
+      return { 
+        success: false, 
+        message: 'You can only discard one card per turn' 
+      };
     }
 
     // Allow discarding the last card - player will be forced to bater before ending turn
