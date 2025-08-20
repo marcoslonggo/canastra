@@ -3,7 +3,7 @@ import { createDeck, shuffleDeck, dealCards, isWildCard } from './deck';
 import { validateSequence, createSequence } from './sequences';
 
 export interface GameAction {
-  type: 'draw' | 'baixar' | 'discard' | 'bater' | 'add-to-sequence' | 'replace-wildcard' | 'end-turn' | 'cheat';
+  type: 'draw' | 'baixar' | 'discard' | 'bater' | 'add-to-sequence' | 'replace-wildcard' | 'end-turn' | 'cheat' | 'pick-card';
   playerId: string;
   data?: any;
 }
@@ -86,6 +86,8 @@ export class BuracoGame {
         return this.handleEndTurn(player, action.data);
       case 'cheat':
         return this.executeCheatCode(action.data.cheatCode, action.playerId);
+      case 'pick-card':
+        return this.cheat_addSelectedCard(player, action.data.cardId);
       default:
         return { success: false, message: 'Invalid action type' };
     }
@@ -935,8 +937,12 @@ export class BuracoGame {
         return this.cheat_setMortoStatus(player.team, 1);
       case '1500pts':
         return this.cheat_setTeamScore(player.team, 1600);
+      case 'getcard':
+        return this.cheat_showDeckForPicking(player);
+      case 'resetgame':
+        return this.cheat_resetGame();
       default:
-        console.log(`🧪 CHEAT: Unknown cheat code "${cheatCode}" - available codes: deadlock, limpa, suja, transform, aces3, pique, discard5, morto0, morto1, 1500pts`);
+        console.log(`🧪 CHEAT: Unknown cheat code "${cheatCode}" - available codes: deadlock, limpa, suja, transform, aces3, pique, discard5, morto0, morto1, 1500pts, getcard, resetgame`);
         return { success: false, message: `Unknown cheat code: ${cheatCode}` };
     }
   }
@@ -1097,6 +1103,103 @@ export class BuracoGame {
     return {
       success: true,
       message: `Team ${team} score set to ${score} points`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_showDeckForPicking(player: Player): GameActionResult {
+    console.log(`🧪 CHEAT: Showing deck for card picking to ${player.username}`);
+    
+    // Collect all available cards from main deck and discard pile
+    const availableCards: Card[] = [
+      ...this.gameState.mainDeck,
+      ...this.gameState.discardPile
+    ];
+    
+    // Return the available cards as data for the client to display
+    return {
+      success: true,
+      message: `Card picker activated - ${availableCards.length} cards available`,
+      newGameState: this.gameState,
+      data: { 
+        action: 'show-card-picker',
+        cards: availableCards 
+      }
+    };
+  }
+
+  private cheat_addSelectedCard(player: Player, cardId: string): GameActionResult {
+    console.log(`🧪 CHEAT: Adding card ${cardId} to ${player.username}'s hand`);
+    
+    // Find the card in main deck or discard pile
+    let cardIndex = this.gameState.mainDeck.findIndex(c => c.id === cardId);
+    let card: Card | undefined;
+    
+    if (cardIndex >= 0) {
+      // Remove from main deck
+      card = this.gameState.mainDeck.splice(cardIndex, 1)[0];
+    } else {
+      // Try discard pile
+      cardIndex = this.gameState.discardPile.findIndex(c => c.id === cardId);
+      if (cardIndex >= 0) {
+        card = this.gameState.discardPile.splice(cardIndex, 1)[0];
+      }
+    }
+    
+    if (!card) {
+      return { success: false, message: 'Card not found in available cards' };
+    }
+    
+    // Add to player's hand
+    player.hand.push(card);
+    
+    return {
+      success: true,
+      message: `Added ${card.rank}${card.suit} to hand`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_resetGame(): GameActionResult {
+    console.log(`🧪 CHEAT: Resetting game to initial state`);
+    
+    // Create new deck and shuffle
+    const deck = createDeck();
+    const shuffledDeck = shuffleDeck(deck);
+    
+    // Deal cards to all players (11 cards each)
+    const { playerHands, remainingDeck } = dealCards(shuffledDeck, this.gameState.players.length);
+    
+    // Reset each player's hand
+    this.gameState.players.forEach((player, index) => {
+      player.hand = playerHands[index];
+    });
+    
+    // Reset game state
+    this.gameState.mainDeck = remainingDeck;
+    this.gameState.discardPile = [];
+    this.gameState.currentTurn = 0;
+    this.gameState.teamSequences = [[], []];
+    this.gameState.scores = [0, 0];
+    this.gameState.mortosUsed = [false, false];
+    this.gameState.mortosUsedByTeam = [null, null];
+    
+    // Reset mortos (11 cards each)
+    const morto1Cards = this.gameState.mainDeck.splice(0, 11);
+    const morto2Cards = this.gameState.mainDeck.splice(0, 11);
+    this.gameState.mortos = [morto1Cards, morto2Cards];
+    
+    // Reset turn state
+    this.gameState.turnState = {
+      hasDrawn: false,
+      hasDiscarded: false,
+      drawnCardIds: [],
+      hasDiscardedNonDrawnCard: false
+    };
+    
+    return {
+      success: true,
+      message: 'Game reset to initial state - all players have 11 cards',
       newGameState: this.gameState
     };
   }

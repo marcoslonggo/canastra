@@ -49,6 +49,8 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [cheatMode, setCheatMode] = useState(false);
   const [showCheatMenu, setShowCheatMenu] = useState(false);
+  const [showCardPicker, setShowCardPicker] = useState(false);
+  const [availableCardsForPicking, setAvailableCardsForPicking] = useState<Card[]>([]);
   const [cheatsEnabled, setCheatsEnabled] = useState({
     allowPlayAllCards: false,
     allowMultipleDiscard: false,
@@ -209,6 +211,15 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
     listenersRef.current.actionError = (error: { message: string; data?: any }) => {
       console.log('🎮 Action error received:', error);
+      
+      // Check if this is actually a card picker response (not really an error)
+      if (error.data?.action === 'show-card-picker' && error.data?.cards) {
+        console.log('🎮 Card picker data received:', error.data.cards.length, 'cards');
+        setAvailableCardsForPicking(error.data.cards);
+        setShowCardPicker(true);
+        showInfo('Select a card to add to your hand');
+        return;
+      }
       
       if (error.message === 'multiple_mortos_available' && error.data?.availableMortos) {
         console.log('🎮 Multiple Mortos available, showing selection:', error.data.availableMortos);
@@ -670,6 +681,22 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     showInfo('Attempting to replace wildcard...', 2000);
   };
 
+  const executeCheatCode = (cheatCode: string) => {
+    gameService.sendCheatCode(cheatCode);
+    showInfo(`Executing cheat: ${cheatCode}`, 2000);
+  };
+
+  const handlePickCard = (cardId: string) => {
+    if (gameService.socket) {
+      gameService.socket.emit('game-action', {
+        type: 'pick-card',
+        data: { cardId }
+      });
+    }
+    setShowCardPicker(false);
+    showInfo('Adding card to hand...', 2000);
+  };
+
   const handleCardDragStart = (cardIndex: number) => {
     setDraggedCardIndex(cardIndex);
   };
@@ -939,57 +966,141 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
       {showCheatMenu && (
         <div className="cheat-menu-overlay">
-          <div className="cheat-menu">
-            <h3>{t('game.cheat.title')}</h3>
-            <div className="cheat-options">
-              <div className="cheat-option">
-                <label>
-                  <div className="cheat-option-header">
-                    <input
-                      type="checkbox"
-                      checked={cheatsEnabled.allowPlayAllCards}
-                      onChange={() => toggleCheat('allowPlayAllCards')}
-                    />
-                    <span className="cheat-label">{t('game.cheat.options.allowPlayAllCards.title')}</span>
-                  </div>
-                  <span className="cheat-description">{t('game.cheat.options.allowPlayAllCards.description')}</span>
-                </label>
-              </div>
-              
-              <div className="cheat-option">
-                <label>
-                  <div className="cheat-option-header">
-                    <input
-                      type="checkbox"
-                      checked={cheatsEnabled.allowMultipleDiscard}
-                      onChange={() => toggleCheat('allowMultipleDiscard')}
-                    />
-                    <span className="cheat-label">{t('game.cheat.options.allowMultipleDiscard.title')}</span>
-                  </div>
-                  <span className="cheat-description">{t('game.cheat.options.allowMultipleDiscard.description')}</span>
-                </label>
-              </div>
-              
-              <div className="cheat-option">
-                <label>
-                  <div className="cheat-option-header">
-                    <input
-                      type="checkbox"
-                      checked={cheatsEnabled.allowDiscardDrawnCards}
-                      onChange={() => toggleCheat('allowDiscardDrawnCards')}
-                    />
-                    <span className="cheat-label">{t('game.cheat.options.allowDiscardDrawnCards.title')}</span>
-                  </div>
-                  <span className="cheat-description">{t('game.cheat.options.allowDiscardDrawnCards.description')}</span>
-                </label>
+          <div className="cheat-menu" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
+            <h3>{t('game.cheat.title')} - IDDQD Mode</h3>
+            
+            {/* Toggle Cheats Section */}
+            <div className="cheat-section">
+              <h4>Toggle Cheats</h4>
+              <div className="cheat-options">
+                <div className="cheat-option">
+                  <label>
+                    <div className="cheat-option-header">
+                      <input
+                        type="checkbox"
+                        checked={cheatsEnabled.allowPlayAllCards}
+                        onChange={() => toggleCheat('allowPlayAllCards')}
+                      />
+                      <span className="cheat-label">{t('game.cheat.options.allowPlayAllCards.title')}</span>
+                    </div>
+                    <span className="cheat-description">{t('game.cheat.options.allowPlayAllCards.description')}</span>
+                  </label>
+                </div>
+                
+                <div className="cheat-option">
+                  <label>
+                    <div className="cheat-option-header">
+                      <input
+                        type="checkbox"
+                        checked={cheatsEnabled.allowMultipleDiscard}
+                        onChange={() => toggleCheat('allowMultipleDiscard')}
+                      />
+                      <span className="cheat-label">{t('game.cheat.options.allowMultipleDiscard.title')}</span>
+                    </div>
+                    <span className="cheat-description">{t('game.cheat.options.allowMultipleDiscard.description')}</span>
+                  </label>
+                </div>
+                
+                <div className="cheat-option">
+                  <label>
+                    <div className="cheat-option-header">
+                      <input
+                        type="checkbox"
+                        checked={cheatsEnabled.allowDiscardDrawnCards}
+                        onChange={() => toggleCheat('allowDiscardDrawnCards')}
+                      />
+                      <span className="cheat-label">{t('game.cheat.options.allowDiscardDrawnCards.title')}</span>
+                    </div>
+                    <span className="cheat-description">{t('game.cheat.options.allowDiscardDrawnCards.description')}</span>
+                  </label>
+                </div>
               </div>
             </div>
+
+            {/* Card Cheats Section */}
+            <div className="cheat-section">
+              <h4>Card Cheats</h4>
+              <div className="cheat-buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                <button onClick={() => executeCheatCode('limpa')} className="action-button cheat-button">
+                  🟢 Give Canastra Limpa
+                </button>
+                <button onClick={() => executeCheatCode('suja')} className="action-button cheat-button">
+                  🔴 Give Canastra Suja
+                </button>
+                <button onClick={() => executeCheatCode('transform')} className="action-button cheat-button">
+                  🔄 Setup Transform Test
+                </button>
+                <button onClick={() => executeCheatCode('aces3')} className="action-button cheat-button">
+                  ♠️ Give Three Aces
+                </button>
+                <button onClick={() => executeCheatCode('pique')} className="action-button cheat-button">
+                  ✂️ Reduce to Pique
+                </button>
+                <button onClick={() => executeCheatCode('discard5')} className="action-button cheat-button">
+                  🗑️ Add to Discard Pile
+                </button>
+                <button onClick={() => executeCheatCode('getcard')} className="action-button cheat-button primary">
+                  🎴 Pick Any Card
+                </button>
+              </div>
+            </div>
+
+            {/* Game State Cheats Section */}
+            <div className="cheat-section">
+              <h4>Game State Cheats</h4>
+              <div className="cheat-buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+                <button onClick={() => executeCheatCode('morto0')} className="action-button cheat-button">
+                  📦 Use Morto 1
+                </button>
+                <button onClick={() => executeCheatCode('morto1')} className="action-button cheat-button">
+                  📦 Use Morto 2
+                </button>
+                <button onClick={() => executeCheatCode('1500pts')} className="action-button cheat-button">
+                  🏆 Set Score 1600
+                </button>
+                <button onClick={() => executeCheatCode('deadlock')} className="action-button cheat-button">
+                  🔒 Create Deadlock
+                </button>
+                <button onClick={() => executeCheatCode('resetgame')} className="action-button cheat-button danger">
+                  🔄 Reset Game
+                </button>
+              </div>
+            </div>
+
             <div className="cheat-menu-actions">
               <button 
                 onClick={() => setShowCheatMenu(false)}
                 className="action-button cancel-button"
               >
                 {t('common.close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Card Picker Modal */}
+      {showCardPicker && (
+        <div className="card-picker-overlay" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="card-picker-modal" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', maxWidth: '90vw', maxHeight: '80vh', overflow: 'auto' }}>
+            <h3 style={{ marginBottom: '20px' }}>Select a Card to Add to Your Hand</h3>
+            <div className="card-picker-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: '10px' }}>
+              {availableCardsForPicking.map((card) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  className="clickable-card"
+                  style={{ cursor: 'pointer', width: '60px', height: '84px' }}
+                  onClick={() => handlePickCard(card.id)}
+                />
+              ))}
+            </div>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button 
+                onClick={() => setShowCardPicker(false)}
+                className="action-button cancel-button"
+              >
+                Cancel
               </button>
             </div>
           </div>

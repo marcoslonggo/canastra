@@ -1218,6 +1218,59 @@
   background: rgba(156, 163, 175, 0.6);
 }
 
+/* Cheat Menu Enhancements */
+.cheat-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.cheat-section h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.cheat-button {
+  font-size: 12px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.cheat-button:hover {
+  background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+.cheat-button.primary {
+  background: #4CAF50;
+  color: white;
+  border-color: #4CAF50;
+}
+
+.cheat-button.primary:hover {
+  background: #45a049;
+}
+
+.cheat-button.danger {
+  background: #f44336;
+  color: white;
+  border-color: #f44336;
+}
+
+.cheat-button.danger:hover {
+  background: #da190b;
+}
+
 /* Debug and Testing Modes */
 .debug-show-all-hands .opponent-hand .card,
 .debug-show-all-hands .team-hand .card {
