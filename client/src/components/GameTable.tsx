@@ -1276,10 +1276,10 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
           <div className="game-ended-dialog">
             <h2>{t('game.gameEnded.title')}</h2>
             <div className="final-scores">
-              <div>{t('game.teamScore', { team: 1, score: gameState.scores[0] })}</div>
-              <div>{t('game.teamScore', { team: 2, score: gameState.scores[1] })}</div>
+              <div>{t('game.teamScore', { team: 1, score: gameState.matchScores?.[0] || 0 })}</div>
+              <div>{t('game.teamScore', { team: 2, score: gameState.matchScores?.[1] || 0 })}</div>
               <div className="winner">
-                {t('game.gameEnded.winner', { team: gameState.winner })}
+                {t('game.gameEnded.winner', { team: gameState.matchWinner })}
               </div>
             </div>
             <button onClick={onLeaveGame} className="primary-button">

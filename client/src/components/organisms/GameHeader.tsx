@@ -75,14 +75,14 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                     'px-1.5 py-0.5 rounded font-medium',
                     myTeam === 1 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
                   )}>
-                    {gameState.scores[0]}
+                    {gameState.matchScores?.[0] || 0}
                   </span>
                   <span className="text-gray-400 text-xs">:</span>
                   <span className={cn(
                     'px-1.5 py-0.5 rounded font-medium',
                     myTeam === 2 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
                   )}>
-                    {gameState.scores[1]}
+                    {gameState.matchScores?.[1] || 0}
                   </span>
                 </div>
                 <LanguageSwitcher compact />
@@ -129,7 +129,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                   ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-500/20' 
                   : 'bg-gray-100 text-gray-700'
               )}>
-                {t('game.teamScore', { team: 1, score: gameState.scores[0] })}
+                {t('game.teamScore', { team: 1, score: gameState.matchScores?.[0] || 0 })}
               </div>
               <div className="text-gray-400 font-bold text-lg">VS</div>
               <div className={cn(
@@ -138,7 +138,7 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
                   ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-500/20' 
                   : 'bg-gray-100 text-gray-700'
               )}>
-                {t('game.teamScore', { team: 2, score: gameState.scores[1] })}
+                {t('game.teamScore', { team: 2, score: gameState.matchScores?.[1] || 0 })}
               </div>
             </div>
           </div>
