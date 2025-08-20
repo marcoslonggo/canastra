@@ -230,6 +230,16 @@ export class BuracoGame {
       };
     }
 
+    // DEADLOCK PREVENTION: Check if action would cause unplayable state
+    const totalCardsToRemove = data.sequences.reduce((sum, seq) => sum + seq.length, 0);
+    if (this.wouldCauseDeadlock(player, 'baixar', totalCardsToRemove)) {
+      const deadlockReason = this.getDeadlockExplanation(player.team);
+      return {
+        success: false,
+        message: `Cannot baixar these cards - this would empty your hand without ability to bater. ${deadlockReason}`
+      };
+    }
+
     // Validate all sequences
     const validatedSequences: Sequence[] = [];
     for (const cardGroup of data.sequences) {
@@ -422,6 +432,16 @@ export class BuracoGame {
       };
     }
     
+    // DEADLOCK PREVENTION: Check if action would cause unplayable state
+    const cardsToRemove = data.cardIndices.length;
+    if (this.wouldCauseDeadlock(player, 'add-to-sequence', cardsToRemove)) {
+      const deadlockReason = this.getDeadlockExplanation(player.team);
+      return {
+        success: false,
+        message: `Cannot add these cards - this would empty your hand without ability to bater. ${deadlockReason}`
+      };
+    }
+    
     // Try to add cards to the sequence
     try {
       const newSequence = createSequence(newSequenceCards, targetSequence.id);
@@ -597,6 +617,79 @@ export class BuracoGame {
     return player.hand.length === 0;
   }
 
+  /**
+   * Check if a team can bater based on current game state
+   * Two scenarios:
+   * 1. Team hasn't taken Morto - can bater freely if Morto available
+   * 2. Team already took Morto OR no Mortos available - can only bater if team has Canastra Limpa
+   */
+  private canTeamBater(team: number): boolean {
+    const teamSequences = this.gameState.teamSequences[team - 1];
+    const availableMortos = this.getAvailableMortos();
+    
+    // Check if team has taken a Morto
+    const teamHasTakenMorto = this.gameState.mortosUsedByTeam.some(takenByTeam => takenByTeam === team);
+    
+    // Scenario A: Team hasn't taken Morto
+    if (!teamHasTakenMorto) {
+      // Can bater freely if any Morto is available
+      return availableMortos.length > 0;
+    }
+    
+    // Scenario B: Team already took Morto OR no Mortos available
+    // Can only bater if team has Canastra Limpa
+    const hasCanstraLimpa = teamSequences.some(seq => 
+      seq.isCanastra && (seq.canastraType === 'limpa' || seq.canastraType === 'as-a-as')
+    );
+    
+    return hasCanstraLimpa;
+  }
+
+  /**
+   * Check if an action would cause a deadlock (empty hand without ability to bater)
+   * CRITICAL: Prevents unplayable game states
+   */
+  private wouldCauseDeadlock(player: Player, actionType: string, cardsToRemove: number): boolean {
+    const remainingCards = player.hand.length - cardsToRemove;
+    
+    // If action wouldn't empty hand, no deadlock
+    if (remainingCards > 0) {
+      return false;
+    }
+    
+    // If action would empty hand, check if team can bater
+    return !this.canTeamBater(player.team);
+  }
+
+  /**
+   * Provides clear explanation of why team cannot bater (for deadlock warnings)
+   */
+  private getDeadlockExplanation(team: number): string {
+    const teamSequences = this.gameState.teamSequences[team - 1];
+    const availableMortos = this.getAvailableMortos();
+    const teamHasTakenMorto = this.gameState.mortosUsedByTeam.some(takenByTeam => takenByTeam === team);
+    
+    // Check if team has Canastra Limpa
+    const hasCanstraLimpa = teamSequences.some(seq => 
+      seq.isCanastra && (seq.canastraType === 'limpa' || seq.canastraType === 'as-a-as')
+    );
+    
+    if (!teamHasTakenMorto && availableMortos.length > 0) {
+      // This shouldn't happen - team should be able to bater
+      return "Team should be able to bater with available Morto.";
+    }
+    
+    if (teamHasTakenMorto && !hasCanstraLimpa) {
+      return "Your team already took a Morto and needs a Canastra Limpa (7+ cards without wildcards) to bater.";
+    }
+    
+    if (availableMortos.length === 0 && !hasCanstraLimpa) {
+      return "No Mortos available and your team needs a Canastra Limpa to bater.";
+    }
+    
+    return "Team cannot bater under current game rules.";
+  }
+
   private canTeamFinishGame(team: number): boolean {
     // Team needs: at least one Canastra Limpa + any Morto taken by team
     const teamSequences = this.gameState.teamSequences[team - 1];
@@ -721,5 +814,193 @@ export class BuracoGame {
 
   public getCurrentPlayer(): Player {
     return this.gameState.players[this.gameState.currentTurn];
+  }
+
+  // CHEAT SYSTEM - FOR TESTING ONLY
+  public executeCheatCode(cheatCode: string, playerId: string): GameActionResult {
+    const player = this.getPlayerById(playerId);
+    if (!player) {
+      return { success: false, message: 'Player not found' };
+    }
+
+    switch (cheatCode) {
+      case 'deadlock':
+        return this.cheat_createDeadlockScenario(player);
+      case 'limpa':
+        return this.cheat_giveCanastraLimpa(player);
+      case 'suja':
+        return this.cheat_giveCanastraSuja(player);
+      case 'transform':
+        return this.cheat_setupSujaForTransformation(player);
+      case 'aces3':
+        return this.cheat_giveThreeAces(player);
+      case 'pique':
+        return this.cheat_reduceToPique(player);
+      case 'discard5':
+        return this.cheat_addCardsToDiscardPile();
+      case 'morto0':
+        return this.cheat_setMortoStatus(player.team, 0);
+      case 'morto1':
+        return this.cheat_setMortoStatus(player.team, 1);
+      case '1500pts':
+        return this.cheat_setTeamScore(player.team, 1600);
+      default:
+        return { success: false, message: `Unknown cheat code: ${cheatCode}` };
+    }
+  }
+
+  private cheat_createDeadlockScenario(player: Player): GameActionResult {
+    // Set player to 1 card
+    player.hand = player.hand.slice(0, 1);
+    
+    // Make sure team took a Morto and has no Limpa
+    this.gameState.mortosUsedByTeam[0] = player.team;
+    this.gameState.mortosUsed[0] = true;
+    this.gameState.mortos[0] = []; // Empty the Morto
+    
+    // Clear team's sequences to ensure no Limpa
+    this.gameState.teamSequences[player.team - 1] = [];
+    
+    return {
+      success: true,
+      message: `Deadlock scenario created: ${player.username} has 1 card, team took Morto, no Limpa`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_giveCanastraLimpa(player: Player): GameActionResult {
+    // Give player A♠-2♠-3♠-4♠-5♠-6♠-7♠ (Canastra Limpa)
+    const limpaCards = [
+      { id: 'cheat_A♠', suit: 'spades', rank: 'A', value: 1, points: 15 },
+      { id: 'cheat_2♠', suit: 'spades', rank: '2', value: 2, points: 10 },
+      { id: 'cheat_3♠', suit: 'spades', rank: '3', value: 3, points: 5 },
+      { id: 'cheat_4♠', suit: 'spades', rank: '4', value: 4, points: 5 },
+      { id: 'cheat_5♠', suit: 'spades', rank: '5', value: 5, points: 5 },
+      { id: 'cheat_6♠', suit: 'spades', rank: '6', value: 6, points: 5 },
+      { id: 'cheat_7♠', suit: 'spades', rank: '7', value: 7, points: 5 }
+    ];
+    
+    player.hand.push(...limpaCards);
+    
+    return {
+      success: true,
+      message: `Canastra Limpa cards added to ${player.username}'s hand`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_giveCanastraSuja(player: Player): GameActionResult {
+    // Give player A♠-2♥-3♠-4♠-5♠-6♠-7♠ (Canastra Suja with different-suit 2)
+    const sujaCards = [
+      { id: 'cheat_A♠_suja', suit: 'spades', rank: 'A', value: 1, points: 15 },
+      { id: 'cheat_2♥_wild', suit: 'hearts', rank: '2', value: 2, points: 10, isWild: true },
+      { id: 'cheat_3♠_suja', suit: 'spades', rank: '3', value: 3, points: 5 },
+      { id: 'cheat_4♠_suja', suit: 'spades', rank: '4', value: 4, points: 5 },
+      { id: 'cheat_5♠_suja', suit: 'spades', rank: '5', value: 5, points: 5 },
+      { id: 'cheat_6♠_suja', suit: 'spades', rank: '6', value: 6, points: 5 },
+      { id: 'cheat_7♠_suja', suit: 'spades', rank: '7', value: 7, points: 5 }
+    ];
+    
+    player.hand.push(...sujaCards);
+    
+    return {
+      success: true,
+      message: `Canastra Suja cards added to ${player.username}'s hand`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_setupSujaForTransformation(player: Player): GameActionResult {
+    // Give player 3♠-4♠-5♠-2♠-7♠-8♠-9♠ + natural 6♠ for transformation
+    const transformCards = [
+      { id: 'cheat_3♠_transform', suit: 'spades', rank: '3', value: 3, points: 5 },
+      { id: 'cheat_4♠_transform', suit: 'spades', rank: '4', value: 4, points: 5 },
+      { id: 'cheat_5♠_transform', suit: 'spades', rank: '5', value: 5, points: 5 },
+      { id: 'cheat_2♠_wild_transform', suit: 'spades', rank: '2', value: 2, points: 10, isWild: true },
+      { id: 'cheat_7♠_transform', suit: 'spades', rank: '7', value: 7, points: 5 },
+      { id: 'cheat_8♠_transform', suit: 'spades', rank: '8', value: 8, points: 5 },
+      { id: 'cheat_9♠_transform', suit: 'spades', rank: '9', value: 9, points: 5 },
+      { id: 'cheat_6♠_natural', suit: 'spades', rank: '6', value: 6, points: 5 }
+    ];
+    
+    player.hand.push(...transformCards);
+    
+    return {
+      success: true,
+      message: `Transformation scenario set: Suja with missing 6♠ for natural replacement`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_giveThreeAces(player: Player): GameActionResult {
+    // Give player A♠-A♥-A♣-Joker (3 natural Aces + wildcard)
+    const acesCards = [
+      { id: 'cheat_A♠_aces', suit: 'spades', rank: 'A', value: 1, points: 15 },
+      { id: 'cheat_A♥_aces', suit: 'hearts', rank: 'A', value: 1, points: 15 },
+      { id: 'cheat_A♣_aces', suit: 'clubs', rank: 'A', value: 1, points: 15 },
+      { id: 'cheat_joker_aces', suit: 'joker', rank: 'Joker', value: 0, points: 20, isWild: true }
+    ];
+    
+    player.hand.push(...acesCards);
+    
+    return {
+      success: true,
+      message: `Three Aces sequence cards added to ${player.username}'s hand`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_reduceToPique(player: Player): GameActionResult {
+    // Reduce player to only 1 card
+    player.hand = player.hand.slice(0, 1);
+    
+    return {
+      success: true,
+      message: `${player.username} reduced to Pique (1 card)`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_addCardsToDiscardPile(): GameActionResult {
+    // Add 5 specific test cards to discard pile
+    const testCards = [
+      { id: 'cheat_discard_K♠', suit: 'spades', rank: 'K', value: 13, points: 10 },
+      { id: 'cheat_discard_Q♥', suit: 'hearts', rank: 'Q', value: 12, points: 10 },
+      { id: 'cheat_discard_J♣', suit: 'clubs', rank: 'J', value: 11, points: 10 },
+      { id: 'cheat_discard_10♦', suit: 'diamonds', rank: '10', value: 10, points: 10 },
+      { id: 'cheat_discard_9♠', suit: 'spades', rank: '9', value: 9, points: 5 }
+    ];
+    
+    this.gameState.discardPile.push(...testCards);
+    
+    return {
+      success: true,
+      message: `5 test cards added to discard pile`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_setMortoStatus(team: number, mortoIndex: number): GameActionResult {
+    // Set whether team has taken specific Morto
+    this.gameState.mortosUsedByTeam[mortoIndex] = team;
+    this.gameState.mortosUsed[mortoIndex] = true;
+    this.gameState.mortos[mortoIndex] = []; // Empty the Morto
+    
+    return {
+      success: true,
+      message: `Team ${team} set as having taken Morto ${mortoIndex + 1}`,
+      newGameState: this.gameState
+    };
+  }
+
+  private cheat_setTeamScore(team: number, score: number): GameActionResult {
+    // Set team score for testing 1500+ requirements
+    this.gameState.scores[team - 1] = score;
+    
+    return {
+      success: true,
+      message: `Team ${team} score set to ${score} points`,
+      newGameState: this.gameState
+    };
   }
 }

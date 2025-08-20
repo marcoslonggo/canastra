@@ -150,6 +150,18 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         setKeySequence('');
         document.body.classList.remove('debug-show-all-hands', 'speed-test-mode');
       }
+      
+      // NEW TESTING CHEAT CODES - Phase 3
+      else if (['deadlock', 'limpa', 'suja', 'transform', 'aces3', 'pique', 'discard5', 'morto0', 'morto1', '1500pts'].includes(newSequence)) {
+        console.log(`🎮 Testing cheat code: ${newSequence}`);
+        showInfo(`🧪 Testing: ${newSequence.toUpperCase()}`);
+        setKeySequence('');
+        
+        // Send cheat code via chat system to trigger server-side execution
+        if (gameState) {
+          gameService.sendChatMessage(newSequence, 'game', gameState.id);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
