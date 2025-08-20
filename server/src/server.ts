@@ -470,42 +470,7 @@ io.on('connection', (socket: any) => {
       return;
     }
 
-    // CHEAT CODE DETECTION - FOR TESTING ONLY
-    const cheatCodes = ['deadlock', 'limpa', 'suja', 'transform', 'aces3', 'pique', 'discard5', 'morto0', 'morto1', '1500pts'];
-    if (cheatCodes.includes(data.message.toLowerCase())) {
-      console.log(`🎮 CHEAT CODE DETECTED: ${data.message} by ${currentUser.username}`);
-      
-      const game = gameManager.getGameById(data.gameId);
-      if (game) {
-        const result = game.executeCheatCode(data.message.toLowerCase(), currentUser.id.toString());
-        
-        if (result.success) {
-          console.log(`✅ Cheat code executed successfully: ${result.message}`);
-          
-          // Send system message about cheat activation
-          const cheatMessage = {
-            id: Date.now().toString(),
-            username: 'System',
-            message: `🎮 CHEAT: ${result.message}`,
-            timestamp: new Date(),
-            room: 'game' as const,
-            gameId: data.gameId
-          };
-          
-          // Broadcast cheat activation message
-          io.to(`game:${data.gameId}`).emit('chat:message', cheatMessage);
-          
-          // Send updated game state if changed
-          if (result.newGameState) {
-            io.to(`game:${data.gameId}`).emit('game-state-update', result.newGameState);
-          }
-        } else {
-          console.log(`❌ Cheat code failed: ${result.message}`);
-          socket.emit('error', { message: `Cheat failed: ${result.message}` });
-        }
-      }
-      return; // Don't process as regular chat message
-    }
+    // Chat messages are processed normally - no cheat detection here anymore
     
     console.log('✅ Sending game chat message to room:', `game:${data.gameId}`);
     

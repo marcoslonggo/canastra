@@ -157,9 +157,9 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         showInfo(`🧪 Testing: ${newSequence.toUpperCase()}`);
         setKeySequence('');
         
-        // Send cheat code via chat system to trigger server-side execution
+        // Send cheat code directly as game action, not through chat
         if (gameState) {
-          gameService.sendChatMessage(newSequence, 'game', gameState.id);
+          gameService.sendGameAction('cheat', { cheatCode: newSequence });
         }
       }
     };

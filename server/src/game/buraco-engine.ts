@@ -3,7 +3,7 @@ import { createDeck, shuffleDeck, dealCards, isWildCard } from './deck';
 import { validateSequence, createSequence } from './sequences';
 
 export interface GameAction {
-  type: 'draw' | 'baixar' | 'discard' | 'bater' | 'add-to-sequence' | 'end-turn';
+  type: 'draw' | 'baixar' | 'discard' | 'bater' | 'add-to-sequence' | 'end-turn' | 'cheat';
   playerId: string;
   data?: any;
 }
@@ -64,7 +64,8 @@ export class BuracoGame {
       return { success: false, message: 'Player not found' };
     }
 
-    if (!this.isPlayerTurn(action.playerId)) {
+    // Skip turn check for cheat actions
+    if (action.type !== 'cheat' && !this.isPlayerTurn(action.playerId)) {
       return { success: false, message: 'Not your turn' };
     }
 
@@ -81,6 +82,8 @@ export class BuracoGame {
         return this.handleAddToSequence(player, action.data);
       case 'end-turn':
         return this.handleEndTurn(player, action.data);
+      case 'cheat':
+        return this.executeCheatCode(action.data.cheatCode, action.playerId);
       default:
         return { success: false, message: 'Invalid action type' };
     }
