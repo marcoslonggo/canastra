@@ -309,6 +309,12 @@ export class BuracoGame {
     const points = validatedSequences.reduce((sum, seq) => sum + seq.points, 0);
     this.gameState.roundScores[team - 1] += points;
 
+    // Check if player reached 0 cards by playing (NOT by discarding)
+    if (player.hand.length === 0) {
+      console.log('🎮 Player reached 0 cards by playing sequences - can continue with Morto');
+      // reachedZeroByDiscard remains false (default) - allows continuing with Morto
+    }
+
     return {
       success: true,
       message: `Baixou ${validatedSequences.length} sequences for ${points} points`,
@@ -342,6 +348,12 @@ export class BuracoGame {
       this.gameState.turnState.hasDiscardedNonDrawnCard = true;
     }
 
+    // Check if player has 0 cards after discarding - mark for bater enforcement
+    if (player.hand.length === 0) {
+      this.gameState.turnState.reachedZeroByDiscard = true;
+      console.log('🎮 Player reached 0 cards by discarding - must bater');
+    }
+    
     // Check if player has only one card left (Pique)
     if (player.hand.length === 1) {
       return {
@@ -430,12 +442,30 @@ export class BuracoGame {
     this.gameState.mortosUsedByTeam[mortoToTake] = player.team;
 
     console.log('🎮 Bater successful! Player now has', player.hand.length, 'cards');
+    
+    // Check if player reached 0 cards by discarding - if so, end turn immediately
+    if (this.gameState.turnState.reachedZeroByDiscard) {
+      console.log('🎮 Player reached 0 by discard - ending turn immediately after bater');
+      this.nextTurn();
+      return {
+        success: true,
+        message: `Bateu! Took Morto ${mortoToTake + 1}. Turn ended.`,
+        newGameState: this.gameState,
+        actionDetails: {
+          mortoChoice: mortoToTake,
+          turnEnded: true
+        }
+      };
+    }
+    
+    // Player reached 0 by playing cards - can continue with Morto
     return {
       success: true,
       message: `Bateu! Took Morto ${mortoToTake + 1}. Continue playing.`,
       newGameState: this.gameState,
       actionDetails: {
-        mortoChoice: mortoToTake
+        mortoChoice: mortoToTake,
+        turnEnded: false
       }
     };
   }
@@ -499,6 +529,12 @@ export class BuracoGame {
       this.gameState.roundScores[team - 1] += addedPoints;
       
       console.log(`🃏 Added ${cardsToAdd.length} cards to sequence. New sequence:`, newSequence);
+      
+      // Check if player reached 0 cards by playing (NOT by discarding)
+      if (player.hand.length === 0) {
+        console.log('🎮 Player reached 0 cards by adding to sequence - can continue with Morto');
+        // reachedZeroByDiscard remains false (default) - allows continuing with Morto
+      }
       
       return {
         success: true,
@@ -933,7 +969,8 @@ export class BuracoGame {
       hasDrawn: false,
       hasDiscarded: false,
       drawnCardIds: [],
-      hasDiscardedNonDrawnCard: false
+      hasDiscardedNonDrawnCard: false,
+      reachedZeroByDiscard: false
     };
   }
 
@@ -953,6 +990,7 @@ export class BuracoGame {
     this.gameState.turnState.hasDiscarded = false;
     this.gameState.turnState.drawnCardIds = [];
     this.gameState.turnState.hasDiscardedNonDrawnCard = false;
+    this.gameState.turnState.reachedZeroByDiscard = false;
   }
 
   private getPlayerById(playerId: string): Player | undefined {
@@ -1313,7 +1351,8 @@ export class BuracoGame {
       hasDrawn: false,
       hasDiscarded: false,
       drawnCardIds: [],
-      hasDiscardedNonDrawnCard: false
+      hasDiscardedNonDrawnCard: false,
+      reachedZeroByDiscard: false
     };
     
     return {
