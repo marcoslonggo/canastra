@@ -352,6 +352,19 @@ export class BuracoGame {
       };
     }
 
+    // BUG #5 FIX: Prevent discarding last card if team already has Morto (creates unplayable state)
+    if (player.hand.length === 1 && !data.cheatMode) {
+      const team = player.team;
+      const teamHasMorto = this.gameState.mortosUsedByTeam.includes(team);
+      if (teamHasMorto) {
+        console.log(`❌ Team ${team} already has Morto - cannot discard last card`);
+        return {
+          success: false,
+          message: 'Cannot discard last card - your team already has a Morto'
+        };
+      }
+    }
+
     // Allow discarding the last card - player will be forced to bater before ending turn
 
     const discardedCard = player.hand.splice(data.cardIndex, 1)[0];
@@ -423,9 +436,24 @@ export class BuracoGame {
       return { success: false, message: 'Cannot Bater yet' };
     }
 
+    // BUG #6 FIX: Require player to have drawn a card this turn before allowing bater
+    if (!this.gameState.turnState.hasDrawn) {
+      console.log('🎮 Player has not drawn this turn - cannot bater');
+      return { 
+        success: false, 
+        message: 'You must draw a card before you can bater' 
+      };
+    }
+
     const team = player.team;
     
-    // BUG #2 FIX: Check if team has already taken a Morto
+    // Check if team can finish the game FIRST (this should always be allowed regardless of Morto status)
+    if (this.canTeamFinishGame(team)) {
+      console.log(`🎮 Team ${team} can finish the game - allowing bater to end game`);
+      return this.finishGame(player);
+    }
+    
+    // BUG #2 FIX: Check if team has already taken a Morto (only applies to taking additional Mortos)
     const teamHasMorto = this.gameState.mortosUsedByTeam.includes(team);
     if (teamHasMorto) {
       console.log(`🎮 Team ${team} already has a Morto - cannot take another`);
@@ -433,11 +461,6 @@ export class BuracoGame {
         success: false, 
         message: `Your team has already taken a Morto. Only one Morto per team is allowed.` 
       };
-    }
-    
-    // Check if team can finish the game
-    if (this.canTeamFinishGame(team)) {
-      return this.finishGame(player);
     }
 
     // Get available Mortos
