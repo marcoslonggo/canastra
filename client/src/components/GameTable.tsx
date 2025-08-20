@@ -820,7 +820,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         </div>
 
         {/* End Turn Button - Mobile: Between Hand and Deck, Desktop: Bottom */}
-        {isMyTurnOrCheat() && gameState.teamSequences[myTeam - 1]?.length > 0 && (
+        {isMyTurnOrCheat() && (
           <div className="end-turn-section order-2.5 lg:order-4 flex justify-center py-2">
             <ActionButton
               size="sm"

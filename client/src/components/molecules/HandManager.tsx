@@ -331,16 +331,17 @@ export const HandManager: React.FC<HandManagerProps> = ({
           isMobile ? 'min-h-[120px] max-h-[30vh]' : 'min-h-[200px] max-h-[300px]'
         )}
       >
-        {/* Tiny Sort Icon - Positioned in small available space on mobile only */}
-        {isMobile && (
-          <button
-            onClick={toggleSort}
-            title={`Sort: ${sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}`}
-            className="absolute top-1 right-1 z-10 w-6 h-6 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 shadow-sm hover:bg-white active:scale-95 transition-all"
-          >
-            {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
-          </button>
-        )}
+        {/* Sort Icon - Positioned for both mobile and desktop */}
+        <button
+          onClick={toggleSort}
+          title={`Sort: ${sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}`}
+          className={cn(
+            "absolute top-1 right-1 z-10 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-full flex items-center justify-center font-bold text-gray-700 shadow-sm hover:bg-white active:scale-95 transition-all",
+            isMobile ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm"
+          )}
+        >
+          {sortType === 'suit' ? '♠♥' : sortType === 'blackred1' ? 'B1' : 'B2'}
+        </button>
         {sortedCards.length === 0 ? (
           <div className="flex items-center justify-center h-32 text-gray-400">
             <p className="text-sm">No cards in hand</p>
