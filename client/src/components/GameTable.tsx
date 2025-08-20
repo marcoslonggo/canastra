@@ -473,7 +473,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
 
   const canPlayerBater = (): boolean => {
     const myHand = getMyHand();
-    return myHand.length <= 1;
+    return myHand.length === 0;
   };
 
   const getTeamSequences = (team: number): Sequence[] => {
@@ -827,6 +827,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
             isMyTurn={isMyTurnOrCheat()}
             drawnCardIds={gameState.turnState?.drawnCardIds || []}
             onBaixar={() => setShowBaixarDialog(true)}
+            onBater={handleBater}
             onDiscard={handleDiscard}
             onMultipleDiscard={handleMultipleDiscard}
             onEndTurn={handleEndTurn}

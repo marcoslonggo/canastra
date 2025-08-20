@@ -72,7 +72,8 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
       
       // Check if current user is the host (first player)
       if (newGameState.players.length > 0) {
-        setIsHost(newGameState.players[0].id === user.id.toString());
+        // Temporary: always make michele the host for testing
+        setIsHost(user.username === 'michele');
       }
       
       // If game phase changed to playing, start the game
@@ -162,7 +163,7 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
 
   const team1Players = getTeamPlayers(1);
   const team2Players = getTeamPlayers(2);
-  const canStart = gameState.players.length >= 2 && gameState.players.length <= 4;
+  const canStart = true; // Temporary: always allow start for testing
   const currentPlayer = gameState.players.find(p => p.id === user.id.toString());
   const currentUserTeam = currentPlayer?.team;
 

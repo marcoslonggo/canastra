@@ -17,6 +17,7 @@ interface HandManagerProps {
   
   // Action handlers
   onBaixar?: () => void;
+  onBater?: () => void;
   onDiscard?: (cardIndex: number) => void;
   onMultipleDiscard?: () => void;
   onAddToSequence?: (sequenceId: string) => void;
@@ -44,6 +45,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
   isMyTurn,
   drawnCardIds = [],
   onBaixar,
+  onBater,
   onDiscard,
   onMultipleDiscard,
   onAddToSequence,
@@ -306,7 +308,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
             {canBater && (
               <BaterButton
                 size="sm"
-                onClick={() => {/* Handle bater */}}
+                onClick={onBater}
               >
                 {t('game.hand.actions.bater')}
               </BaterButton>
@@ -473,7 +475,7 @@ export const HandManager: React.FC<HandManagerProps> = ({
             {canBater && (
               <BaterButton
                 size="sm"
-                onClick={() => {/* Handle bater */}}
+                onClick={onBater}
                 className="shadow-lg"
               >
                 {t('game.hand.actions.bater')}

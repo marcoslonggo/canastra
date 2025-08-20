@@ -317,11 +317,19 @@ export class BuracoGame {
   }
 
   private handleDiscard(player: Player, data: { cardIndex: number; cheatMode?: boolean }): GameActionResult {
-    console.log('🎮 Discard action received:', { cardIndex: data.cardIndex, cheatMode: data.cheatMode });
+    console.log('🎮 Discard action received:', { 
+      cardIndex: data.cardIndex, 
+      cheatMode: data.cheatMode,
+      playerHandSize: player.hand.length,
+      playerHand: player.hand.map(c => `${c.rank}${c.suit}`)
+    });
     
     if (data.cardIndex < 0 || data.cardIndex >= player.hand.length) {
-      return { success: false, message: 'Invalid card index' };
+      console.log(`❌ Invalid card index: ${data.cardIndex}, hand size: ${player.hand.length}`);
+      return { success: false, message: `Invalid card index ${data.cardIndex}. You have ${player.hand.length} cards.` };
     }
+
+    // Allow discarding the last card - player will be forced to bater before ending turn
 
     const discardedCard = player.hand.splice(data.cardIndex, 1)[0];
     this.gameState.discardPile.push(discardedCard);
@@ -346,12 +354,11 @@ export class BuracoGame {
       };
     }
 
-    // Only move to next player if not in cheat mode
+    // Discard never auto-ends turn - player must explicitly end turn
     if (data.cheatMode) {
       console.log('🎮 Cheat mode active - not ending turn');
     } else {
-      console.log('🎮 Normal mode - ending turn');
-      this.nextTurn();
+      console.log('🎮 Normal mode - discard complete, turn continues');
     }
 
     return {
