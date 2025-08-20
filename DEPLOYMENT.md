@@ -37,7 +37,8 @@ npm install
 #### Frontend Setup
 ```bash
 cd ../client
-npm install
+# Use legacy peer deps to resolve dependency conflicts
+npm install --legacy-peer-deps
 ```
 
 ### 3. Environment Configuration
@@ -194,6 +195,26 @@ services:
 ## 🔧 Troubleshooting
 
 ### Common Issues
+
+**NPM Dependency Resolution Error (ERESOLVE):**
+```bash
+# If you get ERESOLVE dependency conflicts during npm install:
+
+# Option 1: Use legacy peer deps (recommended)
+npm install --legacy-peer-deps
+
+# Option 2: Use force flag (if legacy doesn't work)
+npm install --force
+
+# Option 3: Clear cache and retry
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+
+# Option 4: Set npm config globally (if you frequently encounter this)
+npm config set legacy-peer-deps true
+npm install
+```
 
 **Node.js Version Too Old (SyntaxError: Unexpected token '?'):**
 ```bash
