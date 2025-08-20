@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { loginUser, registerUser } from '../api';
 import { User } from '../types';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { DebugInfo } from './atoms/DebugInfo';
 import './Auth.css';
 
 interface AuthProps {
@@ -19,6 +20,7 @@ export function Auth({ onLogin }: AuthProps) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +77,34 @@ export function Auth({ onLogin }: AuthProps) {
   return (
     <div className="auth-container">
       <LanguageSwitcher />
+      
+      {/* Floating Debug Button */}
+      <button
+        onClick={() => setShowDebugInfo(true)}
+        className="debug-button"
+        style={{
+          position: 'fixed',
+          top: '60px',
+          right: '20px',
+          zIndex: 1000,
+          background: '#3b82f6',
+          color: 'white',
+          border: 'none',
+          borderRadius: '50%',
+          width: '48px',
+          height: '48px',
+          fontSize: '20px',
+          cursor: 'pointer',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        title="Network Debug Info"
+      >
+        🔧
+      </button>
+      
       <div className="auth-card">
         <h1 className="auth-title">{t('auth.title')}</h1>
         
@@ -217,6 +247,12 @@ export function Auth({ onLogin }: AuthProps) {
           </button>
         </p>
       </div>
+      
+      {/* Debug Info Modal */}
+      <DebugInfo 
+        open={showDebugInfo} 
+        onClose={() => setShowDebugInfo(false)} 
+      />
     </div>
   );
 }
