@@ -175,6 +175,12 @@ export class GameManager {
     return gameRoom.game.getGameState();
   }
 
+  public getGameById(gameId: string): BuracoGame | null {
+    const gameRoom = this.games.get(gameId);
+    if (!gameRoom || gameRoom.status !== 'playing') return null;
+    return gameRoom.game;
+  }
+
   public getGameStateById(gameId: string): GameState | null {
     const gameRoom = this.games.get(gameId);
     if (!gameRoom) return null;

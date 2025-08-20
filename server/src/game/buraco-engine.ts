@@ -870,14 +870,14 @@ export class BuracoGame {
 
   private cheat_giveCanastraLimpa(player: Player): GameActionResult {
     // Give player A♠-2♠-3♠-4♠-5♠-6♠-7♠ (Canastra Limpa)
-    const limpaCards = [
-      { id: 'cheat_A♠', suit: 'spades', rank: 'A', value: 1, points: 15 },
-      { id: 'cheat_2♠', suit: 'spades', rank: '2', value: 2, points: 10 },
-      { id: 'cheat_3♠', suit: 'spades', rank: '3', value: 3, points: 5 },
-      { id: 'cheat_4♠', suit: 'spades', rank: '4', value: 4, points: 5 },
-      { id: 'cheat_5♠', suit: 'spades', rank: '5', value: 5, points: 5 },
-      { id: 'cheat_6♠', suit: 'spades', rank: '6', value: 6, points: 5 },
-      { id: 'cheat_7♠', suit: 'spades', rank: '7', value: 7, points: 5 }
+    const limpaCards: Card[] = [
+      { id: 'cheat_A♠', suit: 'spades', rank: 'A', value: 1, points: 15, isWild: false },
+      { id: 'cheat_2♠', suit: 'spades', rank: '2', value: 2, points: 10, isWild: false },
+      { id: 'cheat_3♠', suit: 'spades', rank: '3', value: 3, points: 5, isWild: false },
+      { id: 'cheat_4♠', suit: 'spades', rank: '4', value: 4, points: 5, isWild: false },
+      { id: 'cheat_5♠', suit: 'spades', rank: '5', value: 5, points: 5, isWild: false },
+      { id: 'cheat_6♠', suit: 'spades', rank: '6', value: 6, points: 5, isWild: false },
+      { id: 'cheat_7♠', suit: 'spades', rank: '7', value: 7, points: 5, isWild: false }
     ];
     
     player.hand.push(...limpaCards);
@@ -891,14 +891,14 @@ export class BuracoGame {
 
   private cheat_giveCanastraSuja(player: Player): GameActionResult {
     // Give player A♠-2♥-3♠-4♠-5♠-6♠-7♠ (Canastra Suja with different-suit 2)
-    const sujaCards = [
-      { id: 'cheat_A♠_suja', suit: 'spades', rank: 'A', value: 1, points: 15 },
+    const sujaCards: Card[] = [
+      { id: 'cheat_A♠_suja', suit: 'spades', rank: 'A', value: 1, points: 15, isWild: false },
       { id: 'cheat_2♥_wild', suit: 'hearts', rank: '2', value: 2, points: 10, isWild: true },
-      { id: 'cheat_3♠_suja', suit: 'spades', rank: '3', value: 3, points: 5 },
-      { id: 'cheat_4♠_suja', suit: 'spades', rank: '4', value: 4, points: 5 },
-      { id: 'cheat_5♠_suja', suit: 'spades', rank: '5', value: 5, points: 5 },
-      { id: 'cheat_6♠_suja', suit: 'spades', rank: '6', value: 6, points: 5 },
-      { id: 'cheat_7♠_suja', suit: 'spades', rank: '7', value: 7, points: 5 }
+      { id: 'cheat_3♠_suja', suit: 'spades', rank: '3', value: 3, points: 5, isWild: false },
+      { id: 'cheat_4♠_suja', suit: 'spades', rank: '4', value: 4, points: 5, isWild: false },
+      { id: 'cheat_5♠_suja', suit: 'spades', rank: '5', value: 5, points: 5, isWild: false },
+      { id: 'cheat_6♠_suja', suit: 'spades', rank: '6', value: 6, points: 5, isWild: false },
+      { id: 'cheat_7♠_suja', suit: 'spades', rank: '7', value: 7, points: 5, isWild: false }
     ];
     
     player.hand.push(...sujaCards);
@@ -912,15 +912,15 @@ export class BuracoGame {
 
   private cheat_setupSujaForTransformation(player: Player): GameActionResult {
     // Give player 3♠-4♠-5♠-2♠-7♠-8♠-9♠ + natural 6♠ for transformation
-    const transformCards = [
-      { id: 'cheat_3♠_transform', suit: 'spades', rank: '3', value: 3, points: 5 },
-      { id: 'cheat_4♠_transform', suit: 'spades', rank: '4', value: 4, points: 5 },
-      { id: 'cheat_5♠_transform', suit: 'spades', rank: '5', value: 5, points: 5 },
+    const transformCards: Card[] = [
+      { id: 'cheat_3♠_transform', suit: 'spades', rank: '3', value: 3, points: 5, isWild: false },
+      { id: 'cheat_4♠_transform', suit: 'spades', rank: '4', value: 4, points: 5, isWild: false },
+      { id: 'cheat_5♠_transform', suit: 'spades', rank: '5', value: 5, points: 5, isWild: false },
       { id: 'cheat_2♠_wild_transform', suit: 'spades', rank: '2', value: 2, points: 10, isWild: true },
-      { id: 'cheat_7♠_transform', suit: 'spades', rank: '7', value: 7, points: 5 },
-      { id: 'cheat_8♠_transform', suit: 'spades', rank: '8', value: 8, points: 5 },
-      { id: 'cheat_9♠_transform', suit: 'spades', rank: '9', value: 9, points: 5 },
-      { id: 'cheat_6♠_natural', suit: 'spades', rank: '6', value: 6, points: 5 }
+      { id: 'cheat_7♠_transform', suit: 'spades', rank: '7', value: 7, points: 5, isWild: false },
+      { id: 'cheat_8♠_transform', suit: 'spades', rank: '8', value: 8, points: 5, isWild: false },
+      { id: 'cheat_9♠_transform', suit: 'spades', rank: '9', value: 9, points: 5, isWild: false },
+      { id: 'cheat_6♠_natural', suit: 'spades', rank: '6', value: 6, points: 5, isWild: false }
     ];
     
     player.hand.push(...transformCards);
@@ -934,11 +934,11 @@ export class BuracoGame {
 
   private cheat_giveThreeAces(player: Player): GameActionResult {
     // Give player A♠-A♥-A♣-Joker (3 natural Aces + wildcard)
-    const acesCards = [
-      { id: 'cheat_A♠_aces', suit: 'spades', rank: 'A', value: 1, points: 15 },
-      { id: 'cheat_A♥_aces', suit: 'hearts', rank: 'A', value: 1, points: 15 },
-      { id: 'cheat_A♣_aces', suit: 'clubs', rank: 'A', value: 1, points: 15 },
-      { id: 'cheat_joker_aces', suit: 'joker', rank: 'Joker', value: 0, points: 20, isWild: true }
+    const acesCards: Card[] = [
+      { id: 'cheat_A♠_aces', suit: 'spades', rank: 'A', value: 1, points: 15, isWild: false },
+      { id: 'cheat_A♥_aces', suit: 'hearts', rank: 'A', value: 1, points: 15, isWild: false },
+      { id: 'cheat_A♣_aces', suit: 'clubs', rank: 'A', value: 1, points: 15, isWild: false },
+      { id: 'cheat_joker_aces', suit: 'joker', rank: 'JOKER', value: 0, points: 20, isWild: true }
     ];
     
     player.hand.push(...acesCards);
@@ -963,12 +963,12 @@ export class BuracoGame {
 
   private cheat_addCardsToDiscardPile(): GameActionResult {
     // Add 5 specific test cards to discard pile
-    const testCards = [
-      { id: 'cheat_discard_K♠', suit: 'spades', rank: 'K', value: 13, points: 10 },
-      { id: 'cheat_discard_Q♥', suit: 'hearts', rank: 'Q', value: 12, points: 10 },
-      { id: 'cheat_discard_J♣', suit: 'clubs', rank: 'J', value: 11, points: 10 },
-      { id: 'cheat_discard_10♦', suit: 'diamonds', rank: '10', value: 10, points: 10 },
-      { id: 'cheat_discard_9♠', suit: 'spades', rank: '9', value: 9, points: 5 }
+    const testCards: Card[] = [
+      { id: 'cheat_discard_K♠', suit: 'spades', rank: 'K', value: 13, points: 10, isWild: false },
+      { id: 'cheat_discard_Q♥', suit: 'hearts', rank: 'Q', value: 12, points: 10, isWild: false },
+      { id: 'cheat_discard_J♣', suit: 'clubs', rank: 'J', value: 11, points: 10, isWild: false },
+      { id: 'cheat_discard_10♦', suit: 'diamonds', rank: '10', value: 10, points: 10, isWild: false },
+      { id: 'cheat_discard_9♠', suit: 'spades', rank: '9', value: 9, points: 5, isWild: false }
     ];
     
     this.gameState.discardPile.push(...testCards);
