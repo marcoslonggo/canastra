@@ -72,6 +72,7 @@ export interface GameState {
     drawnCardIds: string[]; // IDs of cards drawn this turn (for blue border highlighting)
     hasDiscardedNonDrawnCard: boolean; // Track if player discarded a card NOT drawn this turn
     reachedZeroByDiscard: boolean; // Track if player reached 0 cards by discarding (vs playing)
+    hasTakenMorto: boolean; // Track if player has taken a Morto this turn (bateu)
   };
   gameRules: {
     pointsToWin: number; // Points needed to win the match (usually 3000)

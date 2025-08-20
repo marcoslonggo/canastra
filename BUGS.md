@@ -17,7 +17,13 @@
 **Current Behavior**: Shows "no morto available" 
 **Expected Behavior**: Show "You don't have a clean canastra to bater" or similar descriptive message explaining the bater requirement
 
+### 4. Multiple Discards Per Turn
+**Issue**: Players can discard multiple cards during their turn, which violates basic card game rules
+**Current Behavior**: Player can discard repeatedly without restrictions
+**Expected Behavior**: Player should only be able to discard one card per turn (unless special rules apply)
+
 ## Priority
 - Issue #1: High (affects game flow after bater)
 - Issue #2: High (breaks core Morto rules)  
 - Issue #3: Medium (UX improvement)
+- Issue #4: High (breaks basic turn mechanics)

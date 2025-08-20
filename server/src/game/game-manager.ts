@@ -221,7 +221,9 @@ export class GameManager {
           hasDrawn: false,
           hasDiscarded: false,
           drawnCardIds: [],
-          hasDiscardedNonDrawnCard: false
+          hasDiscardedNonDrawnCard: false,
+          reachedZeroByDiscard: false,
+          hasTakenMorto: false
         },
         gameRules: {
           pointsToWin: 3000,

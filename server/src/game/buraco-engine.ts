@@ -52,7 +52,9 @@ export class BuracoGame {
         hasDrawn: false,
         hasDiscarded: false,
         drawnCardIds: [],
-        hasDiscardedNonDrawnCard: false
+        hasDiscardedNonDrawnCard: false,
+        reachedZeroByDiscard: false,
+        hasTakenMorto: false
       },
       gameRules: {
         pointsToWin: 3000,
@@ -327,7 +329,8 @@ export class BuracoGame {
       cardIndex: data.cardIndex, 
       cheatMode: data.cheatMode,
       playerHandSize: player.hand.length,
-      playerHand: player.hand.map(c => `${c.rank}${c.suit}`)
+      playerHand: player.hand.map(c => `${c.rank}${c.suit}`),
+      hasTakenMorto: this.gameState.turnState.hasTakenMorto
     });
     
     if (data.cardIndex < 0 || data.cardIndex >= player.hand.length) {
@@ -352,6 +355,21 @@ export class BuracoGame {
     if (player.hand.length === 0) {
       this.gameState.turnState.reachedZeroByDiscard = true;
       console.log('🎮 Player reached 0 cards by discarding - must bater');
+    }
+    
+    // CRITICAL BUG #1 FIX: If player has already taken a Morto this turn and discards, end turn immediately
+    if (this.gameState.turnState.hasTakenMorto) {
+      console.log('🎮 Player has taken Morto and discarded - ending turn immediately');
+      this.nextTurn();
+      return {
+        success: true,
+        message: 'Turn ended after discarding from Morto.',
+        newGameState: this.gameState,
+        actionDetails: {
+          discardedCard: discardedCard,
+          turnEnded: true
+        }
+      };
     }
     
     // Check if player has only one card left (Pique)
@@ -442,6 +460,10 @@ export class BuracoGame {
     this.gameState.mortosUsedByTeam[mortoToTake] = player.team;
 
     console.log('🎮 Bater successful! Player now has', player.hand.length, 'cards');
+    
+    // Mark that player has taken a Morto this turn
+    this.gameState.turnState.hasTakenMorto = true;
+    console.log('🎮 DEBUG: Set hasTakenMorto = true after bater');
     
     // Check if player reached 0 cards by discarding - if so, end turn immediately
     if (this.gameState.turnState.reachedZeroByDiscard) {
@@ -970,7 +992,8 @@ export class BuracoGame {
       hasDiscarded: false,
       drawnCardIds: [],
       hasDiscardedNonDrawnCard: false,
-      reachedZeroByDiscard: false
+      reachedZeroByDiscard: false,
+      hasTakenMorto: false
     };
   }
 
@@ -991,6 +1014,8 @@ export class BuracoGame {
     this.gameState.turnState.drawnCardIds = [];
     this.gameState.turnState.hasDiscardedNonDrawnCard = false;
     this.gameState.turnState.reachedZeroByDiscard = false;
+    this.gameState.turnState.hasTakenMorto = false;
+    console.log('🎮 DEBUG: Reset hasTakenMorto = false on turn change');
   }
 
   private getPlayerById(playerId: string): Player | undefined {
@@ -1352,7 +1377,8 @@ export class BuracoGame {
       hasDiscarded: false,
       drawnCardIds: [],
       hasDiscardedNonDrawnCard: false,
-      reachedZeroByDiscard: false
+      reachedZeroByDiscard: false,
+      hasTakenMorto: false
     };
     
     return {
