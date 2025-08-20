@@ -43,19 +43,30 @@ export const animations = {
 /**
  * Touch feedback utilities
  */
-export const touchFeedback = {
+export const touchFeedback = (pattern: number | number[] = 50) => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(pattern)
+  }
+}
+
+export const touchFeedbackUtils = {
   // Haptic feedback (if supported)
-  vibrate: (pattern: number | number[] = 50) => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(pattern)
-    }
-  },
+  vibrate: touchFeedback,
   
   // Visual touch feedback
   addTouchClass: (element: HTMLElement, className = 'active') => {
     element.classList.add(className)
     setTimeout(() => element.classList.remove(className), 150)
   },
+  
+  // Light tap feedback
+  light: () => touchFeedback(25),
+  
+  // Medium tap feedback  
+  medium: () => touchFeedback(50),
+  
+  // Strong tap feedback
+  strong: () => touchFeedback([100, 50, 100]),
 }
 
 /**

@@ -46,7 +46,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
   const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [sortType, setSortType] = useState<'suit' | 'blackred1' | 'blackred2'>('suit');
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [cheatMode, setCheatMode] = useState(false);
   const [showCheatMenu, setShowCheatMenu] = useState(false);
   const [showCardPicker, setShowCardPicker] = useState(false);
@@ -513,30 +512,6 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
     }
   };
 
-  const getSequenceTypeDisplay = (sequence: Sequence): string => {
-    if (sequence.type === 'aces') return t('game.sequences.threeAces');
-    if (sequence.isCanastra) {
-      switch (sequence.canastraType) {
-        case 'as-a-as': return t('game.sequences.canastraAsAAs');
-        case 'limpa': return t('game.sequences.canastraLimpa');
-        case 'suja': return t('game.sequences.canastraSuja');
-        default: return t('game.sequences.canastra');
-      }
-    }
-    return t('game.sequences.sequence');
-  };
-
-  const getSortedDiscardPile = (): CardType[] => {
-    if (!gameState) return [];
-    return [...gameState.discardPile].sort((a, b) => {
-      // Sort by suit first, then by value
-      if (a.suit !== b.suit) {
-        const suitOrder = ['hearts', 'diamonds', 'clubs', 'spades', 'joker'];
-        return suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
-      }
-      return a.value - b.value;
-    });
-  };
 
   const isCardDrawnThisTurn = (card: CardType): boolean => {
     if (!gameState || !isMyTurn) return false;
