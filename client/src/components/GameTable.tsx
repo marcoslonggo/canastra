@@ -158,9 +158,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         setKeySequence('');
         
         // Send cheat code directly as game action, not through chat
-        if (gameState) {
-          gameService.sendGameAction('cheat', { cheatCode: newSequence });
-        }
+        gameService.sendCheatCode(newSequence);
       }
     };
 

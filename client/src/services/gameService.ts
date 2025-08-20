@@ -432,6 +432,15 @@ export class GameService {
     }
   }
 
+  public sendCheatCode(cheatCode: string) {
+    if (this.socket) {
+      this.socket.emit('game-action', {
+        type: 'cheat',
+        data: { cheatCode }
+      });
+    }
+  }
+
   public sendChatMessage(message: string, room: 'lobby' | 'game' = 'lobby', gameId?: string) {
     console.log('sendChatMessage called:', { message, room, gameId, socketConnected: !!this.socket });
     
