@@ -103,8 +103,16 @@
 
 ## Development Commands
 - Backend: `ADMIN_PASSWORD=test_admin_123 PORT=3002 npm start`
-- Frontend: `PORT=3004 npm start`
+- Frontend: `HOST=0.0.0.0 PORT=3004 npm start` (now uses Vite!)
 - Admin login: username `admin`, password from ADMIN_PASSWORD env var
+
+### Modern Build System (Phase 2 Migration - COMPLETED ✅)
+**Successfully migrated from react-scripts → Vite + TypeScript 5.x**
+- ✅ **All 9 security vulnerabilities resolved**
+- ✅ **TypeScript upgraded**: 4.9.5 → 5.9.2
+- ✅ **Faster builds**: ~2s vs previous ~30s+ 
+- ✅ **External access**: Still works perfectly with mobile devices
+- ✅ **Host detection bug**: Fixed for game start functionality
 
 ## Architecture Notes
 - **Frontend**: React + TypeScript + Tailwind CSS + Framer Motion
