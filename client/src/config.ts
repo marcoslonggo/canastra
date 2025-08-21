@@ -11,30 +11,20 @@ interface Config {
 }
 
 function getWebSocketUrl(): string {
-  if (process.env.REACT_APP_WS_URL) {
-    return process.env.REACT_APP_WS_URL;
-  }
-  if (process.env.REACT_APP_SERVER_URL) {
-    return process.env.REACT_APP_SERVER_URL;
-  }
-  
-  // Dynamic URL based on current location
+  // ALWAYS use dynamic calculation to match the current page's hostname
+  // This ensures external WebSocket connections work correctly
   const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
   const hostname = window.location.hostname;
   return `${protocol}//${hostname}:3002`;
 }
 
 function getApiBaseUrl(): string {
-  if (process.env.REACT_APP_API_BASE) {
-    return process.env.REACT_APP_API_BASE;
-  }
-  if (process.env.REACT_APP_SERVER_URL) {
-    return process.env.REACT_APP_SERVER_URL;
-  }
-  
-  // Dynamic URL based on current location for cross-device testing
+  // ALWAYS use dynamic calculation to match the current page's hostname
+  // This ensures external access works correctly
   const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
   const hostname = window.location.hostname;
+  
+  // Use the same hostname as the current page (external IP if accessed externally)
   return `${protocol}//${hostname}:3002`;
 }
 

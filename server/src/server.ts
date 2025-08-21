@@ -163,14 +163,40 @@ class ChatHistoryManager {
 
 const chatHistory = new ChatHistoryManager();
 
+// CORS Debugging Middleware
+app.use((req, res, next) => {
+  console.log(`🌐 [CORS] ${req.method} ${req.path} from origin: ${req.get('Origin') || 'no-origin'}`);
+  console.log(`🌐 [CORS] User-Agent: ${req.get('User-Agent')}`);
+  console.log(`🌐 [CORS] Allowed origins: ${JSON.stringify(config.cors.allowedOrigins)}`);
+  next();
+});
+
 // Middleware
 app.use(cors({
-  origin: config.cors.allowedOrigins,
+  origin: (origin, callback) => {
+    console.log(`🌐 [CORS-ORIGIN-CHECK] Incoming origin: "${origin || 'no-origin'}"`);
+    
+    // Allow requests with no origin (mobile apps, direct requests)
+    if (!origin) {
+      console.log(`🌐 [CORS-ORIGIN-CHECK] Allowing no-origin request`);
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (config.cors.allowedOrigins.includes(origin)) {
+      console.log(`🌐 [CORS-ORIGIN-CHECK] Allowing origin: ${origin}`);
+      return callback(null, true);
+    }
+    
+    console.log(`🌐 [CORS-ORIGIN-CHECK] REJECTING origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Handle form data
 
 // Simple test endpoint for mobile debugging
 app.get('/test', (req, res) => {
@@ -203,9 +229,53 @@ app.post('/auth/register', (req, res) => {
 });
 
 app.post('/auth/login', (req, res) => {
-  console.log('🔐 Login request received from:', req.headers.origin || req.ip);
+  console.log('🔐 POST Login request received from:', req.headers.origin || req.ip);
   console.log('🔐 Request headers:', req.headers);
   login(req, res);
+});
+
+// Temporary GET endpoint for debugging mobile connectivity
+app.get('/auth/login', (req, res) => {
+  console.log('🔐 GET Login request received from:', req.headers.origin || req.ip);
+  console.log('🔐 Query parameters:', req.query);
+  
+  // Extract credentials from query params for testing
+  const { username, password } = req.query;
+  
+  if (username && password) {
+    console.log('🔐 Attempting login with GET params...');
+    // Simulate login (TEMPORARY - not secure!)
+    login(req, res);
+  } else {
+    res.status(400).json({ 
+      error: 'Missing credentials',
+      message: 'Username and password required as query parameters',
+      debug: 'GET request received but missing credentials'
+    });
+  }
+});
+
+// Explicit OPTIONS handler for login endpoint
+app.options('/auth/login', (req, res) => {
+  console.log('🔐 OPTIONS preflight for /auth/login from:', req.headers.origin || req.ip);
+  console.log('🔐 Request headers:', JSON.stringify(req.headers, null, 2));
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.sendStatus(200);
+});
+
+// Explicit OPTIONS handler for register endpoint
+app.options('/auth/register', (req, res) => {
+  console.log('🔐 OPTIONS preflight for /auth/register from:', req.headers.origin || req.ip);
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.sendStatus(200);
 });
 
 // Protected route example
@@ -783,8 +853,8 @@ async function initializeAdmin() {
   }
 }
 
-server.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', async () => {
+  console.log(`Server running on port ${PORT} (accepting external connections)`);
   console.log(`WebSocket server ready`);
   
   // Initialize admin user

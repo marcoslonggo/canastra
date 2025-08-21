@@ -4,27 +4,86 @@ import config from './config';
 const API_BASE = config.api.baseUrl;
 
 export async function loginUser(credentials: LoginRequest): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
+  const url = `${API_BASE}/auth/login`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+    
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      return {
+        success: false,
+        message: `Network error: ${response.status} ${response.statusText}`,
+        user: undefined,
+        token: undefined
+      };
+    }
 
-  return response.json();
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Login network failure:', error);
+    
+    // Check if it's a CORS or network connectivity issue
+    let errorMessage = 'Unknown network error';
+    if (error instanceof Error) {
+      if (error.message.includes('Load failed') || error.message.includes('fetch')) {
+        errorMessage = `Network connectivity issue: ${error.message}. Check if server is accessible from your network.`;
+      } else if (error.message.includes('CORS')) {
+        errorMessage = `CORS policy blocked the request: ${error.message}`;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return {
+      success: false,
+      message: `Connection failed: ${errorMessage}`,
+      user: undefined,
+      token: undefined
+    };
+  }
 }
 
 export async function registerUser(userData: RegisterRequest): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
+  const url = `${API_BASE}/auth/register`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    
+    if (!response.ok) {
+      console.error(`Registration Error: ${response.status} ${response.statusText}`);
+      return {
+        success: false,
+        message: `Network error: ${response.status} ${response.statusText}`,
+        user: undefined,
+        token: undefined
+      };
+    }
 
-  return response.json();
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Registration network failure:', error);
+    return {
+      success: false,
+      message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown network error'}`,
+      user: undefined,
+      token: undefined
+    };
+  }
 }
 
 export async function fetchProfile(token: string) {

@@ -44,20 +44,26 @@ export const DebugInfo: React.FC<DebugInfoProps> = ({ open, onClose }) => {
       let corsErrors: string[] = [];
       
       try {
+        console.log(`🔧 [DEBUG] Testing connectivity to: ${realTimeServerURL}/health`);
+        
         const response = await fetch(`${realTimeServerURL}/health`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          mode: 'cors', // Explicitly test CORS
         });
+        
+        console.log(`🔧 [DEBUG] Health check response:`, response.status, response.statusText);
         
         if (response.ok) {
           serverStatus = 'Connected';
         } else {
           serverStatus = `HTTP ${response.status}`;
-          lastError = `Server responded with status ${response.status}`;
+          lastError = `Server responded with status ${response.status}: ${response.statusText}`;
         }
       } catch (error: any) {
+        console.error(`🔧 [DEBUG] Connectivity test failed:`, error);
         serverStatus = 'Failed';
         lastError = error.message;
         
