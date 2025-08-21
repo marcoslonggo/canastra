@@ -9,7 +9,7 @@ interface ModalProps {
   onOpenChange: (open: boolean) => void
   title?: string
   description?: string
-  children: React.ReactNode
+  children?: React.ReactNode
   
   // Size variants for different use cases
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'

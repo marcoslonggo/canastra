@@ -30,6 +30,23 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
     setupEventListeners();
     if (!initialGameState) {
       gameService.getGameState();
+    } else {
+      // Check host status on initial load if we have initial game state
+      if (initialGameState.players.length > 0) {
+        const hostPlayer = initialGameState.players[0];
+        const isUserHost = hostPlayer && hostPlayer.id === user.id.toString();
+        
+        console.log('🎮 Initial host detection:', {
+          hostPlayer,
+          hostPlayerId: hostPlayer?.id,
+          currentUserId: user.id.toString(),
+          currentUsername: user.username,
+          isUserHost,
+          allPlayers: initialGameState.players.map(p => ({ id: p.id, username: p.username }))
+        });
+        
+        setIsHost(isUserHost);
+      }
     }
     
     // Cleanup listeners on unmount
@@ -72,8 +89,21 @@ export function WaitingRoom({ user, gameId, initialGameState, onGameStart, onLea
       
       // Check if current user is the host (first player)
       if (newGameState.players.length > 0) {
-        // Temporary: always make michele the host for testing
-        setIsHost(user.username === 'michele');
+        // Host is the first player to join the game
+        const hostPlayer = newGameState.players[0];
+        const isUserHost = hostPlayer && hostPlayer.id === user.id.toString();
+        
+        // Debug logging
+        console.log('🎮 Host detection debug:', {
+          hostPlayer,
+          hostPlayerId: hostPlayer?.id,
+          currentUserId: user.id.toString(),
+          currentUsername: user.username,
+          isUserHost,
+          allPlayers: newGameState.players.map(p => ({ id: p.id, username: p.username }))
+        });
+        
+        setIsHost(isUserHost);
       }
       
       // If game phase changed to playing, start the game

@@ -249,7 +249,7 @@ export function GameTable({ user, initialGameState, onLeaveGame }: GameTableProp
         
         // Handle both old format (message) and new format (translationKey + translationParams)
         if (data.translationKey && data.translationParams) {
-          message = t(data.translationKey, data.translationParams);
+          message = t(data.translationKey, data.translationParams) as string;
           console.log('🎯 Using translation key:', data.translationKey, 'Result:', message);
         } else if (data.message) {
           message = data.message;
