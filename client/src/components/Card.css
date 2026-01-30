@@ -1,0 +1,287 @@
+.card {
+  width: var(--card-width, 65px) !important;
+  height: var(--card-height, 90px) !important;
+  border-radius: 8px;
+  background: white;
+  border: 2px solid #333;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-content {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  position: relative;
+}
+
+.card-corner {
+  position: absolute;
+  font-size: 10px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.card-corner-top {
+  top: 2px;
+  left: 4px;
+}
+
+.card-corner-bottom {
+  bottom: 2px;
+  right: 4px;
+  transform: rotate(180deg);
+}
+
+.card-rank-large {
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.card-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.card-suit-large {
+  font-size: 14px;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.card-suit-center {
+  font-size: 32px;
+  text-align: center;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.card-suit-center-small {
+  font-size: 20px !important;
+}
+
+/* Color classes */
+.card-red .card-rank-large,
+.card-red .card-suit-large,
+.card-red .card-suit-center {
+  color: #d73027;
+}
+
+.card-black .card-rank-large,
+.card-black .card-suit-large,
+.card-black .card-suit-center {
+  color: #333;
+}
+
+.card-purple .card-rank-large,
+.card-purple .card-suit-large,
+.card-purple .card-suit-center {
+  color: #7b1fa2;
+}
+
+/* Wild card styling */
+.card-wild {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%);
+  border-color: #ff9800;
+}
+
+.card-wild .wild-indicator {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: #ff5722;
+  color: white;
+  font-size: 6px;
+  font-weight: bold;
+  padding: 1px 3px;
+  border-radius: 3px;
+  transform: rotate(15deg);
+}
+
+/* Selection styling - red to distinguish from drawn cards (blue) */
+.card-selected {
+  border-color: #f44336;
+  background: #ffebee;
+  transform: translateY(-4px);
+}
+
+/* Cards drawn this turn - blue border */
+.card-drawn-this-turn {
+  border-color: #2196f3;
+  border-width: 3px;
+  box-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
+}
+
+.selection-indicator {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid #f44336;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* Draggable styling */
+.card-draggable {
+  cursor: grab;
+}
+
+.card-draggable:active {
+  cursor: grabbing;
+}
+
+/* Card back */
+.card-back {
+  background: linear-gradient(135deg, #1a237e 0%, #303f9f 100%);
+  border-color: #1a237e;
+}
+
+.card-back-pattern {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-back-logo {
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Card groups */
+.card-group {
+  margin: 10px 0;
+}
+
+.card-group-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.card-group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.card-sequence .card-group-cards {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.card-in-group {
+  margin-right: -15px;
+}
+
+.card-in-group:last-child {
+  margin-right: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .card {
+    width: var(--card-width, 50px) !important;
+    height: var(--card-height, 70px) !important;
+  }
+  
+  .card-corner {
+    font-size: 8px;
+  }
+  
+  .card-suit-center {
+    font-size: 24px;
+  }
+  
+  .card-suit-center-small {
+    font-size: 16px !important;
+  }
+  
+  .card-rank-large {
+    font-size: 12px;
+  }
+  
+  .card-suit-large {
+    font-size: 10px;
+  }
+  
+  .wild-indicator {
+    font-size: 5px !important;
+    padding: 0px 2px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    width: var(--card-width, 40px) !important;
+    height: var(--card-height, 56px) !important;
+  }
+  
+  .card-corner {
+    font-size: 7px;
+  }
+  
+  .card-suit-center {
+    font-size: 20px;
+  }
+  
+  .card-suit-center-small {
+    font-size: 14px !important;
+  }
+  
+  .card-rank-large {
+    font-size: 10px;
+  }
+  
+  .card-suit-large {
+    font-size: 8px;
+  }
+}
+
+/* Animation for card interactions */
+@keyframes cardFlip {
+  0% { transform: rotateY(0deg); }
+  50% { transform: rotateY(90deg); }
+  100% { transform: rotateY(0deg); }
+}
+
+.card-flip {
+  animation: cardFlip 0.6s ease-in-out;
+}
+
+@keyframes cardDeal {
+  0% { 
+    transform: translateY(-100px) rotate(-10deg);
+    opacity: 0;
+  }
+  100% { 
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.card-deal {
+  animation: cardDeal 0.5s ease-out;
+}

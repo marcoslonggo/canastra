@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-first CSS foundation */
+@layer base {
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overscroll-behavior: none; /* Prevent bounce scrolling on mobile */
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* iOS safe area support */
+  .safe-area {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Hardware acceleration for smooth animations */
+  .hw-accelerate {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Remove tap highlights on mobile */
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+}
+
+@layer components {
+  /* Button Base Styles */
+  .btn-base {
+    @apply relative inline-flex items-center justify-center font-medium transition-all duration-200 ease-in-out;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply min-h-touch; /* 44px minimum touch target */
+    @apply no-tap-highlight hw-accelerate;
+  }
+
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 active:bg-primary-700;
+    @apply text-white shadow-sm hover:shadow-md;
+    @apply border border-transparent;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 active:bg-gray-100;
+    @apply text-gray-900 border border-gray-300;
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-gray-100 active:bg-gray-200;
+    @apply text-gray-700 border border-transparent;
+  }
+
+  /* Card Styles */
+  .card-base {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200;
+    @apply hw-accelerate;
+  }
+
+  .card-game {
+    @apply bg-white rounded-lg shadow-md border;
+    @apply aspect-[2.5/3.5] max-w-[60px] sm:max-w-[80px];
+    @apply transition-transform duration-200 ease-out;
+    @apply hw-accelerate;
+  }
+
+  .card-selected {
+    @apply transform -translate-y-2 shadow-lg ring-2 ring-primary-500;
+  }
+
+  /* Game Table Styles */
+  .game-felt {
+    @apply bg-felt bg-gradient-to-br from-primary-600 to-primary-800;
+    @apply min-h-screen;
+  }
+
+  /* Chat Overlay (preserve existing implementation) */
+  .chat-overlay {
+    @apply fixed inset-x-4 top-4 z-50;
+    @apply bg-white/90 backdrop-blur-sm rounded-lg shadow-lg;
+    @apply border border-gray-200;
+    max-height: 200px;
+  }
+
+  /* Touch-friendly interactive elements */
+  .touch-target {
+    @apply min-h-touch min-w-touch; /* 44px minimum */
+  }
+
+  /* Responsive containers */
+  .container-mobile {
+    @apply w-full px-4 mx-auto;
+    @apply sm:px-6 lg:px-8;
+    @apply max-w-sm sm:max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl;
+  }
+
+  /* Loading states */
+  .skeleton {
+    @apply bg-gray-200 animate-pulse rounded;
+  }
+
+  /* Form elements */
+  .input-base {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm;
+    @apply focus:outline-none focus:ring-primary-500 focus:border-primary-500;
+    @apply placeholder-gray-400 text-base;
+    @apply min-h-touch; /* Touch-friendly height */
+  }
+
+  /* Mobile-optimized navigation */
+  .nav-mobile {
+    @apply fixed bottom-0 left-0 right-0 z-40;
+    @apply bg-white border-t border-gray-200 safe-area;
+    @apply flex items-center justify-around;
+    @apply h-16 px-4;
+  }
+}
+
+@layer utilities {
+  /* Mobile-specific utilities */
+  .mobile-only {
+    @apply block md:hidden;
+  }
+
+  .desktop-only {
+    @apply hidden md:block;
+  }
+
+  /* Scroll behavior */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+  }
+
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Text utilities for mobile */
+  .text-mobile-friendly {
+    @apply text-base leading-relaxed;
+    @apply sm:text-lg sm:leading-7;
+  }
+
+  /* Spacing utilities for touch */
+  .gap-touch {
+    gap: 44px;
+  }
+
+  .space-touch > * + * {
+    margin-top: 44px;
+  }
+
+  /* Card grid responsive */
+  .card-grid {
+    @apply grid gap-2 sm:gap-3 lg:gap-4;
+    @apply grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-11;
+  }
+
+  /* Flexbox utilities for cards */
+  .hand-flex {
+    @apply flex flex-wrap gap-1 sm:gap-2;
+    @apply justify-center sm:justify-start;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    @apply border-2 border-primary-900;
+  }
+  
+  .card-base {
+    @apply border-2 border-gray-900;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .btn-base,
+  .card-game,
+  .hw-accelerate {
+    @apply transition-none;
+  }
+
+  .animate-pulse,
+  .animate-card-flip,
+  .animate-card-deal {
+    animation: none;
+  }
+}

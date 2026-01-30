@@ -1,0 +1,298 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email"
+  },
+  "auth": {
+    "title": "Family Canastra",
+    "welcome": "Welcome, {{username}}!",
+    "gamesStats": "Games: {{played}} | Wins: {{won}}",
+    "loginButton": "Login",
+    "registerButton": "Register",
+    "logoutButton": "Logout",
+    "noAccount": "Don't have an account?",
+    "registerHere": "Register here",
+    "haveAccount": "Already have an account?",
+    "loginHere": "Login here"
+  },
+  "lobby": {
+    "title": "Family Canastra - Game Lobby",
+    "welcome": "Welcome, {{username}}!",
+    "userStats": "Games: {{played}} | Won: {{won}}",
+    "connected": "Connected",
+    "connecting": "Connecting...",
+    "disconnected": "Disconnected",
+    "reconnect": "Reconnect",
+    "creating": "Creating...",
+    "joining": "Joining...",
+    "connectingToServer": "Connecting to game server...",
+    "connectionLost": "Connection lost. Click Reconnect to try again.",
+    "createGame": {
+      "title": "Create New Game",
+      "description": "Start a new Buraco game for your family",
+      "button": "Create Game"
+    },
+    "joinGame": {
+      "title": "Join Game with Code",
+      "description": "Enter the 6-letter game code to join",
+      "placeholder": "Enter game code (e.g., ABC123)",
+      "button": "Join Game",
+      "enterCode": "Please enter a game code"
+    },
+    "availableGames": {
+      "title": "Available Games",
+      "code": "Code: {{code}}",
+      "players": "Players: {{current}}/{{max}}",
+      "noGames": "No games available. Create one!",
+      "status": {
+        "waiting": "waiting",
+        "playing": "playing",
+        "finished": "finished"
+      },
+      "rejoin": "Rejoin",
+      "join": "Join"
+    },
+    "chat": {
+      "title": "Lobby Chat",
+      "placeholder": "Type a message...",
+      "send": "Send",
+      "noMessages": "No messages yet. Say hello!"
+    }
+  },
+  "game": {
+    "title": "Buraco - Room {{roomCode}}",
+    "yourTurn": "Your Turn",
+    "opponentTurn": "{{player}}'s Turn",
+    "teamScore": "Team {{team}}: {{score}} points",
+    "leaveGame": "Leave Game",
+    "loading": {
+      "title": "Loading game...",
+      "connecting": "Connecting to game server..."
+    },
+    "error": {
+      "playerData": "Could not find player data"
+    },
+    "backToLobby": "Back to Lobby",
+    "hand": {
+      "title": "Your Hand ({{count}} cards)",
+      "dropCardHere": "Drop card here",
+      "actions": {
+        "baixar": "Baixar",
+        "bater": "Bater",
+        "discard": "Discard Selected Card",
+        "discardOne": "Discard One Card",
+        "discardMultiple": "🎮 Discard All {{count}} Cards",
+        "endTurn": "End Turn",
+        "addCards": "+ Add Cards",
+        "clearSelection": "Clear Selection"
+      },
+      "sort": {
+        "direction": "Sort {{direction}}",
+        "ascending": "ascending",
+        "descending": "descending",
+        "pattern": "Sort by {{pattern}}",
+        "suitOrder": "suit order",
+        "blackBlackRedRed": "black/black/red/red",
+        "blackRedBlackRed": "black/red/black/red"
+      },
+      "mobileTips": {
+        "title": "Touch Controls",
+        "tapToSelect": "Tap cards to select them",
+        "multipleTaps": "Tap again to deselect",
+        "useButtons": "Use action buttons below to play cards",
+        "dismiss": "Got it!"
+      }
+    },
+    "baixar": {
+      "confirmTitle": "Confirm Baixar",
+      "confirmMessage": "Do you want to baixar {{count}} selected cards?",
+      "confirm": "Confirm Baixar"
+    },
+    "sequences": {
+      "team1": "Team 1 Sequences",
+      "team2": "Team 2 Sequences",
+      "yourSequences": "Your Sequences",
+      "opponentSequences": "Opponent Sequences",
+      "threeAces": "Three Aces",
+      "canastraAsAAs": "Canastra Ás-à-Ás (+1000)",
+      "canastraLimpa": "Canastra Limpa (+200)",
+      "canastraSuja": "Canastra Suja (+100)",
+      "canastra": "Canastra",
+      "sequence": "Sequence",
+      "noSequences": "No sequences yet",
+      "firstSequenceHint": "Play your first sequence to begin",
+      "addCardsToSequence": "Add cards to this sequence"
+    },
+    "players": {
+      "team": "Team {{team}}",
+      "cards": "{{count}} cards",
+      "disconnected": "Disconnected"
+    },
+    "gameEnded": {
+      "title": "Game Ended!",
+      "winner": "Team {{team}} Wins! 🎉"
+    },
+    "chat": {
+      "title": "💬 Chat",
+      "showChat": "Show Chat", 
+      "hideChat": "Hide Chat",
+      "hide": "Hide",
+      "placeholder": "Type a message...",
+      "send": "Send",
+      "noMessages": "No messages yet. Start the conversation!"
+    },
+    "deck": {
+      "mainDeck": "Main Deck ({{count}})",
+      "discardPile": "Discard Pile ({{count}})",
+      "empty": "Empty",
+      "draw": "Draw",
+      "view": "View"
+    },
+    "discardPile": {
+      "viewerTitle": "🃏 Discard Pile",
+      "drawSelected": "Draw Selected",
+      "drawAll": "Draw All",
+      "leaveSelected": "Leave Selected",
+      "takeAllExceptSelected": "Take All Except Selected",
+      "clearSelection": "Clear Selection",
+      "positionIndicator": "Position {{position}}",
+      "noCardsSelected": "No cards selected",
+      "selectCardsFirst": "Select cards first"
+    },
+    "morto": {
+      "title": "📦 Morto {{number}}",
+      "available": "🟢 Available",
+      "used": "🔴 Used",
+      "cardCount": "({{count}} cards)",
+      "selection": {
+        "title": "🎯 Choose Your Morto",
+        "description": "Multiple Mortos are available. Choose which one to take:",
+        "cancel": "Cancel"
+      }
+    },
+    "mortos": {
+      "label": "Dead Decks"
+    },
+    "players": {
+      "team": "Team {{team}}",
+      "cards": "{{count}} cards",
+      "disconnected": "Disconnected"
+    },
+    "messages": {
+      "notYourTurn": "Not your turn!",
+      "selectCards": "Select cards to discard!",
+      "selectCardsFirst": "Select cards first!",
+      "selectAtLeast": "Select at least {{count}} cards to baixar",
+      "connectionError": "Connection error. Trying to reconnect...",
+      "connectionLost": "Connection lost. Please refresh if issues persist.",
+      "gameEnded": "Game ended! Team {{team}} wins! Scores: {{score1}} - {{score2}}",
+      "pique": "Pique! You must announce you have only one card left.",
+      "cannotBater": "Cannot Bater yet",
+      "chooseMoreto": "Choose which Morto to take",
+      "discardingCard": "Discarding card...",
+      "discardingCards": "Discarding {{count}} cards...",
+      "discardedCards": "Successfully discarded {{count}} cards!",
+      "attemptingBater": "Attempting to Bater...",
+      "endingTurn": "Ending turn...",
+      "drawingFromDeck": "Drawing from deck...",
+      "takingDiscardPile": "Taking discard pile...",
+      "playingSequence": "Playing sequence...",
+      "addingToSequence": "Adding cards to sequence...",
+      "addingCardToSequence": "Adding card to sequence...",
+      "cardDrawn": "Card drawn. You can Bater and take Morto if available.",
+      "drewFromDiscard": "Drew {{count}} cards from discard pile. You must discard a different card to end turn.",
+      "mustDraw": "You must draw at least one card before ending your turn",
+      "mustDiscard": "You must discard a card before ending your turn",
+      "cannotDiscardSame": "You cannot end turn by discarding the same card(s) you drew this turn",
+      "turnEnded": "Turn ended",
+      "baixouSequences": "Baixou {{count}} sequences for {{points}} points",
+      "addedToSequence": "Added {{count}} cards to sequence",
+      "bateuTookMorto": "Bateu! Took Morto {{number}}. Continue playing.",
+      "invalidDiscard": "Cannot discard this card right now",
+      "gestureDetected": "Gesture detected"
+    },
+    "playerActions": {
+      "drewFromDeck": "{{playerName}} drew from deck",
+      "drewFromDiscard": "{{playerName}} drew from discard pile",
+      "discardedCard": "{{playerName}} discarded {{card}}",
+      "discardedACard": "{{playerName}} discarded a card",
+      "playedSequence": "{{playerName}} played a sequence of {{count}} cards",
+      "bateu": "{{playerName}} bateu",
+      "bateuWithMorto": "{{playerName}} bateu and chose Morto {{mortoNumber}}",
+      "addedToSequence": "{{playerName}} added {{count}} card(s) to sequence",
+      "endedTurn": "{{playerName}} ended their turn"
+    },
+    "cheat": {
+      "title": "🎮 Cheat Menu",
+      "activated": "Cheat mode activated! 🎮",
+      "allEnabled": "🚀 ALL CHEATS ENABLED! Complete god mode activated",
+      "spyMode": "🔍 Card spy mode activated! All hands visible",
+      "autoWin": "🏆 Auto-win activated for testing!",
+      "speedMode": "⚡ Speed mode activated! Fast animations",
+      "reset": "🔄 All test modes disabled",
+      "options": {
+        "allowPlayAllCards": {
+          "title": "Allow play all cards (ignore turn)",
+          "description": "Play cards even when it's not your turn"
+        },
+        "allowMultipleDiscard": {
+          "title": "Allow multiple card discard",
+          "description": "Discard as many cards as you want at once"
+        },
+        "allowDiscardDrawnCards": {
+          "title": "Allow discarding drawn cards",
+          "description": "End turn even if you discard the same card you drew"
+        }
+      }
+    },
+    "ui": {
+      "compactView": "Compact View",
+      "expandView": "Expand View",
+      "showDetails": "Show Details",
+      "hideDetails": "Hide Details",
+      "mobileOptimized": "Mobile Optimized Interface",
+      "touchFriendly": "Touch-Friendly Controls"
+    }
+  },
+  "admin": {
+    "panelTitle": "🛠️ Admin Panel",
+    "showPanel": "⚙️ Admin Panel",
+    "hidePanel": "🎮 Hide Admin",
+    "userManagement": "User Management",
+    "gameManagement": "Game Management",
+    "serverManagement": "Server Management",
+    "loadingUsers": "Loading users...",
+    "loadingGames": "Loading games...",
+    "makeAdmin": "Make Admin",
+    "removeAdmin": "Remove Admin",
+    "resetPassword": "Reset Password",
+    "resetPasswordTitle": "Reset Password",
+    "enterNewPassword": "Enter new password for user:",
+    "newPasswordPlaceholder": "New password (min 4 characters)",
+    "passwordResetSuccess": "Password reset successfully",
+    "passwordResetFailed": "Failed to reset password",
+    "terminateGame": "Terminate Game",
+    "terminateGameConfirm": "Are you sure you want to terminate game {{gameId}}? This will kick all players.",
+    "gameTerminated": "Game terminated successfully",
+    "gameTerminateFailed": "Failed to terminate game",
+    "restartServer": "🔄 Restart Server",
+    "restartServerConfirm": "Are you sure you want to restart the server? All players will be disconnected.",
+    "serverRestarting": "Server restart initiated",
+    "serverRestartFailed": "Failed to restart server",
+    "noActiveGames": "No active games",
+    "gameId": "Game ID",
+    "players": "Players",
+    "status": "Status",
+    "createdAt": "Created",
+    "actions": "Actions"
+  }
+}
